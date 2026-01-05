@@ -65,7 +65,7 @@ const FooterSection = () => {
             <img 
               src={movelloLogo} 
               alt="Movello" 
-              className="h-10 w-auto brightness-0 invert"
+              className="h-14 w-auto brightness-0 invert"
             />
           </div>
 
