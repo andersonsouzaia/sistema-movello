@@ -21,7 +21,7 @@ const HeroSection = () => {
             <img 
               src={movelloLogo} 
               alt="Movello" 
-              className="h-12 w-auto"
+              className="h-16 sm:h-20 w-auto"
             />
           </div>
           <nav className="hidden md:flex items-center gap-8">
