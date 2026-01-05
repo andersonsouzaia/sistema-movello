@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Monitor, MapPin, QrCode, Smartphone, BarChart3, Rocket } from "lucide-react";
+import movellinhoMascote from "@/assets/movellinho-mascote.png";
 
 const benefits = [
   {
@@ -36,8 +37,16 @@ const benefits = [
 
 const BenefitsSection = () => {
   return (
-    <section id="beneficios" className="section-padding bg-muted/30">
-      <div className="container-section">
+    <section id="beneficios" className="section-padding bg-muted/30 relative overflow-hidden">
+      {/* Movellinho decorativo */}
+      <motion.img
+        src={movellinhoMascote}
+        alt=""
+        animate={{ rotate: [-5, 5, -5] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute bottom-8 right-8 w-24 h-24 object-contain opacity-40 hidden lg:block pointer-events-none"
+      />
+      <div className="container-section relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}

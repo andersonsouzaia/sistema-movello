@@ -1,7 +1,9 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { MapPin, Play } from "lucide-react";
+import { Play, MapPin } from "lucide-react";
 import heroImage from "@/assets/hero-tablet-mockup.jpg";
+import movelloLogo from "@/assets/movello-logo.png";
+import movellinhoMascote from "@/assets/movellinho-mascote.png";
 
 const HeroSection = () => {
   return (
@@ -16,10 +18,11 @@ const HeroSection = () => {
         {/* Header */}
         <header className="flex items-center justify-between py-6">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-              <MapPin className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-display font-bold text-foreground">Movello</span>
+            <img 
+              src={movelloLogo} 
+              alt="Movello" 
+              className="h-12 w-auto"
+            />
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <a href="#como-funciona" className="text-muted-foreground hover:text-foreground transition-colors">Como funciona</a>
@@ -130,13 +133,13 @@ const HeroSection = () => {
             </div>
 
             {/* Movelinho Mascot */}
-            <motion.div
+            <motion.img
+              src={movellinhoMascote}
+              alt="Movellinho"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-6 right-8 w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-glow-primary"
-            >
-              <span className="text-3xl">🚗</span>
-            </motion.div>
+              className="absolute -bottom-4 right-4 w-28 h-28 object-contain drop-shadow-xl"
+            />
           </motion.div>
         </div>
       </div>

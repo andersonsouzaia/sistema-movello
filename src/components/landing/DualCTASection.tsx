@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Car, Building2, Check, DollarSign, BarChart3, Shield } from "lucide-react";
+import movellinhoMascote from "@/assets/movellinho-mascote.png";
 
 const driverBenefits = [
   { icon: DollarSign, text: "Ganhe renda extra passiva" },
@@ -17,7 +18,7 @@ const businessBenefits = [
 
 const DualCTASection = () => {
   return (
-    <section className="section-padding bg-background">
+    <section className="section-padding bg-background relative overflow-hidden">
       <div className="container-section">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -31,7 +32,15 @@ const DualCTASection = () => {
           </h2>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 relative">
+          {/* Movellinho entre os cards */}
+          <motion.img
+            src={movellinhoMascote}
+            alt="Movellinho"
+            animate={{ y: [0, -10, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute left-1/2 -translate-x-1/2 -bottom-8 w-20 h-20 object-contain z-20 hidden lg:block"
+          />
           {/* Drivers Card */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
