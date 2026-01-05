@@ -4,53 +4,54 @@
 
 @layer base {
   :root {
-    /* Movello Brand Colors */
-    --movello-blue: 216 100% 50%;
-    --movello-blue-dark: 216 100% 40%;
-    --movello-blue-light: 216 100% 96%;
-    --movello-orange: 29 100% 50%;
-    --movello-orange-light: 29 100% 95%;
+    /* Movello Brand Colors - Official Palette */
+    --movello-blue: 210 100% 66%;        /* #54A9FF - Azul claro */
+    --movello-blue-dark: 207 100% 34%;   /* #005FAD - Azul profundo */
+    --movello-blue-light: 210 100% 95%;  /* Tom claro do azul */
+    --movello-orange: 27 100% 58%;       /* #FF8A2A - Laranja vibrante */
+    --movello-orange-light: 27 100% 93%; /* Tom claro do laranja */
+    --movello-gray: 220 13% 27%;         /* #374151 - Cinza escuro */
     
     /* Core Design System */
     --background: 0 0% 100%;
-    --foreground: 220 20% 10%;
+    --foreground: 220 13% 27%;
     
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 220 13% 27%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover-foreground: 220 13% 27%;
     
-    --primary: 216 100% 50%;
+    --primary: 207 100% 34%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 216 100% 96%;
-    --secondary-foreground: 216 100% 35%;
+    --secondary: 210 100% 95%;
+    --secondary-foreground: 207 100% 34%;
     
-    --accent: 29 100% 50%;
+    --accent: 27 100% 58%;
     --accent-foreground: 0 0% 100%;
     
     --muted: 220 10% 96%;
-    --muted-foreground: 220 10% 45%;
+    --muted-foreground: 220 13% 40%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
     --border: 220 15% 90%;
     --input: 220 15% 90%;
-    --ring: 216 100% 50%;
+    --ring: 207 100% 34%;
     
     --radius: 0.75rem;
     
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 216 100% 50%;
+    --sidebar-foreground: 220 13% 27%;
+    --sidebar-primary: 207 100% 34%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 216 100% 96%;
-    --sidebar-accent-foreground: 216 100% 40%;
+    --sidebar-accent: 210 100% 95%;
+    --sidebar-accent-foreground: 207 100% 34%;
     --sidebar-border: 220 15% 90%;
-    --sidebar-ring: 216 100% 50%;
+    --sidebar-ring: 207 100% 34%;
   }
 
   .dark {
@@ -63,13 +64,13 @@
     --popover: 220 20% 10%;
     --popover-foreground: 0 0% 98%;
     
-    --primary: 216 100% 55%;
+    --primary: 210 100% 66%;
     --primary-foreground: 0 0% 100%;
     
     --secondary: 220 20% 15%;
     --secondary-foreground: 0 0% 98%;
     
-    --accent: 29 100% 50%;
+    --accent: 27 100% 58%;
     --accent-foreground: 0 0% 100%;
     
     --muted: 220 20% 15%;
@@ -80,16 +81,16 @@
     
     --border: 220 20% 18%;
     --input: 220 20% 18%;
-    --ring: 216 100% 55%;
+    --ring: 210 100% 66%;
     
     --sidebar-background: 220 20% 10%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 216 100% 55%;
+    --sidebar-primary: 210 100% 66%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 20% 15%;
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 220 20% 18%;
-    --sidebar-ring: 216 100% 55%;
+    --sidebar-ring: 210 100% 66%;
   }
 }
 
@@ -127,26 +128,26 @@
   }
   
   .text-gradient-primary {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--movello-blue-dark)));
+    background: linear-gradient(135deg, hsl(var(--movello-blue-dark)), hsl(var(--movello-blue)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   
   .bg-gradient-hero {
-    background: linear-gradient(180deg, hsl(216 100% 98%), hsl(0 0% 100%));
+    background: linear-gradient(180deg, hsl(210 100% 98%), hsl(0 0% 100%));
   }
   
   .bg-gradient-blue-subtle {
-    background: linear-gradient(135deg, hsl(216 100% 97%), hsl(216 100% 99%));
+    background: linear-gradient(135deg, hsl(210 100% 97%), hsl(210 100% 99%));
   }
   
   .shadow-glow-primary {
-    box-shadow: 0 8px 30px -8px hsl(216 100% 50% / 0.35);
+    box-shadow: 0 8px 30px -8px hsl(207 100% 34% / 0.35);
   }
   
   .shadow-glow-accent {
-    box-shadow: 0 8px 30px -8px hsl(29 100% 50% / 0.35);
+    box-shadow: 0 8px 30px -8px hsl(27 100% 58% / 0.35);
   }
 }
 
