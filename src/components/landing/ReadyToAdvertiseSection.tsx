@@ -47,31 +47,47 @@ const ReadyToAdvertiseSection = () => {
 
             {isCompany ? (
               <>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground">
-                  Pronto para anunciar com{" "}
-                  <span className="text-gradient-primary">precisão e visibilidade real?</span>
-                </h2>
-                <p className="text-lg lg:text-xl text-muted-foreground">
-                  Junte-se a centenas de empresas que já estão conquistando clientes todos os dias com a Movello.
-                </p>
-                <Button variant="hero" size="xl" className="group">
-                  Quero trabalhar agora com a Movello
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </Button>
+                {/* Seção EMPRESA */}
+                <div className="space-y-6">
+                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground">
+                    Anuncie exatamente <span className="text-gradient-primary">onde seus clientes estão!</span>
+                  </h2>
+                  <p className="text-lg lg:text-xl font-semibold text-foreground">
+                    Impacte pessoas reais, na sua região, no momento certo.
+                  </p>
+                  <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
+                    Com a Movello, sua marca aparece em carros de aplicativo que circulam próximos ao seu negócio, gerando visibilidade local real e alcance qualificado.
+                    Descubra como empresas estão utilizando a Movello para atrair clientes todos os dias.
+                  </p>
+                  <div className="space-y-3">
+                    <Button variant="hero" size="xl" className="group">
+                      Quero anunciar agora
+                      <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </div>
+                </div>
               </>
             ) : (
               <>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground">
-                  Ganhe renda extra{" "}
-                  <span className="text-gradient-primary">exibindo anúncios</span>
-                </h2>
-                <p className="text-lg lg:text-xl text-muted-foreground">
-                  Seja um motorista parceiro e ganhe dinheiro enquanto dirige. Tablet instalado gratuitamente.
-                </p>
-                <Button variant="hero" size="xl" className="group">
-                  Quero ser motorista parceiro
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-                </Button>
+                {/* Seção MOTORISTA */}
+                <div className="space-y-6">
+                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground">
+                    <span className="text-gradient-primary">Renda extra</span> sem mudar sua rotina!
+                  </h2>
+                  <p className="text-lg lg:text-xl font-semibold text-foreground">
+                    Veja como motoristas estão gerando renda extra com a Movello, apenas dirigindo normalmente.
+                  </p>
+                  <p className="text-lg lg:text-xl text-muted-foreground leading-relaxed">
+                    Seja motorista parceiro Movello e ganhe dinheiro exibindo anúncios no seu carro, com tablet instalado gratuitamente.
+                    Sem custo para você, sem exclusividade e sem alterar sua rotina de trabalho.
+                  </p>
+                  <div className="space-y-3">
+                    <Button variant="hero" size="xl" className="group">
+                      Quero ser motorista parceiro
+                      <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                    </Button>
+                  </div>
+                </div>
               </>
             )}
           </motion.div>
