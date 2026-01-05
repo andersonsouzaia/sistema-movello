@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, MapPin } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import movelloLogo from "@/assets/movello-logo.png";
+import movellinhoMascote from "@/assets/movellinho-mascote.png";
 
 const FinalCTASection = () => {
   return (
@@ -37,13 +39,15 @@ const FinalCTASection = () => {
           <motion.div
             animate={{ y: [0, -10, 0] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="mt-12 inline-flex items-center gap-3 px-6 py-3 bg-primary/5 rounded-full"
+            className="mt-12 inline-flex items-center gap-4 px-6 py-3 bg-primary/5 rounded-full"
           >
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-glow-primary">
-              <span className="text-2xl">🚗</span>
-            </div>
+            <img 
+              src={movellinhoMascote} 
+              alt="Movellinho" 
+              className="w-14 h-14 object-contain"
+            />
             <span className="text-foreground font-medium">
-              Movelinho te espera para começar!
+              Movellinho te espera para começar!
             </span>
           </motion.div>
         </motion.div>
@@ -58,10 +62,11 @@ const FooterSection = () => {
       <div className="container-section">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-              <MapPin className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <span className="text-2xl font-display font-bold text-background">Movello</span>
+            <img 
+              src={movelloLogo} 
+              alt="Movello" 
+              className="h-10 w-auto brightness-0 invert"
+            />
           </div>
 
           <nav className="flex items-center gap-8">
