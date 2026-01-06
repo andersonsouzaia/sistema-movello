@@ -63,14 +63,11 @@ const DualCTASection = () => {
               ))}
             </div>
 
-            <form className="space-y-4">
-              <Input placeholder="Seu nome completo" className="h-12 rounded-xl" />
-              <Input placeholder="Seu e-mail" type="email" className="h-12 rounded-xl" />
-              <Input placeholder="Seu WhatsApp" className="h-12 rounded-xl" />
-              <Button variant="accent" size="lg" className="w-full">
-                Quero ser motorista parceiro
+            <div className="space-y-4">
+              <Button variant="accent" size="lg" className="w-full" asChild>
+                <a href="/cadastro-motorista">Quero ser motorista parceiro</a>
               </Button>
-            </form>
+            </div>
           </motion.div>
 
           {/* Businesses Card */}
@@ -104,28 +101,16 @@ const DualCTASection = () => {
               ))}
             </div>
 
-            <form className="space-y-4">
-              <Input 
-                placeholder="Nome da empresa" 
-                className="h-12 rounded-xl bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/60" 
-              />
-              <Input 
-                placeholder="Seu e-mail corporativo" 
-                type="email" 
-                className="h-12 rounded-xl bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/60" 
-              />
-              <Input 
-                placeholder="Seu WhatsApp" 
-                className="h-12 rounded-xl bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground placeholder:text-primary-foreground/60" 
-              />
+            <div className="space-y-4">
               <Button 
                 variant="secondary" 
                 size="lg" 
                 className="w-full bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                asChild
               >
-                Quero anunciar agora
+                <a href="/cadastro-empresa">Quero anunciar agora</a>
               </Button>
-            </form>
+            </div>
           </motion.div>
         </div>
       </div>

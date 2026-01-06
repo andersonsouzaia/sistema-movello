@@ -30,9 +30,11 @@ const FinalCTASection = () => {
             Junte-se a centenas de empresas que já estão conquistando clientes todos os dias com a Movello.
           </p>
 
-          <Button variant="hero" size="xl" className="group">
-            Quero anunciar agora
-            <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+          <Button variant="hero" size="xl" className="group" asChild>
+            <a href="/cadastro-empresa">
+              Quero anunciar agora
+              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+            </a>
           </Button>
 
           {/* Floating Mascot */}

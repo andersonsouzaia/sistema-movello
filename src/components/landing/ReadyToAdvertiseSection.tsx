@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Building2, Car } from "lucide-react";
 import { useState } from "react";
-import heroImage from "@/assets/hero-tablet-mockup.jpg";
+import heroImage from "@/assets/hero-tablet.png";
 
 const ReadyToAdvertiseSection = () => {
   const [isCompany, setIsCompany] = useState(true);
@@ -60,9 +60,11 @@ const ReadyToAdvertiseSection = () => {
                     Descubra como empresas estão utilizando a Movello para atrair clientes todos os dias.
                   </p>
                   <div className="space-y-3">
-                    <Button variant="hero" size="xl" className="group">
-                      Quero anunciar agora
-                      <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                    <Button variant="hero" size="xl" className="group" asChild>
+                      <a href="/cadastro-empresa">
+                        Quero anunciar agora
+                        <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                      </a>
                     </Button>
                   </div>
                 </div>
@@ -82,9 +84,11 @@ const ReadyToAdvertiseSection = () => {
                     Sem custo para você, sem exclusividade e sem alterar sua rotina de trabalho.
                   </p>
                   <div className="space-y-3">
-                    <Button variant="hero" size="xl" className="group">
-                      Quero ser motorista parceiro
-                      <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                    <Button variant="hero" size="xl" className="group" asChild>
+                      <a href="/cadastro-motorista">
+                        Quero ser motorista parceiro
+                        <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                      </a>
                     </Button>
                   </div>
                 </div>

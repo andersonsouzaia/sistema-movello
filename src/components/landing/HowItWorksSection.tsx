@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { Settings, MapPin, QrCode } from "lucide-react";
 import { useState } from "react";
-import heroImage from "@/assets/hero-tablet-mockup.jpg";
+import { useIsMobile } from "@/hooks/use-mobile";
+import heroImage from "@/assets/hero-tablet.png";
 
 const steps = [
   {
@@ -26,6 +27,7 @@ const steps = [
 
 const HowItWorksSection = () => {
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const isMobile = useIsMobile();
   
   // Extrair apenas o ID do vídeo (remover parâmetros adicionais)
   const youtubeVideoId = "CeItO4-ARfk"; // ID correto sem "?si=..."
@@ -104,11 +106,14 @@ const HowItWorksSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="card-premium p-6"
+          className="card-premium p-3 sm:p-4 md:p-6"
         >
           <div 
-            className={`relative w-full rounded-3xl overflow-hidden bg-black ${hasVideo ? 'cursor-pointer' : ''}`}
-            style={{ aspectRatio: '16/10', maxHeight: '600px' }}
+            className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black ${hasVideo ? 'cursor-pointer' : ''}`}
+            style={{ 
+              aspectRatio: isMobile ? '9/16' : '16/10', 
+              maxHeight: isMobile ? 'none' : '600px' 
+            }}
             onClick={() => hasVideo && setIsVideoPlaying(true)}
           >
             {!isVideoPlaying || !hasVideo ? (
@@ -118,7 +123,7 @@ const HowItWorksSection = () => {
                   <img 
                     src={youtubeThumbnail}
                     alt="Tablet exibindo anúncio no carro"
-                    className="w-full h-full object-cover rounded-3xl"
+                    className="w-full h-full object-cover rounded-2xl sm:rounded-3xl"
                     onError={(e) => {
                       // Fallback para a imagem original se o thumbnail não carregar
                       e.currentTarget.src = heroImage;
@@ -126,11 +131,11 @@ const HowItWorksSection = () => {
                   />
                   {/* Overlay escuro com botão de play apenas se houver vídeo */}
                   {hasVideo && (
-                    <div className="absolute inset-0 bg-black/30 rounded-3xl flex items-center justify-center group hover:bg-black/40 transition-colors">
+                    <div className="absolute inset-0 bg-black/30 rounded-2xl sm:rounded-3xl flex items-center justify-center group hover:bg-black/40 transition-colors">
                       {/* Botão de play */}
-                      <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/90 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
                         <svg 
-                          className="w-10 h-10 text-primary ml-1" 
+                          className="w-8 h-8 sm:w-10 sm:h-10 text-primary ml-1" 
                           fill="currentColor" 
                           viewBox="0 0 24 24"
                         >
@@ -145,7 +150,7 @@ const HowItWorksSection = () => {
               /* Player do YouTube quando clicado - modo minimalista */
               <div className="absolute inset-0 w-full h-full">
                 <iframe
-                  className="absolute top-0 left-0 w-full h-full rounded-3xl"
+                  className="absolute top-0 left-0 w-full h-full rounded-2xl sm:rounded-3xl"
                   src={youtubeEmbedUrl}
                   title="Vídeo demonstrativo Movello"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Play, MapPin } from "lucide-react";
-import heroImage from "@/assets/hero-tablet-mockup.jpg";
+import heroImage from "@/assets/hero-tablet.png";
 import movelloLogo from "@/assets/movello-logo.png";
 import movellinhoMascote from "@/assets/movellinho-mascote.png";
 
@@ -35,7 +35,7 @@ const HeroSection = () => {
             {/* Botões à direita - sem animação de hover */}
             <div className="hidden md:flex items-center gap-4">
               <button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold h-9">Baixar App</button>
-              <button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold h-9">Entrar</button>
+              <a href="/login" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold h-9">Entrar</a>
             </div>
           </div>
         </div>
