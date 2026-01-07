@@ -1,11 +1,20 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, MapPin } from "lucide-react";
+import { Play, MapPin, Menu } from "lucide-react";
+import { useState } from "react";
 import heroImage from "@/assets/woman-movello-tablet.png";
 import movelloLogo from "@/assets/movello-logo.png";
 import movellinhoMascote from "@/assets/movellinho-mascote.png";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 const HeroSection = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <section className="relative min-h-screen bg-gradient-hero overflow-hidden">
       {/* Background Pattern */}
@@ -26,20 +35,80 @@ const HeroSection = () => {
                 className="h-10 sm:h-12 w-auto"
               />
             </div>
-            {/* Links centralizados */}
+            {/* Links centralizados - Desktop */}
             <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">
               <a href="#como-funciona" className="text-foreground hover:text-primary transition-colors">Como funciona</a>
               <a href="#beneficios" className="text-foreground hover:text-primary transition-colors">Benefícios</a>
               <a href="#faq" className="text-foreground hover:text-primary transition-colors">FAQ</a>
             </nav>
-            {/* Botões à direita - sem animação de hover */}
+            {/* Botões à direita - Desktop */}
             <div className="hidden md:flex items-center gap-4">
               <button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold h-9">Baixar App</button>
               <a href="/login" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold h-9">Entrar</a>
             </div>
+            {/* Botão Menu Mobile */}
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 text-foreground hover:text-primary transition-colors"
+              aria-label="Abrir menu"
+            >
+              <Menu className="w-6 h-6" />
+            </button>
           </div>
         </div>
       </header>
+
+      {/* Menu Mobile */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+          <SheetHeader>
+            <SheetTitle className="text-left">Menu</SheetTitle>
+          </SheetHeader>
+          <div className="flex flex-col gap-6 mt-8">
+            {/* Links de navegação */}
+            <nav className="flex flex-col gap-4">
+              <a 
+                href="#como-funciona" 
+                className="text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Como funciona
+              </a>
+              <a 
+                href="#beneficios" 
+                className="text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Benefícios
+              </a>
+              <a 
+                href="#faq" 
+                className="text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                FAQ
+              </a>
+            </nav>
+            
+            {/* Separador */}
+            <div className="border-t border-border" />
+            
+            {/* Botões de ação */}
+            <div className="flex flex-col gap-3">
+              <button className="bg-primary text-primary-foreground px-4 py-3 rounded-lg text-sm font-semibold w-full">
+                Baixar App
+              </button>
+              <a 
+                href="/login" 
+                className="bg-primary text-primary-foreground px-4 py-3 rounded-lg text-sm font-semibold text-center w-full"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Entrar
+              </a>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <div className="container-section relative z-10">
 
@@ -111,12 +180,48 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative"
           >
-            <div className="relative rounded-3xl overflow-hidden">
+            <div className="relative rounded-3xl overflow-visible">
               <img 
                 src={heroImage} 
-                alt="Passageira escaneando QR code no tablet Movello"
+                alt="Tablet exibindo anúncio geolocalizado em carro de aplicativo"
                 className="w-full h-auto rounded-3xl shadow-2xl"
               />
+              
+              {/* Floating Stats Card */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+                className="absolute -left-2 sm:left-4 top-8 bg-background p-4 rounded-2xl shadow-xl border border-border"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
+                    <MapPin className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">2km</p>
+                    <p className="text-sm text-muted-foreground">Raio configurável</p>
+                  </div>
+                </div>
+              </motion.div>
+
+              {/* Floating Impressions Card */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+                className="absolute right-4 sm:right-8 bottom-4 sm:bottom-8 bg-background p-4 rounded-2xl shadow-xl border border-border"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                    <span className="text-xl">📊</span>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-foreground">98%</p>
+                    <p className="text-sm text-muted-foreground">Taxa de visibilidade</p>
+                  </div>
+                </div>
+              </motion.div>
             </div>
 
             {/* Movelinho Mascot */}
@@ -125,7 +230,14 @@ const HeroSection = () => {
               alt="Movellinho"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-4 -right-4 w-24 h-24 object-contain drop-shadow-xl"
+              className="absolute w-28 h-28 object-contain drop-shadow-xl"
+              style={{
+                left: '512px',
+                top: '246px',
+                zIndex: 10,
+                right: 'auto',
+                bottom: 'auto'
+              }}
             />
           </motion.div>
         </div>
