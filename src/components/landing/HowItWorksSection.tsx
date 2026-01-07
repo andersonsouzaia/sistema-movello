@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Settings, MapPin, Megaphone, QrCode } from "lucide-react";
+import { Settings, MapPin, Megaphone, QrCode, ExternalLink } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import heroImage from "@/assets/hero-tablet.png";
 import tabletInteracao from "@/assets/tablet-interacao.png";
@@ -102,8 +102,11 @@ const HowItWorksSection = () => {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="card-premium p-3 sm:p-4 md:p-6"
         >
-          <div 
-            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black"
+          <a 
+            href="https://movello-tablet.lovable.app/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black block group cursor-pointer"
             style={{ 
               aspectRatio: isMobile ? '9/16' : '16/10', 
               maxHeight: isMobile ? 'none' : '600px' 
@@ -112,13 +115,22 @@ const HowItWorksSection = () => {
             <img 
               src={tabletInteracao}
               alt="Tablet exibindo anúncio no carro"
-              className="w-full h-full object-cover rounded-2xl sm:rounded-3xl"
+              className="w-full h-full object-cover rounded-2xl sm:rounded-3xl blur-md group-hover:blur-sm transition-all duration-300"
               onError={(e) => {
                 // Fallback para a imagem original se não carregar
                 e.currentTarget.src = heroImage;
               }}
             />
-          </div>
+            {/* Overlay com botão */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors duration-300 rounded-2xl sm:rounded-3xl">
+              <div className="bg-white/95 hover:bg-white px-6 py-3 sm:px-8 sm:py-4 rounded-xl shadow-2xl flex items-center gap-3 group-hover:scale-105 transition-transform duration-300">
+                <ExternalLink className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+                <span className="text-base sm:text-lg font-semibold text-foreground">
+                  Ver tablet interativo
+                </span>
+              </div>
+            </div>
+          </a>
         </motion.div>
       </div>
     </section>
