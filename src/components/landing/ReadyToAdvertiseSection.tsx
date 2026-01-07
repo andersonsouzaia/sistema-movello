@@ -36,7 +36,7 @@ const ReadyToAdvertiseSection = () => {
                 onClick={() => setIsCompany(false)}
                 className={`px-6 py-3 rounded-xl font-semibold transition-all flex items-center gap-2 ${
                   !isCompany
-                    ? 'bg-primary text-primary-foreground shadow-lg'
+                    ? 'bg-movello-orange text-white shadow-lg shadow-movello-orange/30 hover:bg-movello-orange/90'
                     : 'bg-muted text-muted-foreground hover:bg-muted/80'
                 }`}
               >
@@ -74,7 +74,7 @@ const ReadyToAdvertiseSection = () => {
                 {/* Seção MOTORISTA */}
                 <div className="space-y-6">
                   <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground">
-                    <span className="text-gradient-primary">Renda extra</span> sem mudar sua rotina!
+                    <span className="text-movello-orange">Renda extra</span> sem mudar sua rotina!
                   </h2>
                   <p className="text-lg lg:text-xl font-semibold text-foreground">
                     Veja como motoristas estão gerando renda extra com a Movello, apenas dirigindo normalmente.
@@ -84,7 +84,12 @@ const ReadyToAdvertiseSection = () => {
                     Sem custo para você, sem exclusividade e sem alterar sua rotina de trabalho.
                   </p>
                   <div className="space-y-3">
-                    <Button variant="hero" size="xl" className="group" asChild>
+                    <Button 
+                      variant="hero" 
+                      size="xl" 
+                      className="group bg-movello-orange hover:bg-movello-orange/90 text-white shadow-lg shadow-movello-orange/30 hover:shadow-xl hover:shadow-movello-orange/40 hover:-translate-y-1" 
+                      asChild
+                    >
                       <a href="/cadastro-motorista">
                         Quero ser motorista parceiro
                         <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
