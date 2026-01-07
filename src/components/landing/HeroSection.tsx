@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Play, MapPin } from "lucide-react";
-import heroImage from "@/assets/hero-tablet.png";
+import heroImage from "@/assets/woman-movello-tablet.png";
 import movelloLogo from "@/assets/movello-logo.png";
 import movellinhoMascote from "@/assets/movellinho-mascote.png";
 
@@ -69,14 +69,26 @@ const HeroSection = () => {
               <strong className="text-foreground">100% rastreável, zero desperdício.</strong>
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Button variant="hero" size="lg">
-                Quero anunciar agora
-              </Button>
-              <Button variant="hero-outline" size="lg">
-                <Play className="w-5 h-5" />
-                Ver como funciona
-              </Button>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <Button variant="hero" size="lg" asChild>
+                  <a href="/cadastro-empresa">Quero anunciar agora</a>
+                </Button>
+
+                <Button variant="hero-outline" size="lg" asChild>
+                  <a href="#como-funciona">
+                    <Play className="w-5 h-5" />
+                    Ver como funciona
+                  </a>
+                </Button>
+              </div>
+
+              <a
+                href="/cadastro-motorista"
+                className="text-sm sm:text-base font-semibold text-movello-orange hover:text-movello-orange/80 sm:self-start"
+              >
+                Quero ser motorista parceiro
+              </a>
             </div>
 
             {/* Trust Badges */}

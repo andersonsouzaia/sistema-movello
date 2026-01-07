@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Settings, MapPin, QrCode } from "lucide-react";
+import { Settings, MapPin, Megaphone, QrCode } from "lucide-react";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import heroImage from "@/assets/hero-tablet.png";
@@ -22,6 +22,12 @@ const steps = [
     icon: QrCode,
     title: "O passageiro interage e você vende",
     description: "QR Code destacado, scan na hora. Lead instantâneo no WhatsApp, site ou página. Mais conversas, mais vendas.",
+  },
+  {
+    number: "04",
+    icon: Megaphone,
+    title: "Motoristas como Embaixadores de Marca",
+    description: "Os motoristas parceiros da Movello tornam-se embaixadores das campanhas, levando a marca para milhares de pessoas todos os dias e gerando conexão real com o público.",
   },
 ];
 
@@ -54,13 +60,13 @@ const HowItWorksSection = () => {
             Como funciona
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground">
-            3 passos simples para atrair
+            4 passos simples para atrair
             <br />
             <span className="text-gradient-primary">clientes todos os dias</span>
           </h2>
         </motion.div>
 
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           {steps.map((step, index) => (
             <motion.div
               key={index}
@@ -73,7 +79,7 @@ const HowItWorksSection = () => {
               {/* Connection Line - entre os cards */}
               {index < steps.length - 1 && (
                 <div 
-                  className="hidden md:block absolute top-1/2 right-0 w-8 h-0.5 bg-gradient-to-r from-primary/30 to-primary/10 -translate-y-1/2 translate-x-full z-0"
+                  className="hidden lg:block absolute top-1/2 right-0 w-8 h-0.5 bg-gradient-to-r from-primary/30 to-primary/10 -translate-y-1/2 translate-x-full z-0"
                 />
               )}
 
