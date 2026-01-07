@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Settings, MapPin, Megaphone, QrCode } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import heroImage from "@/assets/hero-tablet.png";
-import videoThumbnail from "@/assets/Captura de Tela 2026-01-07 às 10.09.43.png";
+import tabletInteracao from "@/assets/tablet-interacao.png";
 
 const steps = [
   {
@@ -110,7 +110,7 @@ const HowItWorksSection = () => {
             }}
           >
             <img 
-              src={videoThumbnail}
+              src={tabletInteracao}
               alt="Tablet exibindo anúncio no carro"
               className="w-full h-full object-cover rounded-2xl sm:rounded-3xl"
               onError={(e) => {
