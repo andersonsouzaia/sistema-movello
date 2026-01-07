@@ -99,48 +99,12 @@ const HeroSection = () => {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="relative"
           >
-            <div className="relative rounded-3xl overflow-visible">
+            <div className="relative rounded-3xl overflow-hidden">
               <img 
                 src={heroImage} 
-                alt="Tablet exibindo anúncio geolocalizado em carro de aplicativo"
+                alt="Passageira escaneando QR code no tablet Movello"
                 className="w-full h-auto rounded-3xl shadow-2xl"
               />
-              
-              {/* Floating Stats Card */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-                className="absolute -left-2 sm:left-4 top-8 bg-background p-4 rounded-2xl shadow-xl border border-border"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">2km</p>
-                    <p className="text-sm text-muted-foreground">Raio configurável</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Floating Impressions Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                className="absolute right-4 sm:right-8 bottom-4 sm:bottom-8 bg-background p-4 rounded-2xl shadow-xl border border-border"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <span className="text-xl">📊</span>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">98%</p>
-                    <p className="text-sm text-muted-foreground">Taxa de visibilidade</p>
-                  </div>
-                </div>
-              </motion.div>
             </div>
 
             {/* Movelinho Mascot */}
@@ -149,14 +113,7 @@ const HeroSection = () => {
               alt="Movellinho"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute w-28 h-28 object-contain drop-shadow-xl"
-              style={{
-                left: '512px',
-                top: '246px',
-                zIndex: 10,
-                right: 'auto',
-                bottom: 'auto'
-              }}
+              className="absolute -bottom-4 -right-4 w-24 h-24 object-contain drop-shadow-xl"
             />
           </motion.div>
         </div>
