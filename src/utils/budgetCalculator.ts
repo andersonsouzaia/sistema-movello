@@ -24,22 +24,18 @@ export interface ROISimulation {
  */
 export function calcularSugestoesOrcamento(
   areaKm2: number,
-  objetivo: string,
+  objetivo: 'awareness' | 'traffic' | 'conversions' | 'engagement',
   duracaoDias: number
 ): BudgetSuggestion {
   // Custo médio por km² por dia (R$)
-  const custoPorKm2PorDia: Record<string, number> = {
+  const custoPorKm2PorDia = {
     awareness: 50,
     traffic: 75,
     conversions: 100,
     engagement: 60,
-    consideracao: 65,
-    conversao: 100,
-    retencao: 70,
-    engajamento: 60,
   }
 
-  const custoBase = areaKm2 * (custoPorKm2PorDia[objetivo] || 75) * duracaoDias
+  const custoBase = areaKm2 * custoPorKm2PorDia[objetivo] * duracaoDias
 
   return {
     orcamentoMinimo: Math.max(100, custoBase * 0.5),
@@ -55,20 +51,16 @@ export function calcularSugestoesOrcamento(
 export function simularROI(
   investimento: number,
   alcanceEstimado: number,
-  objetivo: string,
+  objetivo: 'awareness' | 'traffic' | 'conversions' | 'engagement',
   taxaConversaoMedia: number = 0.02, // 2% padrão
   valorConversaoMedio: number = 50 // R$ 50 por conversão padrão
 ): ROISimulation {
   // Taxas de conversão por objetivo
-  const taxasConversao: Record<string, number> = {
+  const taxasConversao = {
     awareness: 0.01, // 1% - apenas awareness
     traffic: 0.02, // 2% - tráfego para site
     conversions: 0.05, // 5% - conversões diretas
     engagement: 0.03, // 3% - engajamento
-    consideracao: 0.02,
-    conversao: 0.05,
-    retencao: 0.04,
-    engajamento: 0.03,
   }
 
   const taxaConversao = taxasConversao[objetivo] || taxaConversaoMedia
@@ -104,7 +96,7 @@ export function verificarOrcamentoSuficiente(
   orcamento: number,
   areaKm2: number,
   duracaoDias: number,
-  objetivo: string
+  objetivo: 'awareness' | 'traffic' | 'conversions' | 'engagement'
 ): {
   suficiente: boolean
   orcamentoMinimo: number
@@ -143,7 +135,7 @@ export function otimizarOrcamento(
   orcamentoAtual: number,
   areaKm2: number,
   duracaoDias: number,
-  objetivo: string,
+  objetivo: 'awareness' | 'traffic' | 'conversions' | 'engagement',
   metaROI: number = 100 // ROI mínimo desejado em %
 ): {
   orcamentoOtimizado: number

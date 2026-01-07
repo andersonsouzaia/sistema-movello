@@ -42,16 +42,22 @@ const cadastroSchema = z
   .refine((data) => {
     const validation = validatePassword(data.senha)
     return validation.isValid
-  }, {
-    message: 'A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas e números',
-    path: ['senha'],
+  }, (data) => {
+    const validation = validatePassword(data.senha)
+    return {
+      message: validation.error || 'Senha inválida',
+      path: ['senha'],
+    }
   })
   .refine((data) => {
     const validation = validateCNPJ(data.cnpj)
     return validation.isValid
-  }, {
-    message: 'CNPJ inválido',
-    path: ['cnpj'],
+  }, (data) => {
+    const validation = validateCNPJ(data.cnpj)
+    return {
+      message: validation.error || 'CNPJ inválido',
+      path: ['cnpj'],
+    }
   })
 
 type CadastroFormData = z.infer<typeof cadastroSchema>

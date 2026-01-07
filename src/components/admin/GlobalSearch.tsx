@@ -38,7 +38,7 @@ export function GlobalSearch({ open, onOpenChange }: GlobalSearchProps) {
   const [searchHistory, setSearchHistory] = useState<string[]>([])
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const debounceTimerRef = useRef<NodeJS.Timeout>()
 
   // Carregar histórico de buscas
   useEffect(() => {

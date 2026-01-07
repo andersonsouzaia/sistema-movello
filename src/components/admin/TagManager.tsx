@@ -9,7 +9,6 @@ import { Plus, Edit, Trash2, Loader2 } from 'lucide-react'
 import type { Tag } from '@/types/database'
 import { tagService } from '@/services/tagService'
 import { toast } from 'sonner'
-import { useAuth } from '@/contexts/AuthContext'
 
 interface TagManagerProps {
   tags: Tag[]
@@ -18,15 +17,10 @@ interface TagManagerProps {
 }
 
 export function TagManager({ tags, tipoRecurso, onRefresh }: TagManagerProps) {
-  const { user } = useAuth()
   const [editingTag, setEditingTag] = useState<Tag | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState<{
-    nome: string
-    cor: string
-    tipo_recurso: 'tickets' | 'campanhas'
-  }>({
+  const [formData, setFormData] = useState({
     nome: '',
     cor: '#3B82F6',
     tipo_recurso: tipoRecurso || 'tickets',
@@ -43,8 +37,8 @@ export function TagManager({ tags, tipoRecurso, onRefresh }: TagManagerProps) {
       await tagService.createTag({
         nome: formData.nome.trim(),
         cor: formData.cor,
-        tipo_recurso: formData.tipo_recurso,
-      }, user?.id || '')
+        tipo_recurso: formData.tipo_recurso as 'tickets' | 'campanhas',
+      })
       toast.success('Tag criada com sucesso!')
       setDialogOpen(false)
       resetForm()
@@ -67,8 +61,8 @@ export function TagManager({ tags, tipoRecurso, onRefresh }: TagManagerProps) {
       await tagService.updateTag(editingTag.id, {
         nome: formData.nome.trim(),
         cor: formData.cor,
-        tipo_recurso: formData.tipo_recurso,
-      }, user?.id || '')
+        tipo_recurso: formData.tipo_recurso as 'tickets' | 'campanhas',
+      })
       toast.success('Tag atualizada com sucesso!')
       setDialogOpen(false)
       setEditingTag(null)
@@ -86,7 +80,7 @@ export function TagManager({ tags, tipoRecurso, onRefresh }: TagManagerProps) {
 
     setLoading(true)
     try {
-      await tagService.deleteTag(id, user?.id || '')
+      await tagService.deleteTag(id)
       toast.success('Tag deletada com sucesso!')
       onRefresh?.()
     } catch (error) {
@@ -98,11 +92,10 @@ export function TagManager({ tags, tipoRecurso, onRefresh }: TagManagerProps) {
 
   const handleEdit = (tag: Tag) => {
     setEditingTag(tag)
-    const tipoRecursoValue = tag.tipo_recurso === 'ambos' ? 'tickets' : (tag.tipo_recurso || 'tickets')
     setFormData({
       nome: tag.nome,
       cor: tag.cor || '#3B82F6',
-      tipo_recurso: tipoRecursoValue as 'tickets' | 'campanhas',
+      tipo_recurso: tag.tipo_recurso || 'tickets',
     })
     setDialogOpen(true)
   }
