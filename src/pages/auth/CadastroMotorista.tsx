@@ -43,42 +43,30 @@ const cadastroSchema = z
   .refine((data) => {
     const validation = validatePassword(data.senha)
     return validation.isValid
-  }, (data) => {
-    const validation = validatePassword(data.senha)
-    return {
-      message: validation.error || 'Senha inválida',
-      path: ['senha'],
-    }
+  }, {
+    message: 'A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas e números',
+    path: ['senha'],
   })
   .refine((data) => {
     const validation = validateCPF(data.cpf)
     return validation.isValid
-  }, (data) => {
-    const validation = validateCPF(data.cpf)
-    return {
-      message: validation.error || 'CPF inválido',
-      path: ['cpf'],
-    }
+  }, {
+    message: 'CPF inválido',
+    path: ['cpf'],
   })
   .refine((data) => {
     const validation = validatePhone(data.telefone)
     return validation.isValid
-  }, (data) => {
-    const validation = validatePhone(data.telefone)
-    return {
-      message: validation.error || 'Telefone inválido',
-      path: ['telefone'],
-    }
+  }, {
+    message: 'Telefone inválido',
+    path: ['telefone'],
   })
   .refine((data) => {
     const validation = validatePlaca(data.placa)
     return validation.isValid
-  }, (data) => {
-    const validation = validatePlaca(data.placa)
-    return {
-      message: validation.error || 'Placa inválida',
-      path: ['placa'],
-    }
+  }, {
+    message: 'Placa inválida',
+    path: ['placa'],
   })
 
 type CadastroFormData = z.infer<typeof cadastroSchema>

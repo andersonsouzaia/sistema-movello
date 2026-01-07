@@ -26,12 +26,9 @@ const createUserSchema = z
   .refine((data) => {
     const validation = validatePassword(data.senha)
     return validation.isValid
-  }, (data) => {
-    const validation = validatePassword(data.senha)
-    return {
-      message: validation.error || 'Senha inválida',
-      path: ['senha'],
-    }
+  }, {
+    message: 'A senha deve ter pelo menos 8 caracteres, incluindo letras maiúsculas, minúsculas e números',
+    path: ['senha'],
   })
 
 type CreateUserFormValues = z.infer<typeof createUserSchema>
