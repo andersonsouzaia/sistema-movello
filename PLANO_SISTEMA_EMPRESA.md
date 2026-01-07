@@ -597,3 +597,4 @@ CREATE FUNCTION get_empresa_pagamentos(
 - Performance é crítica - usar cache quando possível
 - UX deve ser intuitiva e consistente com o resto do sistema
 
+

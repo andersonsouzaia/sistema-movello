@@ -189,3 +189,4 @@ $$;
 COMMENT ON FUNCTION get_empresa_metricas_diarias IS 'Retorna métricas diárias agregadas de todas as campanhas ativas da empresa';
 COMMENT ON FUNCTION get_empresa_metricas_consolidadas IS 'Retorna métricas consolidadas com comparação entre períodos e tendências';
 
+

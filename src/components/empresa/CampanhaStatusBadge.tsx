@@ -26,3 +26,4 @@ export function CampanhaStatusBadge({ status, className }: CampanhaStatusBadgePr
   )
 }
 
+

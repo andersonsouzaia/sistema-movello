@@ -172,3 +172,4 @@ COMMENT ON FUNCTION verify_empresa_rls IS 'Verifica se as políticas RLS estão 
 -- FIM DO SCRIPT
 -- ============================================
 
+

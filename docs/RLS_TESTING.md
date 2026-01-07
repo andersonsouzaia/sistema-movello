@@ -161,3 +161,4 @@ Todos os testes devem passar, garantindo que:
 3. **Não consegue criar dados** - Verificar política INSERT
 4. **Não consegue atualizar dados** - Verificar política UPDATE e condições de status
 
+

@@ -189,3 +189,4 @@ O sistema está funcional e pronto para uso. As empresas podem:
 
 Todas as integrações com o banco de dados estão funcionando e respeitando as políticas RLS.
 
+

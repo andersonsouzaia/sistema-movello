@@ -157,3 +157,4 @@ COMMENT ON COLUMN campanhas.objetivos_secundarios IS 'Objetivos secundários da 
 COMMENT ON COLUMN campanhas.kpis_meta IS 'KPIs e metas em JSON';
 COMMENT ON COLUMN campanhas.estrategia IS 'Estratégia de cobrança: cpc, cpm, cpa, cpl';
 
+

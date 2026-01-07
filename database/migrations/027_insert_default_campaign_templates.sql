@@ -175,3 +175,4 @@ INSERT INTO campaign_templates (
 
 COMMENT ON TABLE campaign_templates IS 'Templates de campanha completos para reutilização - Templates padrão inseridos';
 
+

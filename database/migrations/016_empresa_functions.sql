@@ -511,3 +511,4 @@ COMMENT ON FUNCTION get_empresa_pagamentos IS 'Lista pagamentos da empresa auten
 -- FIM DO SCRIPT
 -- ============================================
 
+

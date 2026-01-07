@@ -66,3 +66,4 @@ GRANT EXECUTE ON FUNCTION get_empresa_stats TO authenticated;
 
 COMMENT ON FUNCTION get_empresa_stats IS 'Retorna estatísticas agregadas da empresa (campanhas, visualizações, gastos, saldo). Aceita p_empresa_id opcional, usa auth.uid() se não fornecido.';
 
+

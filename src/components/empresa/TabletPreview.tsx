@@ -131,3 +131,4 @@ export function TabletPreview({ midiaUrl, tipo, className, trigger }: TabletPrev
   )
 }
 
+

@@ -381,3 +381,4 @@ COMMENT ON TABLE nicho_categorias IS 'Categorias disponíveis por nicho';
 -- FIM DO SCRIPT
 -- ============================================
 
+
