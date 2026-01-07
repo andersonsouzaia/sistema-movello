@@ -106,15 +106,6 @@ const HeroSection = () => {
                 className="w-full h-auto rounded-3xl shadow-2xl"
               />
             </div>
-
-            {/* Movelinho Mascot */}
-            <motion.img
-              src={movellinhoMascote}
-              alt="Movellinho"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-4 -right-4 w-24 h-24 object-contain drop-shadow-xl"
-            />
           </motion.div>
         </div>
       </div>

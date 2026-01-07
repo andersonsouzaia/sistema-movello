@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { LoadingFallback } from "@/components/ui/LoadingFallback";
+import MovellinhoChatbot from "@/components/chatbot/MovellinhoChatbot";
 
 // Rotas públicas - carregamento imediato
 import Index from "./pages/Index";
@@ -351,6 +352,7 @@ const App = () => (
               {/* 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            <MovellinhoChatbot />
           </AuthProvider>
         </BrowserRouter>
       </TooltipProvider>
