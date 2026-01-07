@@ -151,17 +151,6 @@ const HeroSection = () => {
                   </a>
                 </Button>
               </div>
-
-              <a
-                href="/cadastro-motorista"
-                className="group relative text-sm sm:text-base font-semibold text-movello-orange hover:text-movello-orange/90 sm:self-start inline-flex items-center gap-2 pb-1.5 transition-all duration-300"
-              >
-                <span className="relative z-10 flex items-center gap-2">
-                  <span className="text-lg">🚗</span>
-                  Quero ser motorista parceiro
-                </span>
-                <span className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-movello-orange to-movello-orange/60 w-0 group-hover:w-full transition-all duration-500 ease-out origin-left" />
-              </a>
             </div>
 
             {/* Trust Badges */}
