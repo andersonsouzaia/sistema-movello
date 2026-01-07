@@ -22,6 +22,7 @@ import type { CampanhaWithEmpresa, CampanhaStatus } from '@/types/database'
 import { toast } from 'sonner'
 
 const statusConfig: Record<CampanhaStatus, { label: string; variant: 'default' | 'destructive' | 'secondary' }> = {
+  rascunho: { label: 'Rascunho', variant: 'secondary' },
   em_analise: { label: 'Em Análise', variant: 'secondary' },
   aprovada: { label: 'Aprovada', variant: 'default' },
   reprovada: { label: 'Reprovada', variant: 'destructive' },

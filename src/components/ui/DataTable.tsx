@@ -63,7 +63,7 @@ export function DataTable<T extends Record<string, any>>({
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [filterValues, setFilterValues] = useState<Record<string, string>>({})
-  const debounceTimerRef = useRef<NodeJS.Timeout>()
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Debounce da busca
   useEffect(() => {

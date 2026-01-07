@@ -49,7 +49,7 @@ export function calcularAreaPoligono(coordenadas: Array<[number, number]>): numb
  * Estimar densidade populacional baseado na localização
  */
 export function estimarDensidadePopulacional(
-  tipo: 'raio' | 'poligono' | 'cidade' | 'estado',
+  tipo: string,
   centroLat?: number,
   centroLng?: number,
   cidades?: string[]
@@ -114,7 +114,7 @@ function calcularDistancia(lat1: number, lng1: number, lat2: number, lng2: numbe
  * Estimar alcance e métricas de uma campanha
  */
 export function estimarCobertura(
-  tipo: 'raio' | 'poligono' | 'cidade' | 'estado',
+  tipo: string,
   raioKm?: number,
   poligonoCoordenadas?: Array<[number, number]>,
   centroLat?: number,
