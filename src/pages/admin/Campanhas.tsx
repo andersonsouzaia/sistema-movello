@@ -134,13 +134,23 @@ export default function AdminCampanhas() {
       key: 'actions',
       header: 'Ações',
       render: (row) => (
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/campanhas/${row.id}`)}>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate(`/admin/campanhas/${row.id}`)}
+            className="w-full sm:w-auto"
+          >
             <Eye className="h-4 w-4" />
           </Button>
           {row.status === 'em_analise' && (
             <>
-              <Button variant="ghost" size="sm" onClick={() => handleApprove(row.id)}>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleApprove(row.id)}
+                className="w-full sm:w-auto"
+              >
                 <Check className="h-4 w-4 text-green-600" />
               </Button>
               <Button
@@ -150,18 +160,29 @@ export default function AdminCampanhas() {
                   setSelectedCampanha(row.id)
                   setRejectDialogOpen(true)
                 }}
+                className="w-full sm:w-auto"
               >
                 <X className="h-4 w-4 text-red-600" />
               </Button>
             </>
           )}
           {row.status === 'aprovada' && (
-            <Button variant="ghost" size="sm" onClick={() => handleActivate(row.id)}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handleActivate(row.id)}
+              className="w-full sm:w-auto"
+            >
               <Play className="h-4 w-4" />
             </Button>
           )}
           {(row.status === 'ativa' || row.status === 'aprovada') && (
-            <Button variant="ghost" size="sm" onClick={() => handlePause(row.id)}>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => handlePause(row.id)}
+              className="w-full sm:w-auto"
+            >
               <Pause className="h-4 w-4" />
             </Button>
           )}

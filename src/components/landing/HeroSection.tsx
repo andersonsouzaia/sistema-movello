@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, MapPin, Menu } from "lucide-react";
+import { Play, Menu } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/woman-movello-tablet.png";
 import movelloLogo from "@/assets/movello-logo.png";
@@ -138,8 +138,8 @@ const HeroSection = () => {
               <strong className="text-foreground">100% rastreável, zero desperdício.</strong>
             </p>
 
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 <Button variant="hero" size="lg" asChild>
                   <a href="/cadastro-empresa">Quero anunciar agora</a>
                 </Button>
@@ -154,14 +154,18 @@ const HeroSection = () => {
 
               <a
                 href="/cadastro-motorista"
-                className="text-sm sm:text-base font-semibold text-movello-orange hover:text-movello-orange/80 sm:self-start"
+                className="group relative text-sm sm:text-base font-semibold text-movello-orange hover:text-movello-orange/90 sm:self-start inline-flex items-center gap-2 pb-1.5 transition-all duration-300"
               >
-                Quero ser motorista parceiro
+                <span className="relative z-10 flex items-center gap-2">
+                  <span className="text-lg">🚗</span>
+                  Quero ser motorista parceiro
+                </span>
+                <span className="absolute bottom-0 left-0 h-[2px] bg-gradient-to-r from-movello-orange to-movello-orange/60 w-0 group-hover:w-full transition-all duration-500 ease-out origin-left" />
               </a>
             </div>
 
             {/* Trust Badges */}
-            <div className="flex items-center gap-6 pt-4">
+            <div className="flex items-center gap-6 pt-2">
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
@@ -186,42 +190,6 @@ const HeroSection = () => {
                 alt="Tablet exibindo anúncio geolocalizado em carro de aplicativo"
                 className="w-full h-auto rounded-3xl shadow-2xl"
               />
-              
-              {/* Floating Stats Card */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.6 }}
-                className="absolute -left-2 sm:left-4 top-8 bg-background p-4 rounded-2xl shadow-xl border border-border"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">2km</p>
-                    <p className="text-sm text-muted-foreground">Raio configurável</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Floating Impressions Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
-                className="absolute right-4 sm:right-8 bottom-4 sm:bottom-8 bg-background p-4 rounded-2xl shadow-xl border border-border"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <span className="text-xl">📊</span>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-foreground">98%</p>
-                    <p className="text-sm text-muted-foreground">Taxa de visibilidade</p>
-                  </div>
-                </div>
-              </motion.div>
             </div>
 
             {/* Movelinho Mascot */}

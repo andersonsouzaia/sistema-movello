@@ -163,7 +163,7 @@ export default function EmpresaSuporte() {
                   Novo Ticket
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-[95vw] sm:max-w-2xl p-4 sm:p-6">
                 <DialogHeader>
                   <DialogTitle>Criar Novo Ticket</DialogTitle>
                   <DialogDescription>

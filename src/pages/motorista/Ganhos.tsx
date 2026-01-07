@@ -12,6 +12,7 @@ import { DollarSign, TrendingUp, TrendingDown, RefreshCw, Calendar, Wallet } fro
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 // Mock data - será substituído por hooks reais quando o backend estiver pronto
 interface Ganho {
@@ -41,6 +42,7 @@ const tipoConfig: Record<string, { label: string }> = {
 }
 
 export default function MotoristaGanhos() {
+  const isMobile = useIsMobile()
   const { motorista, profile } = useAuth()
   const [statusFilter, setStatusFilter] = useState<string>('')
   const [loading, setLoading] = useState(false)
@@ -286,7 +288,7 @@ export default function MotoristaGanhos() {
                       </p>
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height={400}>
+                    <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
                       <LineChart data={ganhosMensais}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="mes" />

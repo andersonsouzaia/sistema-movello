@@ -22,6 +22,7 @@ import { ExportScheduler } from '@/components/admin/ExportScheduler'
 import { Download, Settings, FileText, BarChart3 } from 'lucide-react'
 import { Loader2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/formatters'
+import { useIsMobile } from '@/hooks/use-mobile'
 import {
   LineChart,
   Line,
@@ -43,6 +44,7 @@ import { toast } from 'sonner'
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899']
 
 export default function AdminRelatorios() {
+  const isMobile = useIsMobile()
   const { stats, loading } = useAdminStats()
   const { stats: advancedStats } = useAdvancedStats()
   const { campanhas } = useCampanhas({})
@@ -184,7 +186,7 @@ export default function AdminRelatorios() {
 
     if (currentReport.visualization === 'pie') {
       return (
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
           <PieChart>
             <Pie
               data={reportData}
@@ -208,7 +210,7 @@ export default function AdminRelatorios() {
 
     if (currentReport.visualization === 'bar') {
       return (
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
           <BarChart data={reportData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
@@ -223,7 +225,7 @@ export default function AdminRelatorios() {
 
     if (currentReport.visualization === 'line') {
       return (
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
           <LineChart data={reportData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />

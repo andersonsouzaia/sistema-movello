@@ -203,7 +203,7 @@ export default function MotoristaSuporte() {
                   Novo Ticket
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-[95vw] sm:max-w-2xl p-4 sm:p-6">
                 <DialogHeader>
                   <DialogTitle>Criar Novo Ticket</DialogTitle>
                   <DialogDescription>
@@ -351,7 +351,7 @@ export default function MotoristaSuporte() {
           {/* Dialog de Detalhes do Ticket */}
           {selectedTicket && (
             <Dialog open={!!selectedTicket} onOpenChange={(open) => !open && setSelectedTicket(null)}>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                 <DialogHeader>
                   <DialogTitle>Detalhes do Ticket</DialogTitle>
                   <DialogDescription>

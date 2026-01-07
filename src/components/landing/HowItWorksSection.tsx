@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import { Settings, MapPin, Megaphone, QrCode } from "lucide-react";
-import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import heroImage from "@/assets/hero-tablet.png";
+import videoThumbnail from "@/assets/Captura de Tela 2026-01-07 às 10.09.43.png";
 
 const steps = [
   {
@@ -32,19 +32,7 @@ const steps = [
 ];
 
 const HowItWorksSection = () => {
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const isMobile = useIsMobile();
-  
-  // Extrair apenas o ID do vídeo (remover parâmetros adicionais)
-  const youtubeVideoId = "CeItO4-ARfk"; // ID correto sem "?si=..."
-  const hasVideo = !!youtubeVideoId;
-  const youtubeThumbnail = hasVideo ? `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg` : heroImage;
-  
-  // URL do embed com parâmetros para ocultar informações e manter apenas play/pause
-  // Adicionando parâmetros extras para remover vídeos relacionados
-  const youtubeEmbedUrl = hasVideo 
-    ? `https://www.youtube.com/embed/${youtubeVideoId}?autoplay=1&rel=0&modestbranding=1&controls=1&showinfo=0&fs=0&iv_load_policy=3&cc_load_policy=0&disablekb=1&playsinline=1&origin=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}&enablejsapi=0&widget_referrer=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin : '')}`
-    : "";
 
   return (
     <section id="como-funciona" className="section-padding bg-muted/30">
@@ -106,7 +94,7 @@ const HowItWorksSection = () => {
           ))}
         </div>
 
-        {/* Tablet Display com Vídeo YouTube */}
+        {/* Tablet Display com Imagem */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -115,60 +103,21 @@ const HowItWorksSection = () => {
           className="card-premium p-3 sm:p-4 md:p-6"
         >
           <div 
-            className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black ${hasVideo ? 'cursor-pointer' : ''}`}
+            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black"
             style={{ 
               aspectRatio: isMobile ? '9/16' : '16/10', 
               maxHeight: isMobile ? 'none' : '600px' 
             }}
-            onClick={() => hasVideo && setIsVideoPlaying(true)}
           >
-            {!isVideoPlaying || !hasVideo ? (
-              <>
-                {/* Thumbnail do YouTube com botão de play ou imagem estática */}
-                <div className="relative w-full h-full">
-                  <img 
-                    src={youtubeThumbnail}
-                    alt="Tablet exibindo anúncio no carro"
-                    className="w-full h-full object-cover rounded-2xl sm:rounded-3xl"
-                    onError={(e) => {
-                      // Fallback para a imagem original se o thumbnail não carregar
-                      e.currentTarget.src = heroImage;
-                    }}
-                  />
-                  {/* Overlay escuro com botão de play apenas se houver vídeo */}
-                  {hasVideo && (
-                    <div className="absolute inset-0 bg-black/30 rounded-2xl sm:rounded-3xl flex items-center justify-center group hover:bg-black/40 transition-colors">
-                      {/* Botão de play */}
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/90 rounded-full flex items-center justify-center shadow-2xl group-hover:scale-110 transition-transform">
-                        <svg 
-                          className="w-8 h-8 sm:w-10 sm:h-10 text-primary ml-1" 
-                          fill="currentColor" 
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              /* Player do YouTube quando clicado - modo minimalista */
-              <div className="absolute inset-0 w-full h-full">
-                <iframe
-                  className="absolute top-0 left-0 w-full h-full rounded-2xl sm:rounded-3xl"
-                  src={youtubeEmbedUrl}
-                  title="Vídeo demonstrativo Movello"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen={false}
-                  frameBorder="0"
-                  style={{
-                    objectFit: 'cover',
-                    pointerEvents: 'auto'
-                  }}
-                />
-              </div>
-            )}
+            <img 
+              src={videoThumbnail}
+              alt="Tablet exibindo anúncio no carro"
+              className="w-full h-full object-cover rounded-2xl sm:rounded-3xl"
+              onError={(e) => {
+                // Fallback para a imagem original se não carregar
+                e.currentTarget.src = heroImage;
+              }}
+            />
           </div>
         </motion.div>
       </div>

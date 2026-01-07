@@ -253,7 +253,7 @@ export default function CampanhaDetalhes() {
                       Editar
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
+                  <DialogContent className="max-w-[95vw] sm:max-w-2xl p-4 sm:p-6">
                     <DialogHeader>
                       <DialogTitle>Editar Campanha</DialogTitle>
                       <DialogDescription>
@@ -287,7 +287,7 @@ export default function CampanhaDetalhes() {
                           </p>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="edit-orcamento">Orçamento (R$) *</Label>
                           <Input

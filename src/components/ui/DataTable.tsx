@@ -17,8 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Card } from '@/components/ui/card'
 import { Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export interface Column<T> {
   key: string
@@ -59,6 +61,7 @@ export function DataTable<T extends Record<string, any>>({
   pageSize = 10,
   className,
 }: DataTableProps<T>) {
+  const isMobile = useIsMobile()
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
@@ -173,64 +176,120 @@ export function DataTable<T extends Record<string, any>>({
         ))}
       </div>
 
-      {/* Tabela */}
-      <div className="card-premium rounded-xl border overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-b">
-                {columns.map((column) => (
-                  <TableHead key={column.key} className="font-semibold">
-                    {column.header}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
-                    <div className="flex items-center justify-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ) : paginatedData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                    {emptyMessage}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedData.map((row, index) => (
-                  <TableRow
-                    key={index}
-                    className={cn(
-                      onRowClick && 'cursor-pointer'
-                    )}
-                    onClick={() => onRowClick?.(row)}
-                  >
-                    {columns.map((column) => (
-                      <TableCell key={column.key}>
-                        {column.render
-                          ? column.render(row)
-                          : column.accessor
-                          ? column.accessor(row)
-                          : row[column.key]}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+      {/* Tabela / Cards Mobile */}
+      {isMobile ? (
+        <div className="space-y-4">
+          {loading ? (
+            <div className="flex items-center justify-center h-24">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            </div>
+          ) : paginatedData.length === 0 ? (
+            <div className="h-24 flex items-center justify-center text-muted-foreground">
+              {emptyMessage}
+            </div>
+          ) : (
+            paginatedData.map((row, index) => (
+              <Card
+                key={index}
+                className={cn(
+                  "p-4 cursor-pointer hover:shadow-md transition-shadow",
+                  onRowClick && "hover:bg-muted/50"
+                )}
+                onClick={() => onRowClick?.(row)}
+              >
+                <div className="space-y-3">
+                  {columns.map((column) => {
+                    const content = column.render
+                      ? column.render(row)
+                      : column.accessor
+                      ? column.accessor(row)
+                      : row[column.key]
+                    
+                    // Não mostrar coluna de ações como campo separado em mobile
+                    if (column.key === 'actions') {
+                      return (
+                        <div key={column.key} className="pt-2 border-t">
+                          <div className="text-xs font-medium text-muted-foreground mb-2">
+                            {column.header}
+                          </div>
+                          <div>{content}</div>
+                        </div>
+                      )
+                    }
+                    
+                    return (
+                      <div key={column.key}>
+                        <div className="text-xs font-medium text-muted-foreground mb-1">
+                          {column.header}
+                        </div>
+                        <div className="text-sm">{content}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </Card>
+            ))
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="card-premium rounded-xl border overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b">
+                  {columns.map((column) => (
+                    <TableHead key={column.key} className="font-semibold">
+                      {column.header}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                      <div className="flex items-center justify-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedData.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                      {emptyMessage}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  paginatedData.map((row, index) => (
+                    <TableRow
+                      key={index}
+                      className={cn(
+                        onRowClick && 'cursor-pointer'
+                      )}
+                      onClick={() => onRowClick?.(row)}
+                    >
+                      {columns.map((column) => (
+                        <TableCell key={column.key}>
+                          {column.render
+                            ? column.render(row)
+                            : column.accessor
+                            ? column.accessor(row)
+                            : row[column.key]}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
 
       {/* Paginação */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-muted-foreground">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-muted-foreground text-center sm:text-left">
             Mostrando {startIndex + 1} a {Math.min(endIndex, filteredData.length)} de {filteredData.length} resultados
           </div>
           <div className="flex gap-2">

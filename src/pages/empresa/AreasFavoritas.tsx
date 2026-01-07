@@ -110,7 +110,7 @@ export default function AreasFavoritas() {
                   Nova Área Favorita
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                 <DialogHeader>
                   <DialogTitle>Nova Área Favorita</DialogTitle>
                   <DialogDescription>

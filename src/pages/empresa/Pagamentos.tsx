@@ -24,6 +24,7 @@ import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils/formatte
 import { cn } from '@/lib/utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { exportToCSV, exportToExcel } from '@/utils/exportUtils'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 const pagamentoSchema = z.object({
   valor: z.number().min(50, 'Valor mínimo é R$ 50,00'),
@@ -42,6 +43,7 @@ const statusConfig: Record<string, { label: string; variant: 'default' | 'destru
 }
 
 export default function EmpresaPagamentos() {
+  const isMobile = useIsMobile()
   const { empresa } = useAuth()
   const { stats } = useEmpresaStats()
   const [statusFilter, setStatusFilter] = useState<string>('')
@@ -406,7 +408,7 @@ export default function EmpresaPagamentos() {
                       <p className="text-muted-foreground">Nenhum dado disponível</p>
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height={400}>
+                    <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
                       <BarChart data={extratoData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="mes" />

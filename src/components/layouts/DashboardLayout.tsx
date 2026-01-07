@@ -279,27 +279,40 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <Menu className="h-5 w-5" />
           </Button>
 
-          <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+          <div className="flex flex-1 gap-x-2 sm:gap-x-4 self-stretch lg:gap-x-6">
             {/* Busca Global - apenas para admin */}
             {userType === 'admin' && (
-              <div className="flex flex-1 max-w-md">
+              <>
+                {/* Versão Desktop - Campo completo */}
+                <div className="hidden sm:flex flex-1 max-w-md">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-start text-muted-foreground"
+                    onClick={() => setSearchOpen(true)}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Buscar...
+                    <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                      <span className="text-xs">⌘</span>K
+                    </kbd>
+                  </Button>
+                </div>
+                {/* Versão Mobile - Ícone apenas */}
                 <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start text-muted-foreground"
+                  variant="ghost"
+                  size="icon"
+                  className="sm:hidden"
                   onClick={() => setSearchOpen(true)}
+                  aria-label="Buscar"
                 >
-                  <Search className="h-4 w-4 mr-2" />
-                  Buscar...
-                  <kbd className="pointer-events-none ml-auto inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                    <span className="text-xs">⌘</span>K
-                  </kbd>
+                  <Search className="h-5 w-5" />
                 </Button>
                 <GlobalSearch open={searchOpen} onOpenChange={setSearchOpen} />
-              </div>
+              </>
             )}
             <div className="flex flex-1" />
-            <div className="flex items-center gap-x-4 lg:gap-x-6">
+            <div className="flex items-center gap-x-2 sm:gap-x-4 lg:gap-x-6">
               {/* Notifications - apenas para admin */}
               {userType === 'admin' && (
                 <NotificationBell

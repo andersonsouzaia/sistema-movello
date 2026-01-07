@@ -7,9 +7,11 @@ import { MapContainer, TileLayer, Circle, Polygon } from 'react-leaflet'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { MapPin, TrendingUp, Eye, MousePointerClick, ShoppingCart } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/formatters'
+import { useIsMobile } from '@/hooks/use-mobile'
 import 'leaflet/dist/leaflet.css'
 
 export default function CampanhaAnalytics() {
+  const isMobile = useIsMobile()
   const { id } = useParams<{ id: string }>()
   const { campanha, loading, error } = useEmpresaCampanha(id || '')
 
@@ -125,7 +127,7 @@ export default function CampanhaAnalytics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
                 <BarChart data={performancePorArea}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="area" />
@@ -151,7 +153,7 @@ export default function CampanhaAnalytics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
                 <BarChart data={roiPorLocalizacao}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="localizacao" />
@@ -174,7 +176,7 @@ export default function CampanhaAnalytics() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={isMobile ? 200 : 250}>
                   <PieChart>
                     <Pie
                       data={performancePorArea}
@@ -203,7 +205,7 @@ export default function CampanhaAnalytics() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={isMobile ? 200 : 250}>
                   <PieChart>
                     <Pie
                       data={performancePorArea}
@@ -231,7 +233,7 @@ export default function CampanhaAnalytics() {
               <CardTitle>Resumo de Alcance Geográfico</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Área Total</p>
                   <p className="text-2xl font-bold">

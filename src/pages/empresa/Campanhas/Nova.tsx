@@ -866,7 +866,7 @@ export default function NovaCampanha() {
                 <p className="text-sm font-medium text-muted-foreground">Descrição</p>
                 <p className="text-sm">{formBasica.watch('descricao')}</p>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Orçamento</p>
                   <p className="text-lg font-semibold">{formatCurrency(formBasica.watch('orcamento'))}</p>

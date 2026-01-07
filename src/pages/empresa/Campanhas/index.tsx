@@ -218,11 +218,12 @@ export default function EmpresaCampanhas() {
       key: 'actions',
       header: 'Ações',
       render: (row) => (
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(`/empresa/campanhas/${row.id}`)}
+            className="w-full sm:w-auto"
           >
             <Eye className="h-4 w-4" />
           </Button>
@@ -237,6 +238,7 @@ export default function EmpresaCampanhas() {
                     handleAtivarRascunho(row.id)
                   }}
                   disabled={ativando}
+                  className="w-full sm:w-auto"
                 >
                   <Play className="h-4 w-4 mr-1" />
                   Ativar
@@ -249,6 +251,7 @@ export default function EmpresaCampanhas() {
                   e.stopPropagation()
                   navigate(`/empresa/campanhas/nova?rascunho=${row.id}`)
                 }}
+                className="w-full sm:w-auto"
               >
                 <Edit className="h-4 w-4 mr-1" />
                 Continuar Editando
@@ -259,6 +262,7 @@ export default function EmpresaCampanhas() {
               variant="ghost"
               size="sm"
               onClick={() => navigate(`/empresa/campanhas/${row.id}`)}
+              className="w-full sm:w-auto"
             >
               <Edit className="h-4 w-4" />
             </Button>

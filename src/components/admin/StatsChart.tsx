@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { Loader2 } from 'lucide-react'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface ChartDataPoint {
   date?: string
@@ -35,8 +36,10 @@ export function StatsChart({
   showLegend = true,
   dataKeys,
 }: StatsChartProps) {
+  const isMobile = useIsMobile()
   // Se não há título, renderizar apenas o gráfico (para uso dentro de Card existente)
   const renderOnlyChart = !title && !description
+  const chartHeight = isMobile ? 250 : 300
 
   if (loading) {
     if (renderOnlyChart) {
@@ -53,7 +56,7 @@ export function StatsChart({
           {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-center h-[300px]">
+          <div className="flex items-center justify-center" style={{ height: `${chartHeight}px` }}>
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         </CardContent>
@@ -62,7 +65,7 @@ export function StatsChart({
   }
 
   const chartContent = (
-    <div className="w-full h-full overflow-hidden" style={{ height: renderOnlyChart ? '100%' : '300px' }}>
+    <div className="w-full h-full overflow-hidden" style={{ height: renderOnlyChart ? '100%' : `${chartHeight}px` }}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: showLegend ? 60 : 20 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -156,7 +159,7 @@ export function StatsChart({
         <CardTitle>{title}</CardTitle>
         {description && <CardDescription>{description}</CardDescription>}
       </CardHeader>
-      <CardContent className="overflow-hidden" style={{ height: '300px' }}>
+      <CardContent className="overflow-hidden" style={{ height: `${chartHeight}px` }}>
         {chartContent}
       </CardContent>
     </Card>

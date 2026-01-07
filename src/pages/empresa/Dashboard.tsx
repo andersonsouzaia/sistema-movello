@@ -12,6 +12,7 @@ import { InsightsWidget } from '@/components/empresa/InsightsWidget'
 import { useEmpresaMetricasConsolidadas } from '@/hooks/useEmpresaMetricas'
 import { lazy, Suspense } from 'react'
 import { CardSkeleton } from '@/components/ui/CardSkeleton'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 // Lazy load do mapa para melhor performance
 const MapContainer = lazy(() => import('react-leaflet').then((mod) => ({ default: mod.MapContainer })))
@@ -30,6 +31,7 @@ import { useNavigate } from 'react-router-dom'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
 export default function EmpresaDashboard() {
+  const isMobile = useIsMobile()
   const { empresa, profile } = useAuth()
   const navigate = useNavigate()
   const { stats, loading: statsLoading, refetch: refetchStats } = useEmpresaStats()
@@ -386,7 +388,7 @@ export default function EmpresaDashboard() {
                       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                     </div>
                   ) : (
-                    <ResponsiveContainer width="100%" height={300}>
+                    <ResponsiveContainer width="100%" height={isMobile ? 250 : 300}>
                       <LineChart data={performanceChartData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="date" />
@@ -480,7 +482,7 @@ export default function EmpresaDashboard() {
                   }))
                   
                   return nichosData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={200}>
+                    <ResponsiveContainer width="100%" height={isMobile ? 180 : 200}>
                       <BarChart data={nichosData}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="nicho" />

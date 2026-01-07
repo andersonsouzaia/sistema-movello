@@ -168,7 +168,7 @@ export default function EmpresaMidias() {
                   Upload em Massa
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl">
+              <DialogContent className="max-w-[95vw] sm:max-w-2xl p-4 sm:p-6">
                 <DialogHeader>
                   <DialogTitle>Upload em Massa</DialogTitle>
                   <DialogDescription>

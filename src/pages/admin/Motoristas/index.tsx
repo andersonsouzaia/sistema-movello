@@ -123,11 +123,12 @@ export default function AdminMotoristas() {
       key: 'actions',
       header: 'Ações',
       render: (row) => (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(`/admin/motoristas/${row.id}`)}
+            className="w-full sm:w-auto"
           >
             <Eye className="h-4 w-4" />
           </Button>
@@ -137,6 +138,7 @@ export default function AdminMotoristas() {
                 variant="default"
                 size="sm"
                 onClick={() => handleApprove(row.id)}
+                className="w-full sm:w-auto"
               >
                 <CheckCircle2 className="h-4 w-4 mr-1" />
                 Aprovar
@@ -149,6 +151,7 @@ export default function AdminMotoristas() {
                 variant="destructive"
                 size="sm"
                 onClick={() => handleBlock(row.id)}
+                className="w-full sm:w-auto"
               >
                 <Ban className="h-4 w-4 mr-1" />
                 Bloquear

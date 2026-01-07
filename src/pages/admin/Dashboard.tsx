@@ -521,7 +521,7 @@ export default function AdminDashboard() {
                     </div>
                   ) : financialSummary ? (
                     <div className="space-y-4">
-                      <div className="grid grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div className="p-4 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
                           <p className="text-xs text-muted-foreground mb-1">Receitas</p>
                           <p className="text-2xl font-bold text-green-600">
@@ -549,7 +549,7 @@ export default function AdminDashboard() {
                           </p>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
                         <div>
                           <p className="text-sm text-muted-foreground mb-1">Pagamentos Pendentes</p>
                           <p className="text-xl font-semibold">{financialSummary.pagamentos_pendentes}</p>
