@@ -19,10 +19,10 @@ const templateSchema = z.object({
   assunto: z.string().min(1, 'Assunto é obrigatório').max(200, 'Assunto muito longo'),
   corpo_html: z.string().min(1, 'Corpo HTML é obrigatório'),
   corpo_texto: z.string().min(1, 'Corpo texto é obrigatório'),
-  ativo: z.boolean().default(true),
+  ativo: z.boolean(),
 })
 
-type TemplateFormValues = z.infer<typeof templateSchema>
+type TemplateFormValues = z.output<typeof templateSchema>
 
 interface TemplateEditorProps {
   template?: TemplateEmail

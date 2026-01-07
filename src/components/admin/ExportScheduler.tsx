@@ -38,10 +38,10 @@ const scheduleSchema = z.object({
     },
     { message: 'Um ou mais emails são inválidos' }
   ),
-  enabled: z.boolean().default(true),
+  enabled: z.boolean(),
 })
 
-type ScheduleFormValues = z.infer<typeof scheduleSchema>
+type ScheduleFormValues = z.output<typeof scheduleSchema>
 
 interface ExportSchedulerProps {
   dataSources: Array<{ value: string; label: string }>
