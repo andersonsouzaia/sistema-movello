@@ -1,18 +1,17 @@
+/* eslint-disable react-hooks/rules-of-hooks */
+// Este arquivo contém fixtures do Playwright, não React hooks
+// O parâmetro 'use' é parte da API do Playwright, não um React Hook
+
 import { test as base } from '@playwright/test'
-import { loginAs, logout, TestUser } from '../helpers/auth'
+import { loginAs, logout } from '../helpers/auth'
 
 /**
  * Fixture para autenticação nos testes
+ * Nota: Fixtures do Playwright não são React hooks, então não usam 'use'
  */
-export const test = base.extend<{
-  authenticatedPage: {
-    admin: typeof base
-    empresa: typeof base
-    motorista: typeof base
-  }
-}>({
+export const test = base.extend({
   // Página autenticada como admin
-  admin: async ({ page }, use) => {
+  adminPage: async ({ page }, use) => {
     try {
       await loginAs(page, 'admin')
       await use(page)
@@ -24,7 +23,7 @@ export const test = base.extend<{
   },
   
   // Página autenticada como empresa
-  empresa: async ({ page }, use) => {
+  empresaPage: async ({ page }, use) => {
     try {
       await loginAs(page, 'empresa')
       await use(page)
@@ -36,7 +35,7 @@ export const test = base.extend<{
   },
   
   // Página autenticada como motorista
-  motorista: async ({ page }, use) => {
+  motoristaPage: async ({ page }, use) => {
     try {
       await loginAs(page, 'motorista')
       await use(page)

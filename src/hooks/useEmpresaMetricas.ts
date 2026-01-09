@@ -8,7 +8,7 @@ import type {
 
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
 
-let metricasCache: {
+const metricasCache: {
   [key: string]: {
     data: any
     timestamp: number

@@ -126,7 +126,7 @@ export function MapSelector({
     
     // Usar ref para evitar dependência de onChange
     onChangeRef.current(novoValor)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [tipo, centro, raio, poligono])
 
   const handleMapClick = (e: L.LeafletMouseEvent) => {
