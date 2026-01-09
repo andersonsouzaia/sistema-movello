@@ -676,6 +676,7 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </motion.div>
+            </RequirePermission>
           </div>
 
           {/* Gráfico de Tickets */}
@@ -973,6 +974,7 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </motion.div>
+            </RequirePermission>
           </div>
 
           {/* Notificações Não Lidas */}
