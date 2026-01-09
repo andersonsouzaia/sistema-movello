@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { useState } from "react";
 import heroImage from "@/assets/woman-movello-tablet.png";
 import movelloLogo from "@/assets/movello-logo.png";
@@ -38,12 +38,11 @@ const HeroSection = () => {
             {/* Links centralizados - Desktop */}
             <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">
               <a href="#como-funciona" className="text-foreground hover:text-primary transition-colors">Como funciona</a>
-              <a href="#beneficios" className="text-foreground hover:text-primary transition-colors">Benefícios</a>
+              <a href="#beneficios" className="text-foreground hover:text-primary transition-colors">Benefícios e diferenciais</a>
               <a href="#faq" className="text-foreground hover:text-primary transition-colors">FAQ</a>
             </nav>
             {/* Botões à direita - Desktop */}
             <div className="hidden md:flex items-center gap-4">
-              <button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold h-9">Baixar App</button>
               <a href="/login" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold h-9">Entrar</a>
             </div>
             {/* Botão Menu Mobile */}
@@ -79,7 +78,7 @@ const HeroSection = () => {
                 className="text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Benefícios
+                Benefícios e diferenciais
               </a>
               <a 
                 href="#faq" 
@@ -95,9 +94,6 @@ const HeroSection = () => {
             
             {/* Botões de ação */}
             <div className="flex flex-col gap-3">
-              <button className="bg-primary text-primary-foreground px-4 py-3 rounded-lg text-sm font-semibold w-full">
-                Baixar App
-              </button>
               <a 
                 href="/login" 
                 className="bg-primary text-primary-foreground px-4 py-3 rounded-lg text-sm font-semibold text-center w-full"
@@ -134,8 +130,8 @@ const HeroSection = () => {
             </h1>
 
             <p className="text-lg lg:text-xl text-muted-foreground max-w-xl">
-              Seu anúncio aparece em tablets dentro dos veículos, exatamente dentro do raio que você escolher.{" "}
-              <strong className="text-foreground">100% rastreável, zero desperdício.</strong>
+              Plataforma de publicidade em mobilidade que transforma veículos de aplicativo em canais de comunicação de alto impacto.{" "}
+              <strong className="text-foreground">Conectamos marcas ao público certo durante os deslocamentos.</strong>
             </p>
 
             <div className="flex flex-col gap-2">
@@ -144,11 +140,8 @@ const HeroSection = () => {
                   <a href="/cadastro-empresa">Quero anunciar agora</a>
                 </Button>
 
-                <Button variant="hero-outline" size="lg" asChild>
-                  <a href="#como-funciona">
-                    <Play className="w-5 h-5" />
-                    Ver como funciona
-                  </a>
+                <Button variant="accent" size="lg" asChild>
+                  <a href="/cadastro-motorista">Quero ser motorista parceiro</a>
                 </Button>
               </div>
             </div>

@@ -2,7 +2,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Building2, Car } from "lucide-react";
 import { useState } from "react";
-import heroImage from "@/assets/hero-tablet.png";
+import heroCompany from "@/assets/woman-movello-tablet.png";
+import heroDriver from "@/assets/hero-tablet.png";
 
 const ReadyToAdvertiseSection = () => {
   const [isCompany, setIsCompany] = useState(true);
@@ -110,9 +111,9 @@ const ReadyToAdvertiseSection = () => {
             className="relative"
           >
             <img 
-              src={heroImage} 
-              alt={isCompany ? "Empresa anunciando" : "Motorista parceiro"}
-              className="w-full h-auto rounded-3xl shadow-2xl"
+              src={isCompany ? heroCompany : heroDriver}
+              alt={isCompany ? "Empresa anunciando no tablet Movello" : "Motorista parceiro com tablet Movello"}
+              className="w-full h-[340px] sm:h-[420px] lg:h-[480px] xl:h-[520px] object-cover rounded-3xl shadow-2xl"
             />
           </motion.div>
         </div>

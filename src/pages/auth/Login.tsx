@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Spinner } from '@/components/ui/spinner'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
-import { AlertCircle, Lock, Mail } from 'lucide-react'
+import { AlertCircle, Lock, Mail, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 
 const loginSchema = z.object({
@@ -30,6 +30,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [blocked, setBlocked] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -237,11 +238,19 @@ export default function Login() {
                       </div>
                       <Input
                         {...field}
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
                         placeholder="••••••••"
-                        className="pl-14 h-12 rounded-xl border-2 focus:border-primary transition-all"
+                        className="pl-14 pr-12 h-12 rounded-xl border-2 focus:border-primary transition-all"
                         disabled={loading || blocked}
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
                     </div>
                   </FormControl>
                   <FormMessage />
@@ -296,10 +305,18 @@ export default function Login() {
             transition={{ duration: 0.4, delay: 0.5 }}
             className="text-center text-sm text-muted-foreground"
           >
-            Ainda não tem conta?{' '}
-            <Link to="/cadastro-empresa" className="text-primary hover:underline font-medium transition-colors">
-              Cadastre-se aqui
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-center">
+              <span>Ainda não tem conta?</span>
+              <div className="flex items-center gap-3 justify-center">
+                <Link to="/cadastro-empresa" className="text-primary hover:underline font-medium transition-colors">
+                  Sou empresa
+                </Link>
+                <span className="text-muted-foreground">ou</span>
+                <Link to="/cadastro-motorista" className="text-primary hover:underline font-medium transition-colors">
+                  Sou motorista
+                </Link>
+              </div>
+            </div>
           </motion.div>
         </form>
       </Form>

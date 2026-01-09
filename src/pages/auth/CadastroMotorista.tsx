@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Spinner } from '@/components/ui/spinner'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'
-import { AlertCircle, Car, User, Phone, Mail, Lock, FileText } from 'lucide-react'
+import { AlertCircle, Car, User, Phone, Mail, Lock, FileText, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { validateCPF, validatePassword, validatePhone, validatePlaca } from '@/lib/utils/validations'
 import { formatCPF, formatPhone, formatPlaca } from '@/lib/utils/formatters'
@@ -88,6 +88,8 @@ export default function CadastroMotorista() {
   const { signUpMotorista } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const form = useForm<CadastroFormData>({
     resolver: zodResolver(cadastroSchema),
@@ -256,7 +258,23 @@ export default function CadastroMotorista() {
               <FormItem>
                 <FormLabel>Senha</FormLabel>
                 <FormControl>
-                  <Input {...field} type="password" placeholder="••••••••" disabled={loading} />
+                  <div className="relative">
+                    <Input 
+                      {...field} 
+                      type={showPassword ? 'text' : 'password'} 
+                      placeholder="••••••••" 
+                      disabled={loading}
+                      className="pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                 </FormControl>
                 <FormDescription>
                   Mínimo 8 caracteres com pelo menos uma letra maiúscula
@@ -274,7 +292,23 @@ export default function CadastroMotorista() {
               <FormItem>
                 <FormLabel>Confirmar Senha</FormLabel>
                 <FormControl>
-                  <Input {...field} type="password" placeholder="••••••••" disabled={loading} />
+                  <div className="relative">
+                    <Input 
+                      {...field} 
+                      type={showConfirmPassword ? 'text' : 'password'} 
+                      placeholder="••••••••" 
+                      disabled={loading}
+                      className="pr-12"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((v) => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label={showConfirmPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>

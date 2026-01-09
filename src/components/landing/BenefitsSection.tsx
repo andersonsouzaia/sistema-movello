@@ -1,36 +1,42 @@
 import { motion } from "framer-motion";
-import { Monitor, MapPin, QrCode, Smartphone, BarChart3, Rocket } from "lucide-react";
+import { Monitor, MapPin, QrCode, Smartphone, BarChart3, Settings } from "lucide-react";
 
 const benefits = [
   {
     icon: Monitor,
-    title: "Anúncios em tablets",
-    description: "Visibilidade fullscreen diariamente nas rotas mais movimentadas.",
-  },
-  {
-    icon: MapPin,
-    title: "Mídia geolocalizada",
-    description: "Apareça exatamente dentro do raio que você escolher.",
+    title: "Anúncio em todas as telas",
+    description:
+      "Tela dedicada para o seu conteúdo durante toda a viagem, ambiente relaxante, motorista como embaixador e foco em conversão.",
   },
   {
     icon: QrCode,
     title: "QR Code inteligente",
-    description: "Transforme passageiros em clientes em segundos.",
+    description:
+      "Ação em um toque: passageiro escaneia e cai direto no WhatsApp, site ou página da sua empresa, sem fricção.",
   },
   {
-    icon: Smartphone,
-    title: "App Movello",
-    description: "Crie, edite e gerencie campanhas onde estiver.",
+    icon: MapPin,
+    title: "Geolocalização e segmentação",
+    description:
+      "Mostre anúncios na região desejada e para o público certo: pequenos negócios, campanhas locais e mensagens por nicho.",
+  },
+  {
+    icon: Settings,
+    title: "Gestão avançada de anúncios",
+    description:
+      "Defina horário, região, público-alvo e limite de saldo. Controle total de quando e onde sua marca aparece.",
   },
   {
     icon: BarChart3,
-    title: "Painel de métricas",
-    description: "Impressões, mapa de calor e escaneamentos em tempo real.",
+    title: "Métricas em tempo real",
+    description:
+      "Impressões, mapa de calor e escaneamentos atualizados. Visibilidade clara para ajustar campanhas rapidamente.",
   },
   {
-    icon: Rocket,
-    title: "Tecnologia escalável",
-    description: "Plataforma pronta para crescer com sua empresa.",
+    icon: Smartphone,
+    title: "App Movello e escala",
+    description:
+      "Crie, edite e gerencie campanhas pelo app. Infraestrutura pronta para crescer com o volume da sua empresa.",
   },
 ];
 
@@ -46,11 +52,10 @@ const BenefitsSection = () => {
           className="text-center mb-16"
         >
           <span className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
-            Benefícios
+            Benefícios e diferenciais
           </span>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground">
-            O que sua empresa recebe ao
-            <br />
+            O que sua empresa recebe ao <br />
             <span className="text-gradient-primary">anunciar com a Movello</span>
           </h2>
         </motion.div>
