@@ -450,4 +450,3 @@ function TicketDetails({ ticketId, onClose }: { ticketId: string; onClose: () =>
     </div>
   )
 }
-
