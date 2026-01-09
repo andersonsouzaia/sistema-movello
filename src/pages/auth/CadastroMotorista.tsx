@@ -12,73 +12,96 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Spinner } from '@/components/ui/spinner'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form'
-import { AlertCircle, Car, User, Phone, Mail, Lock, FileText, Eye, EyeOff } from 'lucide-react'
+import { AlertCircle, Car, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import { validateCPF, validatePassword, validatePhone, validatePlaca } from '@/lib/utils/validations'
-import { formatCPF, formatPhone, formatPlaca } from '@/lib/utils/formatters'
+import { formatCPF, formatPhone, formatPlaca, cleanCPF, cleanPhone, cleanPlaca } from '@/lib/utils/formatters'
+import type { CadastroMotoristaFormData } from '@/types/database'
 
 const cadastroSchema = z
   .object({
-    cpf: z.string().min(1, 'CPF é obrigatório'),
+    cpf: z
+      .string()
+      .min(1, 'CPF é obrigatório')
+      .refine((val) => {
+        if (!val) return true
+        const validation = validateCPF(val)
+        return validation.isValid
+      }, (val) => {
+        if (!val) return { message: 'CPF é obrigatório' }
+        const validation = validateCPF(val)
+        return { message: validation.error || 'CPF inválido' }
+      }),
     nome: z.string().min(1, 'Nome completo é obrigatório'),
-    telefone: z.string().min(1, 'Telefone é obrigatório'),
+    telefone: z
+      .string()
+      .min(1, 'Telefone é obrigatório')
+      .refine((val) => {
+        if (!val) return true
+        const validation = validatePhone(val)
+        return validation.isValid
+      }, (val) => {
+        if (!val) return { message: 'Telefone é obrigatório' }
+        const validation = validatePhone(val)
+        return { message: validation.error || 'Telefone inválido' }
+      }),
     email: z.string().email('Email inválido'),
-    confirmar_email: z.string(),
-    senha: z.string().min(1, 'Senha é obrigatória'),
-    confirmar_senha: z.string(),
+    confirmar_email: z.string().min(1, 'Confirmação de email é obrigatória'),
+    senha: z
+      .string()
+      .min(1, 'Senha é obrigatória')
+      .refine((val) => {
+        if (!val) return true
+        const validation = validatePassword(val)
+        return validation.isValid
+      }, (val) => {
+        if (!val) return { message: 'Senha é obrigatória' }
+        const validation = validatePassword(val)
+        return { message: validation.error || 'Senha inválida' }
+      }),
+    confirmar_senha: z.string().min(1, 'Confirmação de senha é obrigatória'),
     veiculo: z.string().min(1, 'Veículo é obrigatório'),
-    placa: z.string().min(1, 'Placa é obrigatória'),
+    placa: z
+      .string()
+      .min(1, 'Placa é obrigatória')
+      .refine((val) => {
+        // Se vazio, deixa a validação básica (.min) tratar
+        if (!val || val.trim().length === 0) return true
+        
+        // Remove formatação (hífen, espaços) e converte para maiúsculo
+        // Isso garante que "FSN-8659" vira "FSN8659" antes de validar
+        const placaLimpa = cleanPlaca(val)
+        
+        // Durante a digitação, permite valores parciais (menos de 7 caracteres)
+        // Só valida quando a placa estiver completa (exatamente 7 caracteres limpos)
+        if (placaLimpa.length < 7) return true
+        
+        // Se tiver mais de 7 caracteres limpos, é inválido
+        if (placaLimpa.length > 7) return false
+        
+        // Valida apenas quando tiver exatamente 7 caracteres limpos
+        const validation = validatePlaca(placaLimpa)
+        return validation.isValid
+      }, {
+        message: 'Placa inválida. Use o formato ABC1234 ou ABC1D23',
+      }),
     aceitar_termos: z.boolean().refine((val) => val === true, {
       message: 'Você deve aceitar os termos de uso',
     }),
   })
-  .refine((data) => data.email === data.confirmar_email, {
+  .refine((data) => {
+    if (!data.email || !data.confirmar_email) return true
+    return data.email === data.confirmar_email
+  }, {
     message: 'Os emails não coincidem',
     path: ['confirmar_email'],
   })
-  .refine((data) => data.senha === data.confirmar_senha, {
+  .refine((data) => {
+    if (!data.senha || !data.confirmar_senha) return true
+    return data.senha === data.confirmar_senha
+  }, {
     message: 'As senhas não coincidem',
     path: ['confirmar_senha'],
-  })
-  .refine((data) => {
-    const validation = validatePassword(data.senha)
-    return validation.isValid
-  }, (data) => {
-    const validation = validatePassword(data.senha)
-    return {
-      message: validation.error || 'Senha inválida',
-      path: ['senha'],
-    }
-  })
-  .refine((data) => {
-    const validation = validateCPF(data.cpf)
-    return validation.isValid
-  }, (data) => {
-    const validation = validateCPF(data.cpf)
-    return {
-      message: validation.error || 'CPF inválido',
-      path: ['cpf'],
-    }
-  })
-  .refine((data) => {
-    const validation = validatePhone(data.telefone)
-    return validation.isValid
-  }, (data) => {
-    const validation = validatePhone(data.telefone)
-    return {
-      message: validation.error || 'Telefone inválido',
-      path: ['telefone'],
-    }
-  })
-  .refine((data) => {
-    const validation = validatePlaca(data.placa)
-    return validation.isValid
-  }, (data) => {
-    const validation = validatePlaca(data.placa)
-    return {
-      message: validation.error || 'Placa inválida',
-      path: ['placa'],
-    }
   })
 
 type CadastroFormData = z.infer<typeof cadastroSchema>
@@ -112,35 +135,87 @@ export default function CadastroMotorista() {
     setError(null)
 
     try {
-      const result = await signUpMotorista(data)
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:133',message:'Driver signup form submitted',data:{email:data.email,cpf:data.cpf,nome:data.nome},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      console.log('🔵 [CadastroMotorista] Enviando dados do formulário:', {
+        email: data.email,
+        cpf: data.cpf,
+        nome: data.nome,
+      })
+      
+      // Preparar dados para envio (limpar formatação)
+      const dadosParaEnvio: CadastroMotoristaFormData = {
+        ...data,
+        cpf: cleanCPF(data.cpf),
+        telefone: cleanPhone(data.telefone),
+        placa: cleanPlaca(data.placa),
+      }
+      
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:152',message:'Calling signUpMotorista',data:{cleanedCPF:dadosParaEnvio.cpf,cleanedPhone:dadosParaEnvio.telefone,cleanedPlaca:dadosParaEnvio.placa},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      const result = await signUpMotorista(dadosParaEnvio)
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:154',message:'signUpMotorista result received',data:{success:result.success,error:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      console.log('🔵 [CadastroMotorista] Resultado do signUpMotorista:', result)
 
       if (result.success) {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:157',message:'Driver signup successful, navigating to email verification',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        console.log('✅ [CadastroMotorista] Cadastro bem-sucedido, redirecionando...')
         toast.success('Cadastro realizado com sucesso! Verifique seu email.')
         navigate('/confirmar-email', { replace: true })
       } else {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:162',message:'Driver signup failed',data:{error:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        console.error('❌ [CadastroMotorista] Erro no cadastro:', result.error)
         setError(result.error || 'Erro ao realizar cadastro')
       }
     } catch (err) {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:167',message:'Driver signup exception',data:{error:err instanceof Error?err.message:'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
+      console.error('❌ [CadastroMotorista] Erro catch no onSubmit:', err)
       setError('Erro inesperado. Tente novamente.')
     } finally {
       setLoading(false)
     }
   }
 
-  // Formatação enquanto digita
-  const handleCPFChange = (value: string) => {
-    const formatted = formatCPF(value)
-    form.setValue('cpf', formatted, { shouldValidate: true })
-  }
-
-  const handlePhoneChange = (value: string) => {
-    const formatted = formatPhone(value)
-    form.setValue('telefone', formatted, { shouldValidate: true })
-  }
-
-  const handlePlacaChange = (value: string) => {
-    const formatted = formatPlaca(value)
-    form.setValue('placa', formatted.toUpperCase(), { shouldValidate: true })
+  const onError = (errors: any) => {
+    console.error('❌ [CadastroMotorista] Erros de validação:', errors)
+    
+    // Buscar o primeiro erro com mensagem válida
+    const errorEntries = Object.entries(errors)
+    
+    // Prioridade: buscar erros específicos primeiro
+    const priorityFields = ['placa', 'cpf', 'telefone', 'senha', 'email', 'confirmar_email', 'confirmar_senha', 'nome', 'veiculo', 'aceitar_termos']
+    
+    for (const field of priorityFields) {
+      if (errors[field]?.message) {
+        const message = errors[field].message
+        if (message && message !== 'Invalid input') {
+          setError(message)
+          return
+        }
+      }
+    }
+    
+    // Se não encontrou, buscar em qualquer campo
+    for (const [key, error] of errorEntries) {
+      const err = error as any
+      if (err?.message && err.message !== 'Invalid input') {
+        setError(err.message)
+        return
+      }
+    }
+    
+    // Se ainda não encontrou, mostrar erro genérico
+    setError('Por favor, verifique os campos do formulário.')
   }
 
   return (
@@ -149,7 +224,7 @@ export default function CadastroMotorista() {
       subtitle="Seja um motorista parceiro e ganhe renda extra"
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-5">
           {error && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -176,7 +251,10 @@ export default function CadastroMotorista() {
                   <Input
                     {...field}
                     placeholder="000.000.000-00"
-                    onChange={(e) => handleCPFChange(e.target.value)}
+                    onChange={(e) => {
+                      const formatted = formatCPF(e.target.value)
+                      field.onChange(formatted)
+                    }}
                     disabled={loading}
                   />
                 </FormControl>
@@ -211,7 +289,10 @@ export default function CadastroMotorista() {
                   <Input
                     {...field}
                     placeholder="(00) 00000-0000"
-                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    onChange={(e) => {
+                      const formatted = formatPhone(e.target.value)
+                      field.onChange(formatted)
+                    }}
                     disabled={loading}
                   />
                 </FormControl>
@@ -341,7 +422,10 @@ export default function CadastroMotorista() {
                   <Input
                     {...field}
                     placeholder="ABC1234"
-                    onChange={(e) => handlePlacaChange(e.target.value)}
+                    onChange={(e) => {
+                      const formatted = formatPlaca(e.target.value)
+                      field.onChange(formatted)
+                    }}
                     disabled={loading}
                     className="uppercase"
                   />
@@ -426,4 +510,3 @@ export default function CadastroMotorista() {
     </AuthLayout>
   )
 }
-

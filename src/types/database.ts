@@ -32,6 +32,12 @@ export type PagamentoStatus =
 
 export type RepasseStatus = 'pendente' | 'processando' | 'pago' | 'falhou'
 
+export type GanhoTipo = 'exibicao' | 'bonus' | 'recompensa'
+
+export type GanhoStatus = 'pendente' | 'processando' | 'pago' | 'falhou'
+
+export type TabletStatus = 'disponivel' | 'vinculado' | 'manutencao'
+
 export type TicketStatus = 'aberto' | 'em_andamento' | 'resolvido' | 'fechado'
 
 export type TicketPrioridade = 'baixa' | 'media' | 'alta' | 'urgente'
@@ -606,6 +612,55 @@ export interface Transacao {
   referencia_pagamento: string | null
   referencia_repasse: string | null
   criado_em: string
+}
+
+// ============================================
+// INTERFACES PARA GANHOS DE MOTORISTAS
+// ============================================
+
+export interface Ganho {
+  id: string
+  motorista_id: string
+  valor: number
+  descricao: string
+  tipo: GanhoTipo
+  status: GanhoStatus
+  data_exibicao: string
+  campanha_id: string | null
+  processado_em: string | null
+  processado_por: string | null
+  erro_mensagem: string | null
+  criado_em: string
+  updated_at: string
+}
+
+export interface GanhoStats {
+  ganhos_hoje: number
+  ganhos_mes: number
+  total_pendente: number
+  total_pago: number
+  total_ganhos: number
+}
+
+export interface GanhoMensal {
+  mes: number
+  mes_nome: string
+  valor: number
+}
+
+// ============================================
+// INTERFACES PARA TABLETS
+// ============================================
+
+export interface Tablet {
+  id: string
+  modelo: string | null
+  serial_number: string | null
+  status: TabletStatus
+  motorista_id: string | null
+  ultima_conexao: string | null
+  criado_em: string
+  updated_at: string
 }
 
 export interface FinancialSummary {

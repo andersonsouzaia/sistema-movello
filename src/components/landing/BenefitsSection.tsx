@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
 import { Monitor, MapPin, QrCode, Smartphone, BarChart3, Settings } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 
 const benefits = [
   {
     icon: Monitor,
-    title: "Anúncio em todas as telas",
+    title: "Anúncios Full",
     description:
-      "Tela dedicada para o seu conteúdo durante toda a viagem, ambiente relaxante, motorista como embaixador e foco em conversão.",
+      "Seu anúncio aparece em toda a nossa rede de telas durante a viagem. Tela dedicada para o seu conteúdo, ambiente relaxante, motorista como embaixador e foco em conversão.",
   },
   {
     icon: QrCode,
@@ -22,9 +24,9 @@ const benefits = [
   },
   {
     icon: Settings,
-    title: "Gestão avançada de anúncios",
+    title: "Alto gestão do anúncio",
     description:
-      "Defina horário, região, público-alvo e limite de saldo. Controle total de quando e onde sua marca aparece.",
+      "Você tem controle total: gerencie seu próprio anúncio através do saldo, definindo horário, região, público-alvo e limite de gastos. Controle quando e onde sua marca aparece.",
   },
   {
     icon: BarChart3,
@@ -60,7 +62,7 @@ const BenefitsSection = () => {
           </h2>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
           {benefits.map((benefit, index) => (
             <motion.div
               key={index}
@@ -68,22 +70,38 @@ const BenefitsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="group card-premium p-8 hover:-translate-y-2 transition-all duration-300"
+              className="group card-premium p-6 md:p-8 hover:-translate-y-2 transition-all duration-300"
             >
-              <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary group-hover:shadow-glow-primary transition-all duration-300">
-                <benefit.icon className="w-7 h-7 text-primary group-hover:text-primary-foreground transition-colors" />
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary group-hover:shadow-glow-primary transition-all duration-300">
+                <benefit.icon className="w-6 h-6 md:w-7 md:h-7 text-primary group-hover:text-primary-foreground transition-colors" />
               </div>
 
-              <h3 className="text-xl font-display font-bold text-foreground mb-3">
+              <h3 className="text-lg md:text-xl font-display font-bold text-foreground mb-3">
                 {benefit.title}
               </h3>
 
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                 {benefit.description}
               </p>
             </motion.div>
           ))}
         </div>
+
+        {/* CTA Intermediário */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.6 }}
+          className="text-center mt-12 md:mt-16"
+        >
+          <Button variant="hero" size="lg" className="group" asChild>
+            <a href="/cadastro-empresa">
+              Quero anunciar agora
+              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+            </a>
+          </Button>
+        </motion.div>
       </div>
     </section>
   );

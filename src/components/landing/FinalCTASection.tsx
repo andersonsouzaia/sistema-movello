@@ -21,7 +21,7 @@ const FinalCTASection = () => {
           transition={{ duration: 0.6 }}
           className="max-w-4xl mx-auto text-center"
         >
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-display font-bold text-foreground mb-6">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-display font-bold text-foreground mb-6">
             Pronto para anunciar com{" "}
             <span className="text-gradient-primary">precisão e visibilidade real?</span>
           </h2>
@@ -52,6 +52,7 @@ const FinalCTASection = () => {
               src={movellinhoMascote} 
               alt="Movellinho" 
               className="w-14 h-14 object-contain"
+              loading="lazy"
             />
             <span className="text-foreground font-medium">
               Movellinho te espera para começar!
@@ -76,6 +77,7 @@ const FooterSection = () => {
               src={movelloLogo} 
               alt="Movello" 
               className="h-10 w-auto brightness-0 invert opacity-90"
+              loading="lazy"
             />
           </div>
         </div>

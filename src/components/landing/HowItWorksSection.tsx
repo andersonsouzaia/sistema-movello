@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Settings, MapPin, QrCode, ExternalLink } from "lucide-react";
+import { Settings, MapPin, QrCode, ExternalLink, ArrowRight } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-tablet.png";
 import tabletInteracao from "@/assets/tablet-interacao.png";
 
@@ -65,22 +66,22 @@ const HowItWorksSection = () => {
                 />
               )}
 
-              <div className="card-premium p-8 h-full hover:-translate-y-2 transition-transform duration-300 relative z-10">
+              <div className="card-premium p-6 md:p-8 h-full hover:-translate-y-2 transition-transform duration-300 relative z-10">
                 {/* Step Number */}
                 <div className="flex items-center justify-between mb-6">
-                  <span className="text-5xl font-display font-bold text-primary/20">
+                  <span className="text-4xl md:text-5xl font-display font-bold text-primary/20">
                     {step.number}
                   </span>
-                  <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-glow-primary">
-                    <step.icon className="w-7 h-7 text-primary-foreground" />
+                  <div className="w-12 h-12 md:w-14 md:h-14 bg-primary rounded-2xl flex items-center justify-center shadow-glow-primary">
+                    <step.icon className="w-6 h-6 md:w-7 md:h-7 text-primary-foreground" />
                   </div>
                 </div>
 
-                <h3 className="text-xl font-display font-bold text-foreground mb-4">
+                <h3 className="text-lg md:text-xl font-display font-bold text-foreground mb-4">
                   {step.title}
                 </h3>
 
-                <p className="text-muted-foreground leading-relaxed">
+                <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                   {step.description}
                 </p>
               </div>
@@ -100,16 +101,16 @@ const HowItWorksSection = () => {
             href="https://movello-tablet.lovable.app/" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black block group cursor-pointer"
+            className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black block group cursor-pointer max-h-[500px] lg:max-h-[600px]"
             style={{ 
-              aspectRatio: isMobile ? '9/16' : '16/10', 
-              maxHeight: isMobile ? 'none' : '600px' 
+              aspectRatio: isMobile ? '9/16' : '16/10'
             }}
           >
             <img 
               src={tabletInteracao}
               alt="Tablet exibindo anúncio no carro"
               className="w-full h-full object-cover rounded-2xl sm:rounded-3xl blur-md group-hover:blur-sm transition-all duration-300"
+              loading="lazy"
               onError={(e) => {
                 // Fallback para a imagem original se não carregar
                 e.currentTarget.src = heroImage;
@@ -125,6 +126,22 @@ const HowItWorksSection = () => {
               </div>
             </div>
           </a>
+        </motion.div>
+
+        {/* CTA Intermediário */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="text-center mt-12 md:mt-16"
+        >
+          <Button variant="hero" size="lg" className="group" asChild>
+            <a href="/cadastro-empresa">
+              Fale com um especialista
+              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+            </a>
+          </Button>
         </motion.div>
       </div>
     </section>

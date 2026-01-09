@@ -89,7 +89,8 @@ export const formatPlaca = (value: string): string => {
 }
 
 export const cleanPlaca = (value: string): string => {
-  return value.replace(/\s/g, '').toUpperCase()
+  // Remove espaços, hífens e converte para maiúsculo
+  return value.replace(/\s|-/g, '').toUpperCase()
 }
 
 // ============================================

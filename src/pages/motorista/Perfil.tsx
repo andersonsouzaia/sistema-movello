@@ -21,6 +21,8 @@ import { validatePassword } from '@/lib/utils/validations'
 
 const motoristaSchema = z.object({
   telefone: z.string().min(10, 'Telefone inválido'),
+  rg: z.string().optional(),
+  data_nascimento: z.string().optional(),
   modelo_veiculo: z.string().optional(),
   cor_veiculo: z.string().optional(),
   ano_veiculo: z.number().min(1900).max(new Date().getFullYear() + 1).optional().or(z.literal('')),
@@ -28,6 +30,47 @@ const motoristaSchema = z.object({
   agencia: z.string().optional(),
   conta: z.string().optional(),
   pix: z.string().optional(),
+}).refine((data) => {
+  // Validar PIX se fornecido
+  if (data.pix && data.pix.trim()) {
+    // PIX pode ser CPF, email, telefone ou chave aleatória
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const telefoneRegex = /^\+?55\d{10,11}$/
+    const cpfRegex = /^\d{11}$/
+    const chaveAleatoriaRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    
+    const pixLimpo = data.pix.replace(/[\s.-]/g, '')
+    
+    return emailRegex.test(data.pix) || 
+           telefoneRegex.test(pixLimpo) || 
+           cpfRegex.test(pixLimpo) || 
+           chaveAleatoriaRegex.test(data.pix) ||
+           pixLimpo.length >= 26 // Chave aleatória sem hífens
+  }
+  return true
+}, {
+  message: 'PIX inválido. Use CPF, email, telefone ou chave aleatória',
+  path: ['pix'],
+}).refine((data) => {
+  // Validar agência se fornecida (4 dígitos)
+  if (data.agencia && data.agencia.trim()) {
+    const agenciaLimpa = data.agencia.replace(/\D/g, '')
+    return agenciaLimpa.length === 4
+  }
+  return true
+}, {
+  message: 'Agência deve conter 4 dígitos',
+  path: ['agencia'],
+}).refine((data) => {
+  // Validar conta se fornecida (mínimo 5 dígitos)
+  if (data.conta && data.conta.trim()) {
+    const contaLimpa = data.conta.replace(/\D/g, '')
+    return contaLimpa.length >= 5 && contaLimpa.length <= 12
+  }
+  return true
+}, {
+  message: 'Conta deve conter entre 5 e 12 dígitos',
+  path: ['conta'],
 })
 
 const senhaSchema = z.object({
@@ -58,6 +101,8 @@ export default function MotoristaPerfil() {
     resolver: zodResolver(motoristaSchema),
     defaultValues: {
       telefone: motorista?.telefone || '',
+      rg: motorista?.rg || '',
+      data_nascimento: motorista?.data_nascimento ? motorista.data_nascimento.split('T')[0] : '',
       modelo_veiculo: motorista?.modelo_veiculo || '',
       cor_veiculo: motorista?.cor_veiculo || '',
       ano_veiculo: motorista?.ano_veiculo || undefined,
@@ -82,6 +127,8 @@ export default function MotoristaPerfil() {
     if (motorista) {
       motoristaForm.reset({
         telefone: motorista.telefone || '',
+        rg: motorista.rg || '',
+        data_nascimento: motorista.data_nascimento ? motorista.data_nascimento.split('T')[0] : '',
         modelo_veiculo: motorista.modelo_veiculo || '',
         cor_veiculo: motorista.cor_veiculo || '',
         ano_veiculo: motorista.ano_veiculo || undefined,
@@ -106,6 +153,8 @@ export default function MotoristaPerfil() {
         .from('motoristas')
         .update({
           telefone: data.telefone,
+          rg: data.rg || null,
+          data_nascimento: data.data_nascimento ? new Date(data.data_nascimento).toISOString() : null,
           modelo_veiculo: data.modelo_veiculo || null,
           cor_veiculo: data.cor_veiculo || null,
           ano_veiculo: data.ano_veiculo || null,
@@ -342,6 +391,39 @@ export default function MotoristaPerfil() {
                     </div>
                   </div>
 
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="rg">RG</Label>
+                      <Input
+                        id="rg"
+                        {...motoristaForm.register('rg')}
+                        placeholder="00.000.000-0"
+                        className="h-11"
+                      />
+                      {motoristaForm.formState.errors.rg && (
+                        <p className="text-sm text-destructive">
+                          {motoristaForm.formState.errors.rg.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="data_nascimento">Data de Nascimento</Label>
+                      <Input
+                        id="data_nascimento"
+                        type="date"
+                        {...motoristaForm.register('data_nascimento')}
+                        className="h-11"
+                        max={new Date().toISOString().split('T')[0]}
+                      />
+                      {motoristaForm.formState.errors.data_nascimento && (
+                        <p className="text-sm text-destructive">
+                          {motoristaForm.formState.errors.data_nascimento.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="flex justify-end gap-4">
                     <Button
                       type="button"
@@ -555,8 +637,13 @@ export default function MotoristaPerfil() {
                           </p>
                         )}
                         <p className="text-xs text-muted-foreground">
-                          Configure pelo menos uma forma de recebimento
+                          Configure pelo menos uma forma de recebimento. PIX pode ser CPF, email, telefone ou chave aleatória.
                         </p>
+                        {motoristaForm.formState.errors.pix && (
+                          <p className="text-sm text-destructive">
+                            {motoristaForm.formState.errors.pix.message}
+                          </p>
+                        )}
                       </div>
                     </div>
 

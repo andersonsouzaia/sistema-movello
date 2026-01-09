@@ -193,8 +193,8 @@ export const validatePlaca = (placa: string): PlacaValidationResult => {
     }
   }
 
-  // Remove espaços e converte para maiúsculo
-  const cleaned = placa.replace(/\s/g, '').toUpperCase()
+  // Remove espaços, hífens e converte para maiúsculo
+  const cleaned = placa.replace(/\s|-/g, '').toUpperCase()
 
   // Formato antigo: ABC1234 (7 caracteres)
   // Formato Mercosul: ABC1D23 (7 caracteres)

@@ -36,20 +36,20 @@ const ProblemsVsSolutionsSection = () => {
           </h2>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12">
           {/* Problems Side */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="bg-card rounded-3xl p-8 lg:p-10 border border-border/50 shadow-lg"
+            className="bg-card rounded-3xl p-6 md:p-8 lg:p-10 border border-border/50 shadow-lg"
           >
             <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-movello-orange-light rounded-2xl flex items-center justify-center">
                 <X className="w-6 h-6 text-accent" />
               </div>
-              <h3 className="text-xl font-display font-bold text-foreground">
+              <h3 className="text-lg md:text-xl font-display font-bold text-foreground">
                 Os problemas do marketing tradicional
               </h3>
             </div>
@@ -79,13 +79,13 @@ const ProblemsVsSolutionsSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="bg-gradient-blue-subtle rounded-3xl p-8 lg:p-10 border border-primary/10"
+            className="bg-gradient-blue-subtle rounded-3xl p-6 md:p-8 lg:p-10 border border-primary/10"
           >
             <div className="flex items-center gap-3 mb-8">
               <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
                 <Check className="w-6 h-6 text-primary" />
               </div>
-              <h3 className="text-xl font-display font-bold text-foreground">
+              <h3 className="text-lg md:text-xl font-display font-bold text-foreground">
                 As soluções da Movello
               </h3>
             </div>
@@ -124,6 +124,7 @@ const ProblemsVsSolutionsSection = () => {
               src={movellinhoMascote} 
               alt="Movellinho" 
               className="w-20 h-20 object-contain flex-shrink-0"
+              loading="lazy"
             />
             {/* Speech Bubble */}
             <div className="relative bg-card rounded-3xl p-6 shadow-xl border border-border/50 max-w-md">

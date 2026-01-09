@@ -50,7 +50,7 @@ const ReadyToAdvertiseSection = () => {
               <>
                 {/* Seção EMPRESA */}
                 <div className="space-y-6">
-                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground">
                     Anuncie exatamente <span className="text-gradient-primary">onde seus clientes estão!</span>
                   </h2>
                   <p className="text-lg lg:text-xl font-semibold text-foreground">
@@ -74,7 +74,7 @@ const ReadyToAdvertiseSection = () => {
               <>
                 {/* Seção MOTORISTA */}
                 <div className="space-y-6">
-                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-foreground">
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground">
                     <span className="text-movello-orange">Renda extra</span> sem mudar sua rotina!
                   </h2>
                   <p className="text-lg lg:text-xl font-semibold text-foreground">
@@ -113,7 +113,8 @@ const ReadyToAdvertiseSection = () => {
             <img 
               src={isCompany ? heroCompany : heroDriver}
               alt={isCompany ? "Empresa anunciando no tablet Movello" : "Motorista parceiro com tablet Movello"}
-              className="w-full h-[340px] sm:h-[420px] lg:h-[480px] xl:h-[520px] object-cover rounded-3xl shadow-2xl"
+              className="w-full h-[300px] sm:h-[380px] md:h-[420px] lg:h-[480px] xl:h-[520px] object-cover rounded-3xl shadow-2xl"
+              loading="lazy"
             />
           </motion.div>
         </div>

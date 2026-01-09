@@ -64,7 +64,20 @@ export const adminService = {
           link: `/admin/empresas/${userId}`,
         })
       } catch (notifError) {
-        console.warn('⚠️ [approveEmpresa] Erro ao criar notificação:', notifError)
+        console.warn('⚠️ [approveEmpresa] Erro ao criar notificação para admin:', notifError)
+      }
+
+      // Criar notificação para a empresa aprovada
+      try {
+        await notificationService.createNotification({
+          userId: userId,
+          type: 'success',
+          title: 'Conta Aprovada!',
+          message: `Sua conta foi aprovada. Você já pode acessar todas as funcionalidades.`,
+          link: `/empresa/dashboard`,
+        })
+      } catch (notifError) {
+        console.warn('⚠️ [approveEmpresa] Erro ao criar notificação para empresa:', notifError)
       }
 
       toast.success('Empresa aprovada com sucesso!')
@@ -151,14 +164,31 @@ export const adminService = {
         motorista_id: userId,
       })
 
-      // Criar notificação para o admin
-      await notificationService.createNotification({
-        userId: adminId,
-        type: 'success',
-        title: 'Motorista Aprovado',
-        message: `Motorista foi aprovado com sucesso`,
-        link: `/admin/motoristas/${userId}`,
-      })
+      // Criar notificação para o admin (não bloquear se falhar)
+      try {
+        await notificationService.createNotification({
+          userId: adminId,
+          type: 'success',
+          title: 'Motorista Aprovado',
+          message: `Motorista foi aprovado com sucesso`,
+          link: `/admin/motoristas/${userId}`,
+        })
+      } catch (notifError) {
+        console.warn('⚠️ [approveMotorista] Erro ao criar notificação para admin:', notifError)
+      }
+
+      // Criar notificação para o motorista aprovado
+      try {
+        await notificationService.createNotification({
+          userId: userId,
+          type: 'success',
+          title: 'Conta Aprovada!',
+          message: `Sua conta foi aprovada. Você já pode acessar todas as funcionalidades.`,
+          link: `/motorista/dashboard`,
+        })
+      } catch (notifError) {
+        console.warn('⚠️ [approveMotorista] Erro ao criar notificação para motorista:', notifError)
+      }
 
       toast.success('Motorista aprovado com sucesso!')
       return { success: true, data }

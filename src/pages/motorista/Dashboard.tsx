@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { DashboardLayout } from '@/components/layouts/DashboardLayout'
@@ -6,12 +7,16 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, CheckCircle2, Car, DollarSign, TrendingUp, MapPin, Tablet, Wallet, HelpCircle, User, ArrowRight } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Car, DollarSign, TrendingUp, MapPin, Tablet, Wallet, HelpCircle, User, ArrowRight, RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { useMotoristaGanhosStats } from '@/hooks/useMotoristaGanhos'
+import { formatCurrency } from '@/lib/utils/formatters'
+import { SkeletonCardGrid } from '@/components/ui/SkeletonCard'
 
 export default function MotoristaDashboard() {
   const { motorista, profile } = useAuth()
+  const { stats, loading: loadingStats, refetch: refetchStats } = useMotoristaGanhosStats('mes')
 
   const getStatusBadge = () => {
     if (!motorista) return null
@@ -32,24 +37,24 @@ export default function MotoristaDashboard() {
     )
   }
 
-  const stats = [
+  const statsCards = [
     {
       label: 'Ganhos do Dia',
-      value: 'R$ 0,00',
+      value: loadingStats ? '...' : formatCurrency(stats?.ganhos_hoje || 0),
       icon: DollarSign,
       color: 'primary',
       description: 'Hoje',
     },
     {
       label: 'Ganhos do Mês',
-      value: 'R$ 0,00',
+      value: loadingStats ? '...' : formatCurrency(stats?.ganhos_mes || 0),
       icon: DollarSign,
       color: 'accent',
       description: 'Este mês',
     },
     {
       label: 'Viagens Realizadas',
-      value: '0',
+      value: '0', // TODO: Implementar quando houver sistema de viagens
       icon: Car,
       color: 'primary',
       description: 'Total de viagens',
@@ -57,7 +62,7 @@ export default function MotoristaDashboard() {
     {
       label: 'Status do Tablet',
       value: motorista?.tablet_id ? 'Conectado' : 'Não vinculado',
-      icon: Car,
+      icon: Tablet,
       color: 'accent',
       description: motorista?.tablet_id ? 'Tablet ativo' : 'Aguardando tablet',
     },
@@ -117,9 +122,26 @@ export default function MotoristaDashboard() {
             </motion.div>
           )}
 
+          {/* Botão de Refresh */}
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetchStats()}
+              disabled={loadingStats}
+              className="gap-2"
+            >
+              <RefreshCw className={cn("h-4 w-4", loadingStats && "animate-spin")} />
+              Atualizar
+            </Button>
+          </div>
+
           {/* Cards de Estatísticas */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat, index) => {
+          {loadingStats ? (
+            <SkeletonCardGrid count={4} showIcon={true} showDescription={true} />
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {statsCards.map((stat, index) => {
               const Icon = stat.icon
               return (
                 <motion.div
@@ -150,7 +172,8 @@ export default function MotoristaDashboard() {
                 </motion.div>
               )
             })}
-          </div>
+            </div>
+          )}
 
           {/* Grid de Informações e Ações Rápidas */}
           <div className="grid gap-6 md:grid-cols-2">

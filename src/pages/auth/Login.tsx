@@ -40,12 +40,47 @@ export default function Login() {
     },
   })
 
-  // Redirecionar se já estiver autenticado
+  // Redirecionar quando userType estiver disponível após login
   useEffect(() => {
     if (user && userType) {
+      // Verificar se email está confirmado
+      if (!user.email_confirmed_at) {
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:46',message:'Email not confirmed, redirecting to verification',data:{userType},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+        // #endregion
+        navigate('/confirmar-email', { replace: true })
+        return
+      }
+
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname
       const redirectPath = from || `/${userType}/dashboard`
+      console.log('✅ [Login] Redirecionando após login:', { userType, redirectPath })
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:52',message:'Redirecting after login',data:{userType,redirectPath,emailConfirmed:!!user.email_confirmed_at},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       navigate(redirectPath, { replace: true })
+    } else if (user && !userType) {
+      // Se tem user mas não tem userType ainda, aguardar com timeout de 10 segundos
+      console.log('⏳ [Login] Aguardando userType ser carregado...')
+      
+      // Timeout de 10 segundos para evitar espera infinita
+      const timeoutId = setTimeout(() => {
+        console.warn('⚠️ [Login] Timeout aguardando userType após 10 segundos')
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:63',message:'userType timeout after login',data:{userId:user.id,hasEmailConfirmed:!!user.email_confirmed_at},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+        // #endregion
+        console.warn('⚠️ [Login] userType não carregado após 10 segundos')
+        // Se email não confirmado, redirecionar para confirmação
+        if (!user.email_confirmed_at) {
+          navigate('/confirmar-email', { replace: true })
+        } else {
+          // Mostrar erro específico
+          setError('Erro ao carregar perfil. Tente fazer login novamente ou entre em contato com o suporte.')
+          setLoading(false) // Resetar loading para permitir nova tentativa
+        }
+      }, 10000) // 10 segundos
+
+      return () => clearTimeout(timeoutId)
     }
   }, [user, userType, navigate, location])
 
@@ -73,52 +108,24 @@ export default function Login() {
     setTimeRemaining(null)
 
     try {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:69',message:'Login form submitted',data:{email:data.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
       const result = await signIn(data.email, data.senha)
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:76',message:'signIn result received',data:{success:result.success,error:result.error,blocked:result.blocked},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+      // #endregion
 
       if (result.success) {
         toast.success('Login realizado com sucesso!')
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:95',message:'Login successful, waiting for userType',data:{currentUserType:userType},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         
-        // Aguardar userType ser carregado antes de redirecionar
-        let attempts = 0
-        const maxAttempts = 50 // 5 segundos (50 * 100ms)
-        
-        const checkUserType = setInterval(() => {
-          attempts++
-          // Pegar userType atualizado do contexto (será atualizado pelo AuthContext após signIn)
-          // Usar um pequeno delay para garantir que o contexto foi atualizado
-          
-          if (attempts >= maxAttempts) {
-            clearInterval(checkUserType)
-            console.warn('⚠️ [Login] userType não carregado após 5 segundos')
-            // Verificar se email está confirmado
-            if (user?.email_confirmed_at) {
-              navigate('/confirmar-email', { replace: true })
-            } else {
-              navigate('/confirmar-email', { replace: true })
-            }
-          }
-        }, 100)
-
-        // Aguardar um pouco para o contexto atualizar
-        setTimeout(() => {
-          clearInterval(checkUserType)
-          
-          // Verificar userType novamente após delay
-          if (userType) {
-            if (userType === 'empresa') {
-              navigate('/empresa/dashboard', { replace: true })
-            } else if (userType === 'motorista') {
-              navigate('/motorista/dashboard', { replace: true })
-            } else if (userType === 'admin') {
-              navigate('/admin/dashboard', { replace: true })
-            } else {
-              navigate('/confirmar-email', { replace: true })
-            }
-          } else {
-            // Se ainda não tem userType, aguardar mais ou redirecionar para confirmar email
-            navigate('/confirmar-email', { replace: true })
-          }
-        }, 500)
+        // O redirecionamento será feito pelo useEffect que observa userType
+        // Não precisa mais de polling - useEffect já observa mudanças reativas
+        // Não resetar loading ainda - será resetado quando redirecionar ou após timeout
+        // O loading será resetado pelo useEffect quando redirecionar ou pelo timeout
       } else {
         if (result.blocked && result.timeRemaining) {
           setBlocked(true)

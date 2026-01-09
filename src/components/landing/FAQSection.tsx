@@ -67,12 +67,12 @@ const FAQSection = () => {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="max-w-3xl mx-auto"
         >
-          <Accordion type="single" collapsible className="space-y-4">
+          <Accordion type="single" collapsible className="space-y-3 md:space-y-4">
             {faqs.map((faq, index) => (
               <AccordionItem
                 key={index}
                 value={`item-${index}`}
-                className="bg-primary-foreground/10 backdrop-blur-sm rounded-2xl px-6 border-none"
+                className="bg-primary-foreground/10 backdrop-blur-sm rounded-2xl px-4 md:px-6 border-none"
               >
                 <AccordionTrigger className="text-left font-display font-semibold text-primary-foreground hover:text-primary-foreground/80 hover:no-underline py-6">
                   {faq.question}

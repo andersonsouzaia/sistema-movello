@@ -36,10 +36,10 @@ const HeroSection = () => {
               />
             </div>
             {/* Links centralizados - Desktop */}
-            <nav className="hidden md:flex items-center gap-8 flex-1 justify-center">
-              <a href="#como-funciona" className="text-foreground hover:text-primary transition-colors">Como funciona</a>
-              <a href="#beneficios" className="text-foreground hover:text-primary transition-colors">Benefícios e diferenciais</a>
-              <a href="#faq" className="text-foreground hover:text-primary transition-colors">FAQ</a>
+            <nav className="hidden md:flex items-center gap-4 md:gap-6 lg:gap-8 flex-1 justify-center" aria-label="Navegação principal">
+              <a href="#beneficios" className="text-foreground hover:text-primary transition-colors text-sm md:text-base">Benefícios e diferenciais</a>
+              <a href="#como-funciona" className="text-foreground hover:text-primary transition-colors text-sm md:text-base">Como funciona</a>
+              <a href="#faq" className="text-foreground hover:text-primary transition-colors text-sm md:text-base">FAQ</a>
             </nav>
             {/* Botões à direita - Desktop */}
             <div className="hidden md:flex items-center gap-4">
@@ -65,20 +65,20 @@ const HeroSection = () => {
           </SheetHeader>
           <div className="flex flex-col gap-6 mt-8">
             {/* Links de navegação */}
-            <nav className="flex flex-col gap-4">
-              <a 
-                href="#como-funciona" 
-                className="text-foreground hover:text-primary transition-colors py-2"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Como funciona
-              </a>
+            <nav className="flex flex-col gap-4" aria-label="Menu de navegação mobile">
               <a 
                 href="#beneficios" 
                 className="text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Benefícios e diferenciais
+              </a>
+              <a 
+                href="#como-funciona" 
+                className="text-foreground hover:text-primary transition-colors py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Como funciona
               </a>
               <a 
                 href="#faq" 
@@ -109,7 +109,7 @@ const HeroSection = () => {
       <div className="container-section relative z-10">
 
         {/* Hero Content */}
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center pt-32 lg:pt-40 pb-20">
+        <div className="grid lg:grid-cols-2 gap-8 md:gap-12 lg:gap-16 items-center pt-24 md:pt-32 lg:pt-40 pb-12 md:pb-16 lg:pb-8">
           {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -119,12 +119,12 @@ const HeroSection = () => {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary rounded-full">
               <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-              <span className="text-sm font-medium text-secondary-foreground">
+              <span className="text-xs sm:text-sm font-medium text-secondary-foreground">
                 +1.000.000 de impressões/mês em cidades parceiras
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-extrabold leading-tight text-foreground">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-extrabold leading-tight text-foreground">
               Atraia clientes reais com anúncios em{" "}
               <span className="text-gradient-primary">carros de aplicativo</span>
             </h1>
@@ -147,14 +147,14 @@ const HeroSection = () => {
             </div>
 
             {/* Trust Badges */}
-            <div className="flex items-center gap-6 pt-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 pt-2">
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="w-8 h-8 rounded-full bg-muted border-2 border-background" />
                   ))}
                 </div>
-                <span className="text-sm text-muted-foreground">+500 empresas anunciando</span>
+                <span className="text-sm font-semibold text-foreground">+500 empresas anunciando</span>
               </div>
             </div>
           </motion.div>
@@ -171,6 +171,7 @@ const HeroSection = () => {
                 src={heroImage} 
                 alt="Tablet exibindo anúncio geolocalizado em carro de aplicativo"
                 className="w-full h-auto rounded-3xl shadow-2xl"
+                loading="eager"
               />
             </div>
 
@@ -180,14 +181,7 @@ const HeroSection = () => {
               alt="Movellinho"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute w-28 h-28 object-contain drop-shadow-xl"
-              style={{
-                left: '512px',
-                top: '246px',
-                zIndex: 10,
-                right: 'auto',
-                bottom: 'auto'
-              }}
+              className="absolute w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-contain drop-shadow-xl hidden lg:block right-4 top-1/4 lg:right-8 lg:top-1/4 xl:right-16 xl:top-1/3"
             />
           </motion.div>
         </div>

@@ -2,16 +2,9 @@ import { motion } from 'framer-motion'
 import { useMemo } from 'react'
 import { DashboardLayout } from '@/components/layouts/DashboardLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
+import { RequirePermission } from '@/components/auth/RequirePermission'
 import { useAuth } from '@/contexts/AuthContext'
-import { useAdminStats } from '@/hooks/useAdminStats'
-import { useAdvancedStats } from '@/hooks/useAdvancedStats'
-import { useRecentActivity } from '@/hooks/useAuditLogs'
-import { useUnreadNotifications } from '@/hooks/useNotifications'
-import { useEmpresas } from '@/hooks/useEmpresas'
-import { useMotoristas } from '@/hooks/useMotoristas'
-import { useCampanhas } from '@/hooks/useCampanhas'
-import { useTickets } from '@/hooks/useTickets'
-import { useFinancialSummary } from '@/hooks/usePagamentos'
+import { useAdminDashboardData } from '@/hooks/useAdminDashboardData'
 import { adminService } from '@/services/adminService'
 import { ActivityFeed } from '@/components/admin/ActivityFeed'
 import { StatsChart } from '@/components/admin/StatsChart'
@@ -29,21 +22,42 @@ import { toast } from 'sonner'
 export default function AdminDashboard() {
   const { profile, user } = useAuth()
   const navigate = useNavigate()
-  const { stats, loading: statsLoading, refetch: refetchStats } = useAdminStats()
-  const { stats: advancedStats, loading: advancedStatsLoading } = useAdvancedStats()
-  const { activities, loading: activitiesLoading } = useRecentActivity(10)
-  const { notifications, loading: notificationsLoading } = useUnreadNotifications()
-  const { empresas: empresasPendentes, loading: empresasLoading, refetch: refetchEmpresas } = useEmpresas({ 
-    status: 'aguardando_aprovacao' 
-  })
-  const { motoristas: motoristasPendentes, loading: motoristasLoading, refetch: refetchMotoristas } = useMotoristas({ 
-    status: 'aguardando_aprovacao' 
-  })
-  const { campanhas: campanhasPendentes, loading: campanhasLoading } = useCampanhas({ status: 'em_analise' })
-  const { campanhas: campanhasAtivas, loading: campanhasAtivasLoading } = useCampanhas({ status: 'ativa' })
-  const { tickets: ticketsAbertos, loading: ticketsLoading } = useTickets({ status: 'aberto' })
-  const { tickets: allTickets, loading: allTicketsLoading } = useTickets({})
-  const { summary: financialSummary, loading: financialLoading } = useFinancialSummary()
+  
+  // Hook otimizado que usa React Query com useQueries para batch requests
+  const {
+    data: {
+      stats,
+      advancedStats,
+      empresasPendentes,
+      motoristasPendentes,
+      campanhasPendentes,
+      campanhasAtivas,
+      ticketsAbertos,
+      allTickets,
+      financialSummary,
+      activities,
+      notifications,
+    },
+    loading: {
+      stats: statsLoading,
+      advancedStats: advancedStatsLoading,
+      empresas: empresasLoading,
+      motoristas: motoristasLoading,
+      campanhasPendentes: campanhasLoading,
+      campanhasAtivas: campanhasAtivasLoading,
+      ticketsAbertos: ticketsLoading,
+      allTickets: allTicketsLoading,
+      financial: financialLoading,
+      activities: activitiesLoading,
+      notifications: notificationsLoading,
+    },
+    refetch,
+  } = useAdminDashboardData()
+  
+  // Funções de refetch para compatibilidade com código existente
+  const refetchStats = refetch.stats
+  const refetchEmpresas = refetch.empresas
+  const refetchMotoristas = refetch.motoristas
 
   // Preparar dados para gráfico de crescimento
   const chartData = useMemo(() => {
@@ -131,8 +145,10 @@ export default function AdminDashboard() {
 
       if (result.success) {
         toast.success('Empresa aprovada com sucesso!')
-        refetchEmpresas()
-        refetchStats()
+        // Refetch apenas as queries necessárias
+        refetch.empresas()
+        refetch.stats()
+        refetch.advancedStats()
       }
     } catch (error) {
       toast.error('Erro ao aprovar empresa')
@@ -150,8 +166,10 @@ export default function AdminDashboard() {
 
       if (result.success) {
         toast.success('Motorista aprovado com sucesso!')
-        refetchMotoristas()
-        refetchStats()
+        // Refetch apenas as queries necessárias
+        refetch.motoristas()
+        refetch.stats()
+        refetch.advancedStats()
       }
     } catch (error) {
       toast.error('Erro ao aprovar motorista')
@@ -239,6 +257,7 @@ export default function AdminDashboard() {
     return alerts
   }, [campanhasPendentes, ticketsAbertos, financialSummary, empresasPendentes, motoristasPendentes])
 
+  // Loading geral combinado (otimizado - considera apenas queries críticas para primeira renderização)
   const isLoading = statsLoading || advancedStatsLoading || empresasLoading || motoristasLoading || campanhasLoading
 
   return (
@@ -336,133 +355,142 @@ export default function AdminDashboard() {
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              >
-                <Card className="card-premium cursor-pointer hover:shadow-lg transition-all" onClick={() => navigate('/admin/empresas')}>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Empresas</CardTitle>
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Building2 className="h-5 w-5 text-primary" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold mb-1">{stats?.total_empresas || 0}</div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{stats?.empresas_ativas || 0} ativas</span>
-                      {stats?.empresas_pendentes > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          {stats.empresas_pendentes} pendentes
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              <RequirePermission permission="empresas.read">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                >
+                  <Card className="card-premium cursor-pointer hover:shadow-lg transition-all" onClick={() => navigate('/admin/empresas')}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Empresas</CardTitle>
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Building2 className="h-5 w-5 text-primary" />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold mb-1">{stats?.total_empresas || 0}</div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{stats?.empresas_ativas || 0} ativas</span>
+                        {stats?.empresas_pendentes > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {stats.empresas_pendentes} pendentes
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </RequirePermission>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.25 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              >
-                <Card className="card-premium cursor-pointer hover:shadow-lg transition-all" onClick={() => navigate('/admin/motoristas')}>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Motoristas</CardTitle>
-                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                      <Car className="h-5 w-5 text-accent" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold mb-1">{stats?.total_motoristas || 0}</div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{stats?.motoristas_aprovados || 0} aprovados</span>
-                      {stats?.motoristas_pendentes > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          {stats.motoristas_pendentes} pendentes
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              <RequirePermission permission="motoristas.read">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.25 }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                >
+                  <Card className="card-premium cursor-pointer hover:shadow-lg transition-all" onClick={() => navigate('/admin/motoristas')}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Motoristas</CardTitle>
+                      <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                        <Car className="h-5 w-5 text-accent" />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold mb-1">{stats?.total_motoristas || 0}</div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{stats?.motoristas_aprovados || 0} aprovados</span>
+                        {stats?.motoristas_pendentes > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {stats.motoristas_pendentes} pendentes
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </RequirePermission>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              >
-                <Card className="card-premium cursor-pointer hover:shadow-lg transition-all" onClick={() => navigate('/admin/campanhas')}>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Campanhas</CardTitle>
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Megaphone className="h-5 w-5 text-primary" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold mb-1">{stats?.campanhas_ativas || 0}</div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{campanhasAtivas.length} ativas</span>
-                      {campanhasPendentes.length > 0 && (
-                        <Badge variant="secondary" className="text-xs">
-                          {campanhasPendentes.length} pendentes
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              <RequirePermission permission="campanhas.read">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.3 }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                >
+                  <Card className="card-premium cursor-pointer hover:shadow-lg transition-all" onClick={() => navigate('/admin/campanhas')}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Campanhas</CardTitle>
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Megaphone className="h-5 w-5 text-primary" />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold mb-1">{stats?.campanhas_ativas || 0}</div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{campanhasAtivas.length} ativas</span>
+                        {campanhasPendentes.length > 0 && (
+                          <Badge variant="secondary" className="text-xs">
+                            {campanhasPendentes.length} pendentes
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </RequirePermission>
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.35 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              >
-                <Card className="card-premium cursor-pointer hover:shadow-lg transition-all" onClick={() => navigate('/admin/suporte')}>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                    <CardTitle className="text-sm font-medium text-muted-foreground">Tickets</CardTitle>
-                    <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                      <LifeBuoy className="h-5 w-5 text-accent" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold mb-1">{allTickets.length}</div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{ticketsAbertos.length} abertos</span>
-                      {ticketsAbertos.length > 0 && (
-                        <Badge variant="destructive" className="text-xs">
-                          {ticketsAbertos.length} sem resposta
-                        </Badge>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
+              <RequirePermission permission="suporte.read">
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.35 }}
+                  whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                >
+                  <Card className="card-premium cursor-pointer hover:shadow-lg transition-all" onClick={() => navigate('/admin/suporte')}>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Tickets</CardTitle>
+                      <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
+                        <LifeBuoy className="h-5 w-5 text-accent" />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold mb-1">{allTickets.length}</div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{ticketsAbertos.length} abertos</span>
+                        {ticketsAbertos.length > 0 && (
+                          <Badge variant="destructive" className="text-xs">
+                            {ticketsAbertos.length} sem resposta
+                          </Badge>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </RequirePermission>
             </div>
           )}
 
           {/* Seção Principal: Gráficos e Atividades */}
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Gráfico de Crescimento - 2 colunas */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.4 }}
-              className="lg:col-span-2"
-            >
-              <Card className="card-premium h-full">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5" />
-                    Crescimento (30 dias)
-                  </CardTitle>
-                  <CardDescription>Evolução de empresas, motoristas e aprovações</CardDescription>
-                </CardHeader>
+            <RequirePermission permission={['empresas.read', 'motoristas.read']}>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.4 }}
+                className="lg:col-span-2"
+              >
+                <Card className="card-premium h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5" />
+                      Crescimento (30 dias)
+                    </CardTitle>
+                    <CardDescription>Evolução de empresas, motoristas e aprovações</CardDescription>
+                  </CardHeader>
                 <CardContent>
                   {advancedStatsLoading ? (
                     <div className="flex items-center justify-center h-64">
@@ -481,39 +509,43 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </motion.div>
+            </RequirePermission>
 
             {/* Atividades Recentes - 1 coluna */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.45 }}
-            >
-              <ActivityFeed activities={activities} loading={activitiesLoading} limit={8} />
-            </motion.div>
+            <RequirePermission permission="users.read">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.45 }}
+              >
+                <ActivityFeed activities={activities} loading={activitiesLoading} limit={8} />
+              </motion.div>
+            </RequirePermission>
           </div>
 
           {/* Seção Financeira e Performance */}
           <div className="grid gap-6 lg:grid-cols-2">
             {/* Resumo Financeiro */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.5 }}
-            >
-              <Card className="card-premium">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5" />
-                      Resumo Financeiro
-                    </CardTitle>
-                    <CardDescription>Últimos 30 dias</CardDescription>
-                  </div>
-                  <Button variant="outline" size="sm" onClick={() => navigate('/admin/pagamentos')}>
-                    Ver Detalhes
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardHeader>
+            <RequirePermission permission="pagamentos.read">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.5 }}
+              >
+                <Card className="card-premium">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <DollarSign className="h-5 w-5" />
+                        Resumo Financeiro
+                      </CardTitle>
+                      <CardDescription>Últimos 30 dias</CardDescription>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/admin/pagamentos')}>
+                      Ver Detalhes
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardHeader>
                 <CardContent>
                   {financialLoading ? (
                     <div className="flex items-center justify-center h-48">
@@ -568,21 +600,23 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </motion.div>
+            </RequirePermission>
 
             {/* Top Campanhas */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.55 }}
-            >
-              <Card className="card-premium">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Megaphone className="h-5 w-5" />
-                      Top Campanhas
-                    </CardTitle>
-                    <CardDescription>Melhor performance de orçamento</CardDescription>
+            <RequirePermission permission="campanhas.read">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.55 }}
+              >
+                <Card className="card-premium">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Megaphone className="h-5 w-5" />
+                        Top Campanhas
+                      </CardTitle>
+                      <CardDescription>Melhor performance de orçamento</CardDescription>
                   </div>
                   <Button variant="outline" size="sm" onClick={() => navigate('/admin/campanhas')}>
                     Ver Todas
@@ -645,26 +679,27 @@ export default function AdminDashboard() {
           </div>
 
           {/* Gráfico de Tickets */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.6 }}
-            className="relative z-0"
-          >
-            <Card className="card-premium overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <LifeBuoy className="h-5 w-5" />
-                    Tickets por Status
-                  </CardTitle>
-                  <CardDescription>Últimos 7 dias</CardDescription>
-                </div>
-                <Button variant="outline" size="sm" onClick={() => navigate('/admin/suporte')}>
-                  Ver Todos
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </CardHeader>
+          <RequirePermission permission="suporte.read">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.6 }}
+              className="relative z-0"
+            >
+              <Card className="card-premium overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <LifeBuoy className="h-5 w-5" />
+                      Tickets por Status
+                    </CardTitle>
+                    <CardDescription>Últimos 7 dias</CardDescription>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/admin/suporte')}>
+                    Ver Todos
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </CardHeader>
               <CardContent className="pb-6">
                 {allTicketsLoading ? (
                   <div className="flex items-center justify-center h-64">
@@ -685,36 +720,38 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </motion.div>
+          </RequirePermission>
 
           {/* Pendências - Layout melhorado */}
           <div className="grid gap-6 lg:grid-cols-3 relative z-10">
             {/* Empresas Pendentes */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.65 }}
-            >
-              <Card className="card-premium">
-                <CardHeader className="flex flex-row items-center justify-between pb-3">
-                  <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Building2 className="h-5 w-5" />
-                      Empresas Pendentes
-                    </CardTitle>
-                    <CardDescription>
-                      {empresasPendentes.length} aguardando aprovação
-                    </CardDescription>
-                  </div>
-                  {empresasPendentes.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/admin/empresas')}
-                    >
-                      Ver Todas
-                    </Button>
-                  )}
-                </CardHeader>
+            <RequirePermission permission="empresas.read">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.65 }}
+              >
+                <Card className="card-premium">
+                  <CardHeader className="flex flex-row items-center justify-between pb-3">
+                    <div>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Building2 className="h-5 w-5" />
+                        Empresas Pendentes
+                      </CardTitle>
+                      <CardDescription>
+                        {empresasPendentes.length} aguardando aprovação
+                      </CardDescription>
+                    </div>
+                    {empresasPendentes.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/admin/empresas')}
+                      >
+                        Ver Todas
+                      </Button>
+                    )}
+                  </CardHeader>
                 <CardContent>
                   {empresasLoading ? (
                     <div className="flex items-center justify-center py-8">
@@ -744,18 +781,20 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 pt-2 border-t">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleApproveEmpresa(empresa.id)
-                              }}
-                              className="flex-1"
-                            >
-                              <CheckCircle2 className="h-4 w-4 mr-1" />
-                              Aprovar
-                            </Button>
+                            <RequirePermission permission="empresas.approve">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleApproveEmpresa(empresa.id)
+                                }}
+                                className="flex-1"
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                Aprovar
+                              </Button>
+                            </RequirePermission>
                             <Button
                               size="sm"
                               variant="outline"
@@ -774,34 +813,36 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </motion.div>
+            </RequirePermission>
 
             {/* Motoristas Pendentes */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.7 }}
-            >
-              <Card className="card-premium">
-                <CardHeader className="flex flex-row items-center justify-between pb-3">
-                  <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Car className="h-5 w-5" />
-                      Motoristas Pendentes
-                    </CardTitle>
-                    <CardDescription>
-                      {motoristasPendentes.length} aguardando aprovação
-                    </CardDescription>
-                  </div>
-                  {motoristasPendentes.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/admin/motoristas')}
-                    >
-                      Ver Todos
-                    </Button>
-                  )}
-                </CardHeader>
+            <RequirePermission permission="motoristas.read">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.7 }}
+              >
+                <Card className="card-premium">
+                  <CardHeader className="flex flex-row items-center justify-between pb-3">
+                    <div>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Car className="h-5 w-5" />
+                        Motoristas Pendentes
+                      </CardTitle>
+                      <CardDescription>
+                        {motoristasPendentes.length} aguardando aprovação
+                      </CardDescription>
+                    </div>
+                    {motoristasPendentes.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/admin/motoristas')}
+                      >
+                        Ver Todos
+                      </Button>
+                    )}
+                  </CardHeader>
                 <CardContent>
                   {motoristasLoading ? (
                     <div className="flex items-center justify-center py-8">
@@ -833,18 +874,20 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2 pt-2 border-t">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleApproveMotorista(motorista.id)
-                              }}
-                              className="flex-1"
-                            >
-                              <CheckCircle2 className="h-4 w-4 mr-1" />
-                              Aprovar
-                            </Button>
+                            <RequirePermission permission="motoristas.approve">
+                              <Button
+                                size="sm"
+                                variant="default"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleApproveMotorista(motorista.id)
+                                }}
+                                className="flex-1"
+                              >
+                                <CheckCircle2 className="h-4 w-4 mr-1" />
+                                Aprovar
+                              </Button>
+                            </RequirePermission>
                             <Button
                               size="sm"
                               variant="outline"
@@ -863,34 +906,36 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             </motion.div>
+            </RequirePermission>
 
             {/* Campanhas Pendentes */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.75 }}
-            >
-              <Card className="card-premium">
-                <CardHeader className="flex flex-row items-center justify-between pb-3">
-                  <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Megaphone className="h-5 w-5" />
-                      Campanhas Pendentes
-                    </CardTitle>
-                    <CardDescription>
-                      {campanhasPendentes.length} aguardando aprovação
-                    </CardDescription>
-                  </div>
-                  {campanhasPendentes.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate('/admin/campanhas')}
-                    >
-                      Ver Todas
-                    </Button>
-                  )}
-                </CardHeader>
+            <RequirePermission permission="campanhas.read">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.75 }}
+              >
+                <Card className="card-premium">
+                  <CardHeader className="flex flex-row items-center justify-between pb-3">
+                    <div>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Megaphone className="h-5 w-5" />
+                        Campanhas Pendentes
+                      </CardTitle>
+                      <CardDescription>
+                        {campanhasPendentes.length} aguardando aprovação
+                      </CardDescription>
+                    </div>
+                    {campanhasPendentes.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/admin/campanhas')}
+                      >
+                        Ver Todas
+                      </Button>
+                    )}
+                  </CardHeader>
                 <CardContent>
                   {campanhasLoading ? (
                     <div className="flex items-center justify-center py-8">

@@ -128,20 +128,15 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   }
 
   const getStatusMessage = () => {
+    // Mensagem para empresas apenas (motoristas têm mensagem no próprio Dashboard)
     if (empresa?.status === 'aguardando_aprovacao') {
       return {
         type: 'warning' as const,
-        message: 'Sua conta está aguardando aprovação. Você terá acesso completo após a aprovação.',
+        message: 'Sua conta está aguardando aprovação. Você terá acesso completo após a aprovação pela equipe Movello.',
       }
     }
 
-    if (motorista?.status === 'aguardando_aprovacao') {
-      return {
-        type: 'warning' as const,
-        message: 'Sua conta está aguardando aprovação. Você terá acesso completo após a aprovação.',
-      }
-    }
-
+    // Não mostrar mensagem para motoristas aqui (já tem no Dashboard)
     return null
   }
 

@@ -13,20 +13,11 @@ import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils/formatte
 import { cn } from '@/lib/utils'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts'
 import { useIsMobile } from '@/hooks/use-mobile'
-
-// Mock data - será substituído por hooks reais quando o backend estiver pronto
-interface Ganho {
-  id: string
-  valor: number
-  descricao: string
-  tipo: 'exibicao' | 'bonus' | 'recompensa'
-  status: 'pendente' | 'processando' | 'pago' | 'falhou'
-  data_exibicao: string
-  criado_em: string
-  processado_em: string | null
-  campanha_id?: string
-  campanha_titulo?: string
-}
+import { useMotoristaGanhos, useMotoristaGanhosStats, useMotoristaGanhosMensais } from '@/hooks/useMotoristaGanhos'
+import type { Ganho } from '@/types/database'
+import { SkeletonCardGrid } from '@/components/ui/SkeletonCard'
+import { SkeletonGanhosTable } from '@/components/ui/SkeletonTable'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'destructive' | 'secondary' }> = {
   pendente: { label: 'Pendente', variant: 'secondary' },
@@ -43,36 +34,41 @@ const tipoConfig: Record<string, { label: string }> = {
 
 export default function MotoristaGanhos() {
   const isMobile = useIsMobile()
-  const { motorista, profile } = useAuth()
+  const { motorista } = useAuth()
   const [statusFilter, setStatusFilter] = useState<string>('')
-  const [loading, setLoading] = useState(false)
   
-  // Mock data - será substituído por hook real
-  const [ganhos] = useState<Ganho[]>([
-    // Dados mockados para demonstração
-  ])
+  // Hooks reais
+  const { ganhos, loading: loadingGanhos, refetch: refetchGanhos } = useMotoristaGanhos({
+    status: statusFilter || undefined,
+  })
+  const { stats, loading: loadingStats, refetch: refetchStats } = useMotoristaGanhosStats('mes')
+  const { ganhosMensais, loading: loadingMensais, refetch: refetchMensais } = useMotoristaGanhosMensais()
 
-  // Estatísticas mockadas
-  const stats = {
-    ganhosHoje: 0,
-    ganhosMes: 0,
-    totalPendente: 0,
-    totalPago: 0,
+  const loading = loadingGanhos || loadingStats || loadingMensais
+
+  const handleRefresh = () => {
+    refetchGanhos()
+    refetchStats()
+    refetchMensais()
   }
 
-  // Dados para gráfico mockados
-  const ganhosMensais = [
-    { mes: 'Jan', valor: 0 },
-    { mes: 'Fev', valor: 0 },
-    { mes: 'Mar', valor: 0 },
-    { mes: 'Abr', valor: 0 },
-    { mes: 'Mai', valor: 0 },
-    { mes: 'Jun', valor: 0 },
-  ]
+  // Converter ganhos mensais para formato do gráfico
+  const ganhosMensaisChart = ganhosMensais.map((g) => ({
+    mes: g.mes_nome,
+    valor: Number(g.valor),
+  }))
 
-  const ganhosFiltrados = ganhos.filter((g) => 
-    statusFilter === '' || g.status === statusFilter
-  )
+  // Se não houver dados, criar array vazio com meses
+  const ganhosMensaisDisplay = ganhosMensaisChart.length > 0 
+    ? ganhosMensaisChart 
+    : [
+        { mes: 'Jan', valor: 0 },
+        { mes: 'Fev', valor: 0 },
+        { mes: 'Mar', valor: 0 },
+        { mes: 'Abr', valor: 0 },
+        { mes: 'Mai', valor: 0 },
+        { mes: 'Jun', valor: 0 },
+      ]
 
   const columns: Column<Ganho>[] = [
     {
@@ -95,7 +91,7 @@ export default function MotoristaGanhos() {
       header: 'Descrição',
       render: (row) => (
         <div className="text-sm">
-          {row.campanha_titulo ? `${row.descricao} - ${row.campanha_titulo}` : row.descricao}
+          {row.descricao}
         </div>
       ),
     },
@@ -148,7 +144,7 @@ export default function MotoristaGanhos() {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => setLoading(!loading)}
+                onClick={handleRefresh}
                 className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border border-border bg-background hover:bg-accent transition-colors"
                 disabled={loading}
               >
@@ -166,12 +162,21 @@ export default function MotoristaGanhos() {
                 <Calendar className="h-5 w-5 text-primary" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(stats.ganhosHoje)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Hoje
-                </p>
+                {loadingStats ? (
+                  <>
+                    <Skeleton className="h-8 w-32 mb-2" />
+                    <Skeleton className="h-3 w-16" />
+                  </>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {formatCurrency(stats?.ganhos_hoje || 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Hoje
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -181,12 +186,21 @@ export default function MotoristaGanhos() {
                 <TrendingUp className="h-5 w-5 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(stats.ganhosMes)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Este mês
-                </p>
+                {loadingStats ? (
+                  <>
+                    <Skeleton className="h-8 w-32 mb-2" />
+                    <Skeleton className="h-3 w-20" />
+                  </>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {formatCurrency(stats?.ganhos_mes || 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Este mês
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -196,12 +210,21 @@ export default function MotoristaGanhos() {
                 <Wallet className="h-5 w-5 text-yellow-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(stats.totalPendente)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Aguardando processamento
-                </p>
+                {loadingStats ? (
+                  <>
+                    <Skeleton className="h-8 w-32 mb-2" />
+                    <Skeleton className="h-3 w-32" />
+                  </>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {formatCurrency(stats?.total_pendente || 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Aguardando processamento
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
@@ -211,12 +234,21 @@ export default function MotoristaGanhos() {
                 <DollarSign className="h-5 w-5 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(stats.totalPago)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Total já pago
-                </p>
+                {loadingStats ? (
+                  <>
+                    <Skeleton className="h-8 w-32 mb-2" />
+                    <Skeleton className="h-3 w-24" />
+                  </>
+                ) : (
+                  <>
+                    <div className="text-2xl font-bold">
+                      {formatCurrency(stats?.total_pago || 0)}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Total já pago
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -251,7 +283,9 @@ export default function MotoristaGanhos() {
                       </SelectContent>
                     </Select>
                   </div>
-                  {ganhosFiltrados.length === 0 ? (
+                  {loadingGanhos ? (
+                    <SkeletonGanhosTable rows={5} />
+                  ) : ganhos.length === 0 ? (
                     <div className="text-center py-12">
                       <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                       <p className="text-muted-foreground">Nenhum ganho registrado ainda</p>
@@ -261,7 +295,7 @@ export default function MotoristaGanhos() {
                     </div>
                   ) : (
                     <DataTable
-                      data={ganhosFiltrados}
+                      data={ganhos}
                       columns={columns}
                       searchKey="descricao"
                       searchPlaceholder="Buscar ganhos..."
@@ -280,7 +314,12 @@ export default function MotoristaGanhos() {
                   <CardDescription>Visualize seus ganhos ao longo do tempo</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {ganhosMensais.every((g) => g.valor === 0) ? (
+                  {loadingMensais ? (
+                    <div className="text-center py-12">
+                      <RefreshCw className="h-12 w-12 mx-auto text-muted-foreground mb-4 animate-spin" />
+                      <p className="text-muted-foreground">Carregando dados do gráfico...</p>
+                    </div>
+                  ) : ganhosMensaisDisplay.every((g) => g.valor === 0) ? (
                     <div className="text-center py-12">
                       <p className="text-muted-foreground">Nenhum dado disponível</p>
                       <p className="text-sm text-muted-foreground mt-2">
@@ -289,7 +328,7 @@ export default function MotoristaGanhos() {
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={isMobile ? 300 : 400}>
-                      <LineChart data={ganhosMensais}>
+                      <LineChart data={ganhosMensaisDisplay}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="mes" />
                         <YAxis />

@@ -31,14 +31,14 @@ const DualCTASection = () => {
           </h2>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 relative">
+        <div className="grid lg:grid-cols-2 gap-6 md:gap-8 lg:gap-12 relative">
           {/* Drivers Card */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="card-premium p-8 lg:p-10"
+            className="card-premium p-6 md:p-8 lg:p-10"
           >
             <div className="flex items-center gap-4 mb-8">
               <div className="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center">
@@ -76,7 +76,7 @@ const DualCTASection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className="bg-gradient-to-br from-primary to-movello-blue-dark rounded-3xl p-8 lg:p-10 text-primary-foreground"
+            className="bg-gradient-to-br from-primary to-movello-blue-dark rounded-3xl p-6 md:p-8 lg:p-10 text-primary-foreground"
           >
             <div className="flex items-center gap-4 mb-8">
               <div className="w-14 h-14 bg-primary-foreground/20 rounded-2xl flex items-center justify-center">

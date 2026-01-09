@@ -3,7 +3,6 @@ import { motion } from 'framer-motion'
 import { DashboardLayout } from '@/components/layouts/DashboardLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
-import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,6 +26,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { cn } from '@/lib/utils'
+import { tabletService } from '@/services/tabletService'
 
 const vincularTabletSchema = z.object({
   tablet_id: z.string().min(1, 'ID do tablet é obrigatório'),
@@ -54,22 +54,27 @@ export default function MotoristaTablet() {
 
     setLoading(true)
     try {
-      const { error } = await supabase
-        .from('motoristas')
-        .update({
-          tablet_id: data.tablet_id,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', motorista.id)
+      // Validar tablet antes de vincular
+      const validacao = await tabletService.validarTablet(data.tablet_id)
 
-      if (error) {
-        throw error
+      if (!validacao.existe) {
+        toast.error(validacao.mensagem)
+        return
       }
 
-      toast.success('Tablet vinculado com sucesso!')
-      setVincularDialogOpen(false)
-      form.reset()
-      refreshUser()
+      if (!validacao.disponivel) {
+        toast.error(validacao.mensagem)
+        return
+      }
+
+      // Vincular usando service
+      const result = await tabletService.vincularTablet(motorista.id, data.tablet_id)
+
+      if (result.sucesso) {
+        setVincularDialogOpen(false)
+        form.reset()
+        refreshUser()
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao vincular tablet'
       toast.error(errorMessage)
@@ -91,20 +96,12 @@ export default function MotoristaTablet() {
 
     setLoading(true)
     try {
-      const { error } = await supabase
-        .from('motoristas')
-        .update({
-          tablet_id: null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', motorista.id)
+      // Desvincular usando service
+      const result = await tabletService.desvincularTablet(motorista.id)
 
-      if (error) {
-        throw error
+      if (result.sucesso) {
+        refreshUser()
       }
-
-      toast.success('Tablet desvinculado com sucesso!')
-      refreshUser()
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao desvincular tablet'
       toast.error(errorMessage)
@@ -322,60 +319,6 @@ export default function MotoristaTablet() {
             </CardContent>
           </Card>
 
-          {/* Dialog de Vinculação */}
-          {vincularDialogOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-              <Card className="w-full max-w-md">
-                <CardHeader>
-                  <CardTitle>Vincular Tablet</CardTitle>
-                  <CardDescription>
-                    Insira o ID do tablet para vincular
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={form.handleSubmit(handleVincularTablet)} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="tablet_id_dialog">ID do Tablet *</Label>
-                      <Input
-                        id="tablet_id_dialog"
-                        {...form.register('tablet_id')}
-                        placeholder="Cole o ID do tablet aqui"
-                        className="h-11 font-mono"
-                        autoFocus
-                      />
-                      {form.formState.errors.tablet_id && (
-                        <p className="text-sm text-destructive">
-                          {form.formState.errors.tablet_id.message}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setVincularDialogOpen(false)
-                          form.reset()
-                        }}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button type="submit" disabled={loading}>
-                        {loading ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Vinculando...
-                          </>
-                        ) : (
-                          'Vincular'
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
-          )}
         </div>
       </DashboardLayout>
     </ProtectedRoute>
