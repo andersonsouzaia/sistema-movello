@@ -8,7 +8,7 @@ const testimonials = [
     role: "Proprietária",
     text: "Aumentamos 40% nas vendas após anunciar na Movello. Os clientes chegam direto pelo QR Code! A geolocalização é perfeita para nosso negócio local.",
     rating: 5,
-    avatar: "MS",
+    image: "/testimonials/maria-silva.png",
   },
   {
     name: "João Santos",
@@ -16,7 +16,7 @@ const testimonials = [
     role: "Diretor de Marketing",
     text: "A melhor parte é o controle total sobre onde e quando nosso anúncio aparece. As métricas em tempo real nos ajudam a otimizar constantemente.",
     rating: 5,
-    avatar: "JS",
+    image: "/testimonials/joao-santos.png",
   },
   {
     name: "Ana Costa",
@@ -24,7 +24,7 @@ const testimonials = [
     role: "Proprietária",
     text: "Conseguimos atrair clientes de bairros próximos que nem sabiam que existíamos. O investimento se pagou em menos de 2 meses!",
     rating: 5,
-    avatar: "AC",
+    image: "/testimonials/ana-costa.png",
   },
 ];
 
@@ -76,9 +76,11 @@ const TestimonialsSection = () => {
 
               {/* Author Info */}
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
-                  {testimonial.avatar}
-                </div>
+                <img 
+                  src={testimonial.image} 
+                  alt={testimonial.name}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
+                />
                 <div>
                   <h4 className="font-display font-bold text-foreground text-sm md:text-base">
                     {testimonial.name}
