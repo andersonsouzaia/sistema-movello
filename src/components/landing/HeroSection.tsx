@@ -175,13 +175,13 @@ const HeroSection = () => {
               />
             </div>
 
-            {/* Movelinho Mascot */}
+            {/* Movelinho Mascot - Posicionado no canto inferior direito da imagem */}
             <motion.img
               src={movellinhoMascote}
               alt="Movellinho"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 object-contain drop-shadow-xl hidden lg:block right-4 top-1/4 lg:right-8 lg:top-1/4 xl:right-16 xl:top-1/3"
+              className="absolute w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain drop-shadow-xl hidden lg:block -right-4 -bottom-4 lg:-right-6 lg:-bottom-6"
             />
           </motion.div>
         </div>
