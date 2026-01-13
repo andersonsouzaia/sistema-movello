@@ -110,16 +110,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const now = Date.now()
     const timeSinceLastEvent = now - lastInitialSessionTimeRef.current
     
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:108',message:'debouncedHandleInitialSession called',data:{hasSession:!!session,userId:session?.user?.id,timeSinceLastEvent,currentUserId:currentUserRef.current?.id,hasProfile:!!currentProfileRef.current,hasMotorista:!!currentMotoristaRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     
     // Se passou menos de 1000ms desde o último evento, ignorar (aumentado de 500ms)
     if (timeSinceLastEvent < 1000) {
       console.log('⚠️ [AuthContext] INITIAL_SESSION ignorado (muito recente)', { timeSinceLastEvent })
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:113',message:'INITIAL_SESSION ignored (too recent)',data:{timeSinceLastEvent},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       return
     }
     
@@ -134,9 +128,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         
         if (hasSpecificProfile) {
           console.log('✅ [AuthContext] INITIAL_SESSION ignorado (já carregado)', { userId })
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:132',message:'INITIAL_SESSION ignored (already loaded)',data:{userId,hasMotorista:!!currentMotoristaRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-          // #endregion
           return
         }
       }
@@ -154,9 +145,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Verificar novamente se já está processando ou já carregado (pode ter mudado durante o timeout)
         if (processingUserIdsRef.current.has(userId)) {
           console.log('⚠️ [AuthContext] INITIAL_SESSION ignorado (já processando)', { userId })
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:128',message:'INITIAL_SESSION ignored (already processing)',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-          // #endregion
           return
         }
         if (currentUserRef.current?.id === userId && currentProfileRef.current) {
@@ -167,23 +155,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           
           if (hasSpecificProfile) {
             console.log('✅ [AuthContext] INITIAL_SESSION ignorado (já carregado)', { userId })
-            // #region agent log
-            fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:132',message:'INITIAL_SESSION ignored (already loaded)',data:{userId,hasMotorista:!!currentMotoristaRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-            // #endregion
             return
           }
         }
         // Processar sessão inicial
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:137',message:'Processing INITIAL_SESSION (calling loadUserProfile)',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         setUser(session.user)
         currentUserRef.current = session.user
         loadUserProfile(userId).catch((error) => {
           console.error('❌ [AuthContext] Erro ao carregar perfil em INITIAL_SESSION:', error)
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:139',message:'Error loading profile in INITIAL_SESSION',data:{userId,error:error instanceof Error?error.message:'Unknown'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-          // #endregion
         })
       }
     }, 1000) // Aumentado de 500ms para 1000ms
@@ -261,16 +240,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   }
 
   const loadUserProfileInternal = async (userId: string): Promise<void> => {
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:217',message:'loadUserProfileInternal called',data:{userId,isLoadingProfile,hasProfile:!!profile,profileId:profile?.id,hasMotorista:!!currentMotoristaRef.current,motoristaId:currentMotoristaRef.current?.id,stackTrace:new Error().stack?.split('\n').slice(0,5).join('|')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     
     // Prevenir múltiplas chamadas simultâneas
     if (isLoadingProfile) {
       console.log('⚠️ [loadUserProfile] Já está carregando perfil, ignorando chamada duplicada')
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:220',message:'loadUserProfileInternal skipped (already loading)',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       return
     }
 
@@ -288,17 +261,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           tipo: currentProfileRef.current.tipo,
           hasSpecificProfile 
         })
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:226',message:'loadUserProfile skipping (profile already loaded)',data:{userId,tipo:currentProfileRef.current.tipo,hasMotorista:!!currentMotoristaRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         return
       }
     }
 
     setIsLoadingProfile(true)
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:244',message:'loadUserProfileInternal starting (setIsLoadingProfile=true)',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     
     try {
       console.log('🔵 [loadUserProfile] Carregando perfil para:', userId)
@@ -356,9 +323,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       console.log('✅ [loadUserProfile] UserData encontrado:', { tipo: userData.tipo })
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:151',message:'User profile data found',data:{userId,tipo:userData.tipo,email:userData.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       setProfile(userData)
       currentProfileRef.current = userData // Atualizar ref também
       setUserType(userData.tipo)
@@ -398,9 +362,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (userData.tipo === 'empresa') {
         // Se não é motorista, limpar motorista
         if (motorista) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:190',message:'Clearing motorista state (switching to empresa)',data:{previousMotoristaId:motorista.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-          // #endregion
           setMotorista(null)
         }
         // Se não é admin, limpar admin
@@ -418,9 +379,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log('✅ [loadUserProfile] Empresa carregada')
           setEmpresa(empresaData)
         } else if (empresaError) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:358',message:'Error loading empresa',data:{error:empresaError.message,code:empresaError.code,userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-          // #endregion
           console.error('❌ [loadUserProfile] Erro ao buscar empresa:', empresaError)
           if (empresaError.code === 'PGRST116' || empresaError.message.includes('No rows')) {
             throw new Error('Dados da empresa não encontrados. Entre em contato com o suporte.')
@@ -428,9 +386,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             throw new Error(`Erro ao carregar dados da empresa: ${empresaError.message}`)
           }
         } else if (!empresaData) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:366',message:'Empresa data not found (no error but no data)',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-          // #endregion
           console.error('❌ [loadUserProfile] Dados da empresa não encontrados para userId:', userId)
           throw new Error('Dados da empresa não encontrados. Entre em contato com o suporte.')
         }
@@ -443,32 +398,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (admin) {
           setAdmin(null)
         }
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:201',message:'Loading driver profile from motoristas table',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         const { data: motoristaData, error: motoristaError } = await supabase
           .from('motoristas')
           .select('*')
           .eq('id', userId)
           .single()
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:207',message:'Driver profile query result',data:{hasData:!!motoristaData,hasError:!!motoristaError,error:motoristaError?.message,status:motoristaData?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
 
         if (!motoristaError && motoristaData) {
           console.log('✅ [loadUserProfile] Motorista carregado')
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:370',message:'Setting motorista state',data:{motoristaId:motoristaData.id,status:motoristaData.status,previousMotoristaId:currentMotoristaRef.current?.id,previousMotoristaStatus:currentMotoristaRef.current?.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
           setMotorista(motoristaData)
           currentMotoristaRef.current = motoristaData // Atualizar ref também
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:407',message:'Motorista state set (after setMotorista)',data:{motoristaId:motoristaData.id,refMotoristaId:currentMotoristaRef.current?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-          // #endregion
         } else if (motoristaError) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:375',message:'Error loading motorista',data:{error:motoristaError.message,code:motoristaError.code,userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-          // #endregion
           console.error('❌ [loadUserProfile] Erro ao buscar motorista:', motoristaError)
           
           // Tratamento específico por código de erro
@@ -481,9 +421,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }
         } else if (!motoristaData) {
           // Se não há erro mas também não há dados, pode ser que o registro não existe
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:382',message:'Motorista data not found',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-          // #endregion
           console.error('❌ [loadUserProfile] Dados do motorista não encontrados para userId:', userId)
           throw new Error('Dados do motorista não encontrados. Entre em contato com o suporte.')
         }
@@ -506,9 +443,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           console.log('✅ [loadUserProfile] Admin carregado')
           setAdmin(adminData)
         } else if (adminError) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:418',message:'Error loading admin',data:{error:adminError.message,code:adminError.code,userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-          // #endregion
           console.error('❌ [loadUserProfile] Erro ao buscar admin:', adminError)
           
           // Tratamento específico por código de erro
@@ -520,9 +454,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             throw new Error(`Erro ao carregar dados do admin: ${adminError.message}`)
           }
         } else if (!adminData) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:426',message:'Admin data not found (no error but no data)',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-          // #endregion
           console.error('❌ [loadUserProfile] Dados do admin não encontrados para userId:', userId)
           throw new Error('Dados do admin não encontrados. Entre em contato com o suporte.')
         }
@@ -633,14 +564,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     password: string
   ): Promise<{ success: boolean; error?: string; blocked?: boolean; timeRemaining?: number }> => {
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:301',message:'signIn started',data:{email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       // Verificar tentativas antes de tentar login
       const attemptResult = await checkLoginAttempts(email)
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:308',message:'Login attempts check result',data:{blocked:attemptResult?.bloqueado,timeRemaining:attemptResult?.tempo_restante_segundos},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
 
       if (attemptResult?.bloqueado) {
         return {
@@ -652,23 +577,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       // Tentar login
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:319',message:'Calling supabase.auth.signInWithPassword',data:{email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:324',message:'signInWithPassword result',data:{hasUser:!!data?.user,userId:data?.user?.id,hasError:!!error,error:error?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
 
       if (error) {
         // Registrar tentativa falhada
         await checkLoginAttempts(email, data?.user?.id || undefined)
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:328',message:'Login failed',data:{error:error.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         const errorMessage = handleError(error, 'auth')
         return {
           success: false,
@@ -677,9 +593,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       if (!data.user) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:336',message:'No user returned from signIn',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         return {
           success: false,
           error: 'Erro ao fazer login. Tente novamente.',
@@ -691,33 +604,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       // Verificar se email está confirmado
       if (!data.user.email_confirmed_at) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:558',message:'Email not confirmed, redirecting to verification',data:{userId:data.user.id,email:data.user.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-        // #endregion
         setUser(data.user)
         // Não retornar erro, mas o redirecionamento será feito pela página de login
         return { success: true }
       }
 
       // Carregar perfil completo
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:566',message:'Loading user profile after login',data:{userId:data.user.id,emailConfirmed:!!data.user.email_confirmed_at},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       
       try {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:611',message:'About to call loadUserProfile in signIn',data:{userId:data.user.id,emailConfirmed:!!data.user.email_confirmed_at},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         await loadUserProfile(data.user.id)
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:571',message:'User profile loaded successfully',data:{userId:data.user.id,hasProfile:!!currentProfileRef.current,userType:currentProfileRef.current?.tipo,hasMotorista:!!currentMotoristaRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         
         // Verificar se o perfil foi carregado corretamente
         if (!currentProfileRef.current) {
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:575',message:'Profile not loaded after loadUserProfile',data:{userId:data.user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-          // #endregion
           console.error('❌ [signIn] Perfil não foi carregado após login')
           return {
             success: false,
@@ -730,9 +628,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (userTipo === 'motorista' && currentMotoristaRef.current) {
           const status = currentMotoristaRef.current.status
           if (status === 'bloqueado' || status === 'suspenso') {
-            // #region agent log
-            fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:584',message:'Driver account blocked or suspended',data:{userId:data.user.id,status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-            // #endregion
             return {
               success: false,
               error: status === 'bloqueado' 
@@ -743,9 +638,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         } else if (userTipo === 'empresa' && empresa) {
           const status = empresa.status
           if (status === 'bloqueado' || status === 'suspenso') {
-            // #region agent log
-            fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:592',message:'Company account blocked or suspended',data:{userId:data.user.id,status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-            // #endregion
             return {
               success: false,
               error: status === 'bloqueado'
@@ -755,9 +647,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }
         }
       } catch (profileError) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:600',message:'Error loading profile after login',data:{userId:data.user.id,error:profileError instanceof Error?profileError.message:'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-        // #endregion
         console.error('❌ [signIn] Erro ao carregar perfil:', profileError)
         
         // Retornar mensagem de erro específica se disponível
@@ -771,16 +660,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       }
 
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:608',message:'Login completed successfully',data:{userId:data.user.id,userType:currentProfileRef.current?.tipo},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       setUser(data.user)
 
       return { success: true }
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:352',message:'signIn exception',data:{error:error instanceof Error?error.message:'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       const errorMessage = handleError(error, 'auth')
       return {
         success: false,
@@ -1000,15 +883,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signUpMotorista = async (data: CadastroMotoristaFormData): Promise<{ success: boolean; error?: string }> => {
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:569',message:'signUpMotorista started',data:{email:data.email,cpf:data.cpf,nome:data.nome},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       // Validações
       const emailValidation = validateEmail(data.email)
       if (!emailValidation.isValid) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:574',message:'Email validation failed',data:{error:emailValidation.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         return { success: false, error: emailValidation.error }
       }
 
@@ -1035,9 +912,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       // Criar usuário no Supabase Auth
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:600',message:'Calling supabase.auth.signUp for driver',data:{email:data.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.senha,
@@ -1045,30 +919,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           emailRedirectTo: `${window.location.origin}/confirmar-email`,
         },
       })
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:608',message:'supabase.auth.signUp result',data:{hasUser:!!authData?.user,userId:authData?.user?.id,hasError:!!authError,error:authError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
 
       if (authError) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:610',message:'Auth signup error',data:{error:authError.message,code:authError.code},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         const errorMessage = handleError(authError, 'auth')
         return { success: false, error: errorMessage.message }
       }
 
       if (!authData.user) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:614',message:'No user returned from signup',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         return { success: false, error: 'Erro ao criar usuário' }
       }
 
       // Criar registro em users usando função SQL (bypass RLS)
       console.log('🔵 [signUpMotorista] Criando registro em users via função SQL...')
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:619',message:'Calling create_user_after_signup RPC',data:{userId:authData.user.id,email:data.email,tipo:'motorista'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       const { data: userResult, error: userError } = await supabase.rpc('create_user_after_signup', {
         p_user_id: authData.user.id,
         p_email: data.email,
@@ -1077,9 +939,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         p_status: 'ativo',
         p_telefone: data.telefone,
       })
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:628',message:'create_user_after_signup RPC result',data:{hasResult:!!userResult,hasError:!!userError,error:userError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
 
       if (userError) {
         console.error('❌ [signUpMotorista] Erro ao criar user via função:', {
@@ -1112,9 +971,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       // Criar registro em motoristas usando função SQL (bypass RLS)
       console.log('🔵 [signUpMotorista] Criando registro em motoristas via função SQL...')
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:659',message:'Calling create_motorista_after_signup RPC',data:{userId:authData.user.id,cpf:cpfValidation.cleaned,placa:data.placa},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       const { data: motoristaResult, error: motoristaError } = await supabase.rpc('create_motorista_after_signup', {
         p_user_id: authData.user.id,
         p_cpf: cpfValidation.cleaned!,
@@ -1123,9 +979,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         p_placa: data.placa.toUpperCase().replace(/\s/g, ''),
         p_status: 'aguardando_aprovacao',
       })
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:668',message:'create_motorista_after_signup RPC result',data:{hasResult:!!motoristaResult,hasError:!!motoristaError,error:motoristaError?.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
 
       if (motoristaError) {
         console.error('❌ [signUpMotorista] Erro ao criar motorista via função:', {
@@ -1197,15 +1050,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       }
 
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:738',message:'Driver signup completed successfully',data:{userId:authData.user.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       console.log('✅ [signUpMotorista] Cadastro concluído com sucesso!')
       return { success: true }
     } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:741',message:'Driver signup exception',data:{error:error instanceof Error?error.message:'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       const errorMessage = handleError(error)
       return { success: false, error: errorMessage.message }
     }
@@ -1432,16 +1279,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Armazenar referência para uso no debounce
     checkSessionRef.current = checkSession
     
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1393',message:'checkSession called',data:{currentUserId:currentUserRef.current?.id,hasProfile:!!currentProfileRef.current,hasMotorista:!!currentMotoristaRef.current,isLoadingProfile,isCheckingSession:isCheckingSessionRef.current,stackTrace:new Error().stack?.split('\n').slice(0,5).join('|')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
     
     // CRÍTICO: Prevenir múltiplas chamadas simultâneas usando ref (síncrono, sempre atualizado)
     if (isCheckingSessionRef.current) {
       console.log('⚠️ [checkSession] Já verificando sessão, ignorando chamada duplicada...')
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1400',message:'checkSession skipped (already checking)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       return
     }
     
@@ -1452,9 +1293,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Isso previne múltiplas chamadas simultâneas e recarregamentos desnecessários
       if (isLoadingProfile) {
         console.log('⚠️ [checkSession] Já carregando perfil, ignorando...')
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1408',message:'checkSession skipped (already loading)',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         isCheckingSessionRef.current = false
         return
       }
@@ -1471,9 +1309,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             userId: currentUserRef.current.id,
             tipo: currentProfileRef.current.tipo 
           })
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1418',message:'checkSession skipped (profile already loaded)',data:{userId:currentUserRef.current.id,tipo:currentProfileRef.current.tipo,hasMotorista:!!currentMotoristaRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-        // #endregion
         setLoading(false)
         setInitialized(true)
         isCheckingSessionRef.current = false
@@ -1505,9 +1340,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (currentUserRef.current?.id === userId && currentProfileRef.current && 
             (currentProfileRef.current.tipo === 'motorista' ? currentMotoristaRef.current : true)) {
           console.log('✅ [checkSession] Perfil já carregado, ignorando recarregamento', { userId })
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1047',message:'checkSession skipping reload (already loaded)',data:{userId,hasMotorista:!!currentMotoristaRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-          // #endregion
           setUser(session.user)
           currentUserRef.current = session.user
           setLoading(false)
@@ -1519,9 +1351,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Verificar se já estamos processando este userId
         if (processingUserIdsRef.current.has(userId)) {
           console.log('⚠️ [checkSession] Já processando este userId, ignorando...', userId)
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1480',message:'checkSession skipping (userId already processing)',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
-          // #endregion
           setLoading(false)
           setInitialized(true)
           isCheckingSessionRef.current = false
@@ -1579,9 +1408,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔵 [AuthContext] Auth state changed:', event)
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1088',message:'Auth state change event',data:{event,hasSession:!!session,userId:session?.user?.id,currentUserId:currentUserRef.current?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-      // #endregion
       
       // Tratar eventos INITIAL_SESSION com debounce
       if (event === 'INITIAL_SESSION') {
@@ -1604,9 +1430,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Verificar se já temos este usuário carregado (usando refs para valores atuais)
         if (currentUserRef.current?.id === userId && currentProfileRef.current) {
           console.log('✅ [AuthContext] Usuário já carregado, ignorando SIGNED_IN duplicado')
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1099',message:'Skipping duplicate SIGNED_IN (user already loaded)',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-          // #endregion
           setLoading(false)
           setInitialized(true)
           return
@@ -1615,9 +1438,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Verificar se já estamos processando este userId específico
         if (processingUserIdsRef.current.has(userId)) {
           console.log('⚠️ [AuthContext] Já processando SIGNED_IN para este userId, ignorando...', userId)
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1108',message:'Skipping duplicate SIGNED_IN (userId already processing)',data:{userId,processingIds:Array.from(processingUserIdsRef.current)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-          // #endregion
           return
         }
 
@@ -1625,17 +1445,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         processingUserIdsRef.current.add(userId)
         processingAuthEventRef.current = true
         console.log('🔵 [AuthContext] Usuário autenticado, carregando perfil...', userId)
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1114',message:'Processing SIGNED_IN event, loading profile',data:{userId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-        // #endregion
         setUser(session.user)
         currentUserRef.current = session.user // Atualizar ref também
         try {
           await loadUserProfileInternal(userId)
           console.log('✅ [AuthContext] Perfil carregado após SIGNED_IN')
-          // #region agent log
-          fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1118',message:'Profile loaded after SIGNED_IN',data:{userId,hasMotorista:!!currentMotoristaRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-          // #endregion
         } catch (error) {
           console.error('❌ [AuthContext] Erro ao carregar perfil após SIGNED_IN:', error)
           // Continuar mesmo com erro
@@ -1655,9 +1469,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       } else if (event === 'SIGNED_OUT') {
         console.log('🔵 [AuthContext] Usuário deslogado')
         processingAuthEventRef.current = true
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'AuthContext.tsx:1130',message:'SIGNED_OUT event, clearing all state',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
-        // #endregion
         setUser(null)
         currentUserRef.current = null // Limpar ref também
         setProfile(null)

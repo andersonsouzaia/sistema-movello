@@ -45,9 +45,6 @@ export default function Login() {
     if (user && userType) {
       // Verificar se email está confirmado
       if (!user.email_confirmed_at) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:46',message:'Email not confirmed, redirecting to verification',data:{userType},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-        // #endregion
         navigate('/confirmar-email', { replace: true })
         return
       }
@@ -55,9 +52,6 @@ export default function Login() {
       const from = (location.state as { from?: { pathname: string } })?.from?.pathname
       const redirectPath = from || `/${userType}/dashboard`
       console.log('✅ [Login] Redirecionando após login:', { userType, redirectPath })
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:52',message:'Redirecting after login',data:{userType,redirectPath,emailConfirmed:!!user.email_confirmed_at},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       navigate(redirectPath, { replace: true })
     } else if (user && !userType) {
       // Se tem user mas não tem userType ainda, aguardar com timeout de 10 segundos
@@ -66,9 +60,6 @@ export default function Login() {
       // Timeout de 10 segundos para evitar espera infinita
       const timeoutId = setTimeout(() => {
         console.warn('⚠️ [Login] Timeout aguardando userType após 10 segundos')
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:63',message:'userType timeout after login',data:{userId:user.id,hasEmailConfirmed:!!user.email_confirmed_at},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
-        // #endregion
         console.warn('⚠️ [Login] userType não carregado após 10 segundos')
         // Se email não confirmado, redirecionar para confirmação
         if (!user.email_confirmed_at) {
@@ -108,19 +99,10 @@ export default function Login() {
     setTimeRemaining(null)
 
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:69',message:'Login form submitted',data:{email:data.email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       const result = await signIn(data.email, data.senha)
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:76',message:'signIn result received',data:{success:result.success,error:result.error,blocked:result.blocked},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
 
       if (result.success) {
         toast.success('Login realizado com sucesso!')
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'Login.tsx:95',message:'Login successful, waiting for userType',data:{currentUserType:userType},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         
         // O redirecionamento será feito pelo useEffect que observa userType
         // Não precisa mais de polling - useEffect já observa mudanças reativas

@@ -135,9 +135,6 @@ export default function CadastroMotorista() {
     setError(null)
 
     try {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:133',message:'Driver signup form submitted',data:{email:data.email,cpf:data.cpf,nome:data.nome},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       console.log('🔵 [CadastroMotorista] Enviando dados do formulário:', {
         email: data.email,
         cpf: data.cpf,
@@ -152,33 +149,18 @@ export default function CadastroMotorista() {
         placa: cleanPlaca(data.placa),
       }
       
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:152',message:'Calling signUpMotorista',data:{cleanedCPF:dadosParaEnvio.cpf,cleanedPhone:dadosParaEnvio.telefone,cleanedPlaca:dadosParaEnvio.placa},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       const result = await signUpMotorista(dadosParaEnvio)
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:154',message:'signUpMotorista result received',data:{success:result.success,error:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       console.log('🔵 [CadastroMotorista] Resultado do signUpMotorista:', result)
 
       if (result.success) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:157',message:'Driver signup successful, navigating to email verification',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         console.log('✅ [CadastroMotorista] Cadastro bem-sucedido, redirecionando...')
         toast.success('Cadastro realizado com sucesso! Verifique seu email.')
         navigate('/confirmar-email', { replace: true })
       } else {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:162',message:'Driver signup failed',data:{error:result.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         console.error('❌ [CadastroMotorista] Erro no cadastro:', result.error)
         setError(result.error || 'Erro ao realizar cadastro')
       }
     } catch (err) {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/30e3f810-e32f-4652-aa52-6ee6d50e3d85',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CadastroMotorista.tsx:167',message:'Driver signup exception',data:{error:err instanceof Error?err.message:'Unknown error'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       console.error('❌ [CadastroMotorista] Erro catch no onSubmit:', err)
       setError('Erro inesperado. Tente novamente.')
     } finally {

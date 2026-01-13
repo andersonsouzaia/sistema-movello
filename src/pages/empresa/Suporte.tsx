@@ -353,12 +353,8 @@ function TicketDetails({ ticketId, onClose }: { ticketId: string; onClose: () =>
         <p className="text-muted-foreground">Ticket não encontrado</p>
       </div>
     )
-  }
-
-  const status = statusConfig[ticket.status] || { label: ticket.status, variant: 'secondary' as const }
-  const prioridade = prioridadeConfig[ticket.prioridade] || { label: ticket.prioridade, variant: 'secondary' as const }
-
-  return (
+  }  const status = statusConfig[ticket.status] || { label: ticket.status, variant: 'secondary' as const }
+  const prioridade = prioridadeConfig[ticket.prioridade] || { label: ticket.prioridade, variant: 'secondary' as const }  return (
     <div className="space-y-6">
       {/* Informações do Ticket */}
       <Card>
@@ -390,9 +386,7 @@ function TicketDetails({ ticketId, onClose }: { ticketId: string; onClose: () =>
             )}
           </div>
         </CardContent>
-      </Card>
-
-      {/* Comentários */}
+      </Card>      {/* Comentários */}
       <TicketComments
         comments={comments || []}
         loading={loadingComments}
