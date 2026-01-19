@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { Eye, Edit, Pause, Play, AlertCircle, Calendar, DollarSign } from 'lucide-react'
+import { Eye, Edit, Pause, Play, AlertCircle, Calendar, DollarSign, Trash2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '@/lib/utils/formatters'
 import { cn } from '@/lib/utils'
 import type { CampanhaWithEmpresa, CampanhaStatus } from '@/types/database'
@@ -16,6 +16,7 @@ const statusConfig: Record<CampanhaStatus, { label: string; variant: 'default' |
   pausada: { label: 'Pausada', variant: 'secondary' },
   finalizada: { label: 'Finalizada', variant: 'secondary' },
   cancelada: { label: 'Cancelada', variant: 'destructive' },
+  rascunho: { label: 'Rascunho', variant: 'secondary' },
 }
 
 interface CampanhaCardProps {
@@ -24,6 +25,7 @@ interface CampanhaCardProps {
   onEdit?: (id: string) => void
   onPause?: (id: string) => void
   onActivate?: (id: string) => void
+  onDelete?: (id: string) => void
   className?: string
 }
 
@@ -33,10 +35,11 @@ export function CampanhaCard({
   onEdit,
   onPause,
   onActivate,
+  onDelete,
   className,
 }: CampanhaCardProps) {
   const navigate = useNavigate()
-  const status = statusConfig[campanha.status]
+  const status = statusConfig[campanha.status] || { label: 'Desconhecido', variant: 'secondary' }
   const progressoOrcamento = campanha.orcamento > 0
     ? Math.min((campanha.orcamento_utilizado / campanha.orcamento) * 100, 100)
     : 0
@@ -54,7 +57,15 @@ export function CampanhaCard({
       "card-premium hover:shadow-xl transition-all duration-300 cursor-pointer group",
       className
     )}
-    onClick={() => onView ? onView(campanha.id) : navigate(`/empresa/campanhas/${campanha.id}`)}
+      onClick={() => {
+        if (onView) {
+          onView(campanha.id)
+        } else if (isRascunho) {
+          navigate(`/empresa/campanhas/nova?id=${campanha.id}`)
+        } else {
+          navigate(`/empresa/campanhas/${campanha.id}`)
+        }
+      }}
     >
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
@@ -94,7 +105,7 @@ export function CampanhaCard({
             </div>
             <p className="font-semibold text-base">{formatCurrency(campanha.orcamento)}</p>
           </div>
-          
+
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Utilizado</span>
@@ -102,8 +113,8 @@ export function CampanhaCard({
                 {formatCurrency(campanha.orcamento_utilizado || 0)} ({progressoOrcamento.toFixed(1)}%)
               </span>
             </div>
-            <Progress 
-              value={progressoOrcamento} 
+            <Progress
+              value={progressoOrcamento}
               className={cn(
                 "h-2",
                 progressoOrcamento > 80 ? "bg-destructive" : progressoOrcamento > 50 ? "bg-yellow-500" : ""
@@ -143,13 +154,28 @@ export function CampanhaCard({
         {/* Ações */}
         <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
           <Button
-            variant="outline"
+            variant={isRascunho ? "default" : "outline"}
             size="sm"
             className="flex-1"
-            onClick={() => onView ? onView(campanha.id) : navigate(`/empresa/campanhas/${campanha.id}`)}
+            onClick={() => {
+              if (isRascunho) {
+                navigate(`/empresa/campanhas/nova?id=${campanha.id}`)
+              } else {
+                onView ? onView(campanha.id) : navigate(`/empresa/campanhas/${campanha.id}`)
+              }
+            }}
           >
-            <Eye className="h-4 w-4 mr-1" />
-            Ver
+            {isRascunho ? (
+              <>
+                <Edit className="h-4 w-4 mr-1" />
+                Configurar
+              </>
+            ) : (
+              <>
+                <Eye className="h-4 w-4 mr-1" />
+                Ver
+              </>
+            )}
           </Button>
           {isRascunho && !temSaldoInsuficiente && onActivate && (
             <Button

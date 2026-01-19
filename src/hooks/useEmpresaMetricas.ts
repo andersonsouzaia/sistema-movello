@@ -1,19 +1,6 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
 import { empresaMetricasService } from '@/services/empresaMetricasService'
-import type {
-  CampanhaMetricasConsolidadas,
-  MetricaDiaria,
-} from '@/types/database'
-
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutos
-
-const metricasCache: {
-  [key: string]: {
-    data: any
-    timestamp: number
-  }
-} = {}
 
 /**
  * Hook para obter métricas consolidadas de uma campanha
@@ -22,71 +9,26 @@ export const useCampanhaMetricas = (
   campanhaId: string | null,
   periodo?: { inicio: string; fim: string }
 ) => {
-  const [metricas, setMetricas] = useState<CampanhaMetricasConsolidadas | null>(
-    null
-  )
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const isFetchingRef = useRef(false)
-
   const periodoInicio = periodo?.inicio
   const periodoFim = periodo?.fim
 
-  const fetchMetricas = useCallback(async () => {
-    if (!campanhaId || isFetchingRef.current) return
+  const { data: metricas = null, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['campanha-metricas', campanhaId, periodoInicio, periodoFim],
+    queryFn: () => {
+      if (!campanhaId) return null
+      return empresaMetricasService.getCampanhaMetricas(campanhaId, periodo)
+    },
+    enabled: !!campanhaId,
+    staleTime: 5 * 60 * 1000,
+  })
 
-    const cacheKey = `campanha_${campanhaId}_${periodoInicio || 'all'}_${periodoFim || 'all'}`
-    const cached = metricasCache[cacheKey]
-
-    // Verificar cache
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      setMetricas(cached.data)
-      setLoading(false)
-      return
-    }
-
-    try {
-      isFetchingRef.current = true
-      setLoading(true)
-      setError(null)
-
-      const data = await empresaMetricasService.getCampanhaMetricas(
-        campanhaId,
-        periodo
-      )
-
-      setMetricas(data)
-
-      // Atualizar cache
-      metricasCache[cacheKey] = {
-        data,
-        timestamp: Date.now(),
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Erro ao buscar métricas'
-      setError(errorMessage)
-      console.error('Erro ao buscar métricas:', err)
-    } finally {
-      setLoading(false)
-      isFetchingRef.current = false
-    }
-  }, [campanhaId, periodoInicio, periodoFim])
-
-  useEffect(() => {
-    if (campanhaId) {
-      fetchMetricas()
-    } else {
-      setLoading(false)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [campanhaId, periodoInicio, periodoFim])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar métricas' : null
 
   return {
     metricas,
-    loading,
+    loading: loading && !!campanhaId,
     error,
-    refetch: fetchMetricas,
+    refetch,
   }
 }
 
@@ -97,44 +39,21 @@ export const useCampanhaMetricasDiarias = (
   campanhaId: string | null,
   dias: number = 30
 ) => {
-  const [metricas, setMetricas] = useState<MetricaDiaria[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: metricas = [], isLoading: loading, error: queryError } = useQuery({
+    queryKey: ['campanha-metricas-diarias', campanhaId, dias],
+    queryFn: () => {
+      if (!campanhaId) return []
+      return empresaMetricasService.getMetricasDiarias(campanhaId, dias)
+    },
+    enabled: !!campanhaId,
+    staleTime: 5 * 60 * 1000,
+  })
 
-  useEffect(() => {
-    const fetchMetricas = async () => {
-      if (!campanhaId) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        setLoading(true)
-        setError(null)
-
-        const data = await empresaMetricasService.getMetricasDiarias(
-          campanhaId,
-          dias
-        )
-
-        setMetricas(data)
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Erro ao buscar métricas diárias'
-        setError(errorMessage)
-        console.error('Erro ao buscar métricas diárias:', err)
-        setMetricas([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchMetricas()
-  }, [campanhaId, dias])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar métricas diárias' : null
 
   return {
     metricas,
-    loading,
+    loading: loading && !!campanhaId,
     error,
   }
 }
@@ -144,68 +63,24 @@ export const useCampanhaMetricasDiarias = (
  */
 export const useEmpresaMetricasDiarias = (dias: number = 30) => {
   const { empresa } = useAuth()
-  const [metricas, setMetricas] = useState<MetricaDiaria[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const isFetchingRef = useRef(false)
 
-  const empresaId = empresa?.id
+  const { data: metricas = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['empresa-metricas-diarias', empresa?.id, dias],
+    queryFn: () => {
+      if (!empresa?.id) return []
+      return empresaMetricasService.getEmpresaMetricasDiarias(dias)
+    },
+    enabled: !!empresa?.id,
+    staleTime: 5 * 60 * 1000,
+  })
 
-  const fetchMetricas = useCallback(async () => {
-    if (!empresaId || isFetchingRef.current) return
-
-    const cacheKey = `empresa_diarias_${empresaId}_${dias}`
-    const cached = metricasCache[cacheKey]
-
-    // Verificar cache
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      setMetricas(cached.data)
-      setLoading(false)
-      return
-    }
-
-    try {
-      isFetchingRef.current = true
-      setLoading(true)
-      setError(null)
-
-      const data = await empresaMetricasService.getEmpresaMetricasDiarias(dias)
-
-      setMetricas(data)
-
-      // Atualizar cache
-      metricasCache[cacheKey] = {
-        data,
-        timestamp: Date.now(),
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Erro ao buscar métricas diárias'
-      setError(errorMessage)
-      console.error('Erro ao buscar métricas diárias:', err)
-      setMetricas([])
-    } finally {
-      setLoading(false)
-      isFetchingRef.current = false
-    }
-  }, [empresaId, dias])
-
-  useEffect(() => {
-    if (empresaId) {
-      fetchMetricas()
-    } else {
-      setLoading(false)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [empresaId, dias])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar métricas diárias' : null
 
   return {
     metricas,
-    loading,
+    loading: loading && !!empresa?.id,
     error,
-    refetch: fetchMetricas,
+    refetch,
   }
 }
 
@@ -214,89 +89,24 @@ export const useEmpresaMetricasDiarias = (dias: number = 30) => {
  */
 export const useEmpresaMetricasConsolidadas = () => {
   const { empresa } = useAuth()
-  const [metricas, setMetricas] = useState<{
-    periodo_atual: CampanhaMetricasConsolidadas
-    periodo_anterior: Partial<CampanhaMetricasConsolidadas>
-    tendencias: {
-      visualizacoes_crescimento: number
-      gasto_crescimento: number
-      cliques_crescimento: number
-      conversoes_crescimento: number
-    }
-  } | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const isFetchingRef = useRef(false)
 
-  const empresaId = empresa?.id
+  const { data: metricas = null, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['empresa-metricas-consolidadas', empresa?.id],
+    queryFn: () => {
+      if (!empresa?.id) return null
+      return empresaMetricasService.getEmpresaMetricasConsolidadas()
+    },
+    enabled: !!empresa?.id,
+    staleTime: 5 * 60 * 1000,
+  })
 
-  const fetchMetricas = useCallback(async () => {
-    if (!empresaId || isFetchingRef.current) return
-
-    const cacheKey = `empresa_consolidadas_${empresaId}`
-    const cached = metricasCache[cacheKey]
-
-    // Verificar cache
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-      setMetricas(cached.data)
-      setLoading(false)
-      return
-    }
-
-    try {
-      isFetchingRef.current = true
-      setLoading(true)
-      setError(null)
-
-      const data =
-        await empresaMetricasService.getEmpresaMetricasConsolidadas()
-
-      setMetricas(data)
-
-      // Atualizar cache
-      metricasCache[cacheKey] = {
-        data,
-        timestamp: Date.now(),
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'Erro ao buscar métricas consolidadas'
-      setError(errorMessage)
-      console.error('Erro ao buscar métricas consolidadas:', err)
-    } finally {
-      setLoading(false)
-      isFetchingRef.current = false
-    }
-  }, [empresaId])
-
-  useEffect(() => {
-    if (empresaId) {
-      fetchMetricas()
-    } else {
-      setLoading(false)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [empresaId])
-
-  // Função para invalidar cache
-  const invalidateCache = useCallback(() => {
-    if (!empresaId) return
-    Object.keys(metricasCache).forEach((key) => {
-      if (key.includes(`empresa_consolidadas_${empresaId}`)) {
-        delete metricasCache[key]
-      }
-    })
-    fetchMetricas()
-  }, [empresaId, fetchMetricas])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar métricas consolidadas' : null
 
   return {
     metricas,
-    loading,
+    loading: loading && !!empresa?.id,
     error,
-    refetch: fetchMetricas,
-    invalidateCache,
+    refetch,
+    invalidateCache: refetch, // Compatibilidade
   }
 }
-

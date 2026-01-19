@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -11,6 +11,8 @@ export interface EmpresaPagamento {
   status: string
   criado_em: string
   processado_em: string | null
+  descricao?: string
+  tipo?: string
 }
 
 export interface UseEmpresaPagamentosFilters {
@@ -27,66 +29,33 @@ export interface CreatePagamentoData {
  */
 export const useEmpresaPagamentos = (filters: UseEmpresaPagamentosFilters = {}) => {
   const { empresa } = useAuth()
-  const [pagamentos, setPagamentos] = useState<EmpresaPagamento[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const filtersRef = useRef<string>('')
-  const isFetchingRef = useRef(false)
-  const hasInitializedRef = useRef(false)
 
   const stableFilters = filters.status || null
 
-  const fetchPagamentos = useCallback(async () => {
-    if (isFetchingRef.current || !empresa?.id) {
-      if (!empresa?.id) {
-        setLoading(false)
-        setPagamentos([])
-      }
-      return
-    }
-
-    try {
-      isFetchingRef.current = true
-      setLoading(true)
-      setError(null)
+  const { data: pagamentos = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['empresa-pagamentos', empresa?.id, stableFilters],
+    queryFn: async () => {
+      if (!empresa?.id) return []
 
       const { data, error: rpcError } = await supabase.rpc('get_empresa_pagamentos', {
         p_empresa_id: empresa.id,
         p_status: stableFilters,
       })
 
-      if (rpcError) {
-        throw rpcError
-      }
+      if (rpcError) throw rpcError
+      return (data || []) as EmpresaPagamento[]
+    },
+    enabled: !!empresa?.id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
 
-      setPagamentos((data || []) as EmpresaPagamento[])
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar pagamentos'
-      setError(errorMessage)
-      console.error('Erro ao buscar pagamentos:', err)
-      setPagamentos([])
-    } finally {
-      setLoading(false)
-      isFetchingRef.current = false
-    }
-  }, [empresa?.id, stableFilters])
-
-  useEffect(() => {
-    const filtersKey = JSON.stringify(stableFilters)
-    const filtersChanged = filtersRef.current !== filtersKey
-
-    if (!hasInitializedRef.current || filtersChanged) {
-      hasInitializedRef.current = true
-      filtersRef.current = filtersKey
-      fetchPagamentos()
-    }
-  }, [stableFilters, fetchPagamentos])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar pagamentos' : null
 
   return {
     pagamentos,
-    loading,
+    loading: loading && !!empresa?.id,
     error,
-    refetch: fetchPagamentos,
+    refetch,
   }
 }
 
@@ -95,23 +64,13 @@ export const useEmpresaPagamentos = (filters: UseEmpresaPagamentosFilters = {}) 
  */
 export const useCreatePagamento = () => {
   const { empresa } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  const createPagamento = useCallback(async (data: CreatePagamentoData) => {
-    if (!empresa?.id) {
-      throw new Error('Empresa não encontrada')
-    }
+  const { mutateAsync: createPagamento, isPending: loading, error: queryError } = useMutation({
+    mutationFn: async (data: CreatePagamentoData) => {
+      if (!empresa?.id) throw new Error('Empresa não encontrada')
+      if (data.valor < 50.00) throw new Error('Valor mínimo é R$ 50,00')
 
-    // Validar valor mínimo
-    if (data.valor < 50.00) {
-      throw new Error('Valor mínimo é R$ 50,00')
-    }
-
-    setLoading(true)
-    setError(null)
-
-    try {
       const { data: pagamentoData, error: insertError } = await supabase
         .from('pagamentos')
         .insert({
@@ -124,21 +83,21 @@ export const useCreatePagamento = () => {
         .select()
         .single()
 
-      if (insertError) {
-        throw insertError
-      }
-
-      toast.success('Pagamento criado com sucesso!')
+      if (insertError) throw insertError
       return pagamentoData as EmpresaPagamento
-    } catch (err) {
+    },
+    onSuccess: () => {
+      toast.success('Pagamento criado com sucesso!')
+      queryClient.invalidateQueries({ queryKey: ['empresa-pagamentos'] })
+      queryClient.invalidateQueries({ queryKey: ['empresa-stats'] })
+    },
+    onError: (err) => {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao criar pagamento'
-      setError(errorMessage)
       toast.error(errorMessage)
-      throw err
-    } finally {
-      setLoading(false)
     }
-  }, [empresa?.id])
+  })
+
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao criar pagamento' : null
 
   return {
     createPagamento,

@@ -29,6 +29,7 @@ const statusConfig: Record<CampanhaStatus, { label: string; variant: 'default' |
   pausada: { label: 'Pausada', variant: 'secondary' },
   finalizada: { label: 'Finalizada', variant: 'secondary' },
   cancelada: { label: 'Cancelada', variant: 'destructive' },
+  rascunho: { label: 'Rascunho', variant: 'secondary' },
 }
 
 export default function AdminCampanhas() {
@@ -42,7 +43,7 @@ export default function AdminCampanhas() {
   const [confirmPause, setConfirmPause] = useState<string | null>(null)
   const [confirmActivate, setConfirmActivate] = useState<string | null>(null)
 
-  const { campanhas, loading, error, refetch } = useCampanhas(filters)
+  const { campanhas, loading, error, refetch, page, setPage, totalPages, totalRecords } = useCampanhas(filters)
 
   const handleApprove = async (id: string) => {
     if (!user?.id) return
@@ -135,9 +136,9 @@ export default function AdminCampanhas() {
       header: 'Ações',
       render: (row) => (
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => navigate(`/admin/campanhas/${row.id}`)}
             className="w-full sm:w-auto"
           >
@@ -145,9 +146,9 @@ export default function AdminCampanhas() {
           </Button>
           {row.status === 'em_analise' && (
             <>
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => handleApprove(row.id)}
                 className="w-full sm:w-auto"
               >
@@ -167,9 +168,9 @@ export default function AdminCampanhas() {
             </>
           )}
           {row.status === 'aprovada' && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => handleActivate(row.id)}
               className="w-full sm:w-auto"
             >
@@ -177,9 +178,9 @@ export default function AdminCampanhas() {
             </Button>
           )}
           {(row.status === 'ativa' || row.status === 'aprovada') && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => handlePause(row.id)}
               className="w-full sm:w-auto"
             >
@@ -323,6 +324,10 @@ export default function AdminCampanhas() {
                 loading={loading}
                 searchKeys={['titulo', 'descricao']}
                 searchPlaceholder="Buscar campanhas..."
+                manualPagination={true}
+                pageCount={totalPages}
+                rowCount={totalRecords}
+                onPageChange={setPage}
               />
             </motion.div>
           </div>

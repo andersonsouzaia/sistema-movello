@@ -44,8 +44,36 @@ export const ProtectedRoute = ({
       )
     }
     // Se não está carregando mas não tem profile, pode ser erro
-    // Redirecionar para login após um delay
-    return <Navigate to="/login" state={{ from: location }} replace />
+    // Em vez de redirecionar imediatamente (que causa loop), mostrar erro e opção de retry
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
+        <div className="bg-destructive/10 p-4 rounded-full mb-4">
+          <Spinner className="h-8 w-8 text-destructive" />
+        </div>
+        <h1 className="text-xl font-bold mb-2">Erro ao carregar perfil</h1>
+        <p className="text-muted-foreground mb-6 max-w-md">
+          Não foi possível carregar seus dados de perfil. Isso pode ocorrer por falha de conexão.
+        </p>
+        <div className="flex gap-4">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Tentar Novamente
+          </button>
+          <button
+            onClick={() => {
+              // Forçar logout limpo
+              localStorage.clear()
+              window.location.href = '/login'
+            }}
+            className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"
+          >
+            Voltar para Login
+          </button>
+        </div>
+      </div>
+    )
   }
 
   // Verificar se email está confirmado

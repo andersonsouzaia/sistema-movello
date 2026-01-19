@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { TrendingUp, TrendingDown, Minus, Target, DollarSign, MousePointerClick, Eye, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatCurrency } from '@/lib/utils/formatters'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, AreaChart, Area } from 'recharts'
 import type { CampanhaMetricasConsolidadas, MetricaDiaria, KPIsMeta } from '@/types/database'
 
 interface CampanhaMetricasProps {
@@ -226,28 +226,65 @@ export function CampanhaMetricas({
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="data" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Legend />
-                  <Line
-                    yAxisId="left"
-                    type="monotone"
-                    dataKey="visualizacoes"
-                    stroke="#8884d8"
-                    name="Visualizações"
-                  />
-                  <Line
-                    yAxisId="right"
-                    type="monotone"
-                    dataKey="gasto"
-                    stroke="#82ca9d"
-                    name="Gasto (R$)"
-                  />
-                </LineChart>
+                <div className="w-full h-full">
+                  <defs>
+                    <linearGradient id="colorVisualizacoes" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorGasto" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#82ca9d" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <AreaChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                    <XAxis
+                      dataKey="data"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#6B7280', fontSize: 12 }}
+                      dy={10}
+                    />
+                    <YAxis
+                      yAxisId="left"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#6B7280', fontSize: 12 }}
+                    />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: '#6B7280', fontSize: 12 }}
+                    />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                    />
+                    <Legend />
+                    <Area
+                      yAxisId="left"
+                      type="monotone"
+                      dataKey="visualizacoes"
+                      stroke="#8884d8"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorVisualizacoes)"
+                      name="Visualizações"
+                    />
+                    <Area
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="gasto"
+                      stroke="#82ca9d"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#colorGasto)"
+                      name="Gasto (R$)"
+                    />
+                  </AreaChart>
+                </div>
               </ResponsiveContainer>
             </CardContent>
           </Card>

@@ -42,9 +42,13 @@ interface AuthContextType {
   updatePassword: (token: string, newPassword: string) => Promise<{ success: boolean; error?: string }>
   verifyEmail: (code: string) => Promise<{ success: boolean; error?: string }>
   resendVerificationCode: () => Promise<{ success: boolean; error?: string }>
-  refreshUser: () => Promise<void>
+  refreshUser: (options?: { force?: boolean }) => Promise<void>
   checkSession: () => Promise<void>
   checkPermission: (permissionSlug: string) => boolean
+}
+
+interface LoadUserProfileOptions {
+  force?: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -75,15 +79,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const currentProfileRef = useRef<User | null>(null) // Ref para acessar profile atual no callback
   const currentMotoristaRef = useRef<Motorista | null>(null) // Ref para acessar motorista atual
   const isCheckingSessionRef = useRef(false) // Ref para prevenir múltiplas chamadas simultâneas de checkSession
-  
+
   // Debounce e Queue para melhorar performance
   const checkSessionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const initialSessionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const lastInitialSessionTimeRef = useRef<number>(0)
-  const loadProfileQueueRef = useRef<Array<{ userId: string; resolve: () => void; reject: (error: any) => void }>>([])
+  const loadProfileQueueRef = useRef<Array<{ userId: string; options?: LoadUserProfileOptions; resolve: () => void; reject: (error: any) => void }>>([])
   const isProcessingQueueRef = useRef(false)
   const loadProfileRetryCountRef = useRef<Map<string, number>>(new Map())
-  
+
   const navigate = useNavigate()
 
   // ============================================
@@ -105,40 +109,50 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }, 300)
   }
 
-  // Debounce para eventos INITIAL_SESSION (1000ms - aumentado para reduzir recarregamentos)
+  // Debounce para eventos INITIAL_SESSION
   const debouncedHandleInitialSession = (session: Session | null) => {
+    // Se não houver sessão, carrega imediatamente
+    if (!session?.user) {
+      setUser(null)
+      setLoading(false)
+      setInitialized(true)
+      return
+    }
+
     const now = Date.now()
     const timeSinceLastEvent = now - lastInitialSessionTimeRef.current
-    
-    
-    // Se passou menos de 1000ms desde o último evento, ignorar (aumentado de 500ms)
-    if (timeSinceLastEvent < 1000) {
+
+
+    // Se passou menos de 100ms desde o último evento, ignorar
+    if (timeSinceLastEvent < 100) {
       console.log('⚠️ [AuthContext] INITIAL_SESSION ignorado (muito recente)', { timeSinceLastEvent })
       return
     }
-    
+
     // Verificar ANTES de agendar timeout se já está carregado
     if (session?.user) {
       const userId = session.user.id
       if (currentUserRef.current?.id === userId && currentProfileRef.current) {
-        const hasSpecificProfile = 
+        const hasSpecificProfile =
           (currentProfileRef.current.tipo === 'motorista' && currentMotoristaRef.current) ||
           (currentProfileRef.current.tipo === 'empresa' && empresa) ||
           (currentProfileRef.current.tipo === 'admin' && admin)
-        
+
         if (hasSpecificProfile) {
           console.log('✅ [AuthContext] INITIAL_SESSION ignorado (já carregado)', { userId })
+          setLoading(false)
+          setInitialized(true)
           return
         }
       }
     }
-    
+
     lastInitialSessionTimeRef.current = now
-    
+
     if (initialSessionTimeoutRef.current) {
       clearTimeout(initialSessionTimeoutRef.current)
     }
-    
+
     initialSessionTimeoutRef.current = setTimeout(() => {
       if (session?.user) {
         const userId = session.user.id
@@ -148,45 +162,57 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           return
         }
         if (currentUserRef.current?.id === userId && currentProfileRef.current) {
-          const hasSpecificProfile = 
+          const hasSpecificProfile =
             (currentProfileRef.current.tipo === 'motorista' && currentMotoristaRef.current) ||
             (currentProfileRef.current.tipo === 'empresa' && empresa) ||
             (currentProfileRef.current.tipo === 'admin' && admin)
-          
+
           if (hasSpecificProfile) {
             console.log('✅ [AuthContext] INITIAL_SESSION ignorado (já carregado)', { userId })
+            setLoading(false)
+            setInitialized(true)
             return
           }
         }
         // Processar sessão inicial
         setUser(session.user)
         currentUserRef.current = session.user
-        loadUserProfile(userId).catch((error) => {
-          console.error('❌ [AuthContext] Erro ao carregar perfil em INITIAL_SESSION:', error)
-        })
+        loadUserProfile(userId)
+          .catch((error) => {
+            console.error('❌ [AuthContext] Erro ao carregar perfil em INITIAL_SESSION:', error)
+          })
+          .finally(() => {
+            setLoading(false)
+            setInitialized(true)
+          })
+      } else {
+        setLoading(false)
+        setInitialized(true)
       }
-    }, 1000) // Aumentado de 500ms para 1000ms
+    }, 100) // Reduzido de 1000ms para 100ms para melhorar percepção de performance
   }
 
   // Queue para loadUserProfile (processa uma por vez)
-  const queueLoadUserProfile = async (userId: string): Promise<void> => {
+  const queueLoadUserProfile = async (userId: string, options?: LoadUserProfileOptions): Promise<void> => {
     return new Promise((resolve, reject) => {
-      // Verificar se já está na fila
-      const alreadyInQueue = loadProfileQueueRef.current.some(item => item.userId === userId)
-      if (alreadyInQueue) {
-        console.log('⚠️ [loadUserProfile] Já na fila, aguardando...', { userId })
-        // Aguardar o item existente na fila
-        const existingItem = loadProfileQueueRef.current.find(item => item.userId === userId)
-        if (existingItem) {
-          existingItem.resolve = resolve
-          existingItem.reject = reject
+      // Verificar se já está na fila (apenas se não for forçado)
+      if (!options?.force) {
+        const alreadyInQueue = loadProfileQueueRef.current.some(item => item.userId === userId)
+        if (alreadyInQueue) {
+          console.log('⚠️ [loadUserProfile] Já na fila, aguardando...', { userId })
+          // Aguardar o item existente na fila
+          const existingItem = loadProfileQueueRef.current.find(item => item.userId === userId)
+          if (existingItem) {
+            existingItem.resolve = resolve
+            existingItem.reject = reject
+          }
+          return
         }
-        return
       }
 
       // Adicionar à fila
-      loadProfileQueueRef.current.push({ userId, resolve, reject })
-      
+      loadProfileQueueRef.current.push({ userId, options, resolve, reject })
+
       // Processar fila se não estiver processando
       if (!isProcessingQueueRef.current) {
         processLoadProfileQueue()
@@ -206,12 +232,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (!item) break
 
       try {
-        await loadUserProfileInternal(item.userId)
+        await loadUserProfileInternal(item.userId, item.options)
         item.resolve()
       } catch (error) {
         // Retry logic com backoff exponencial
         const retryCount = loadProfileRetryCountRef.current.get(item.userId) || 0
-        if (retryCount < 3) {
+        if (retryCount < 3 && !item.options?.force) { // Não retentar se for forçado (assumimos que o caller trata)
           loadProfileRetryCountRef.current.set(item.userId, retryCount + 1)
           const delay = Math.min(1000 * Math.pow(2, retryCount), 5000) // Max 5s
           console.log(`🔄 [loadUserProfile] Retry ${retryCount + 1}/3 em ${delay}ms`, { userId: item.userId })
@@ -220,7 +246,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             processLoadProfileQueue()
           }, delay)
         } else {
-          console.error('❌ [loadUserProfile] Falhou após 3 tentativas', { userId: item.userId })
+          console.error('❌ [loadUserProfile] Falhou após 3 tentativas ou erro forçado', { userId: item.userId })
           loadProfileRetryCountRef.current.delete(item.userId)
           item.reject(error)
         }
@@ -235,275 +261,219 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // ============================================
 
   // Wrapper público que usa a queue
-  const loadUserProfile = async (userId: string): Promise<void> => {
-    return queueLoadUserProfile(userId)
+  const loadUserProfile = async (userId: string, options?: LoadUserProfileOptions): Promise<void> => {
+    return queueLoadUserProfile(userId, options)
   }
 
-  const loadUserProfileInternal = async (userId: string): Promise<void> => {
-    
-    // Prevenir múltiplas chamadas simultâneas
-    if (isLoadingProfile) {
+  const loadUserProfileInternal = async (userId: string, options?: LoadUserProfileOptions): Promise<void> => {
+
+    // Prevenir múltiplas chamadas simultâneas (exceto se forçado)
+    if (isLoadingProfile && !options?.force) {
       console.log('⚠️ [loadUserProfile] Já está carregando perfil, ignorando chamada duplicada')
       return
     }
 
-    // Se já temos o perfil carregado para este usuário, não recarregar
+    // Se já temos o perfil carregado para este usuário, não recarregar (exceto se forçado)
     // IMPORTANTE: Usar refs em vez de estado para verificação (valores sempre atualizados)
-    // IMPORTANTE: Verificar também se temos o perfil específico carregado (motorista/empresa/admin)
-    if (currentProfileRef.current && currentProfileRef.current.id === userId) {
-      const hasSpecificProfile = 
+    if (!options?.force && currentProfileRef.current && currentProfileRef.current.id === userId) {
+      const hasSpecificProfile =
         (currentProfileRef.current.tipo === 'motorista' && currentMotoristaRef.current) ||
         (currentProfileRef.current.tipo === 'empresa' && empresa) ||
         (currentProfileRef.current.tipo === 'admin' && admin)
-      
+
       if (hasSpecificProfile) {
-        console.log('✅ [loadUserProfile] Perfil completo já carregado para este usuário', { 
+        console.log('✅ [loadUserProfile] Perfil completo já carregado para este usuário', {
           tipo: currentProfileRef.current.tipo,
-          hasSpecificProfile 
         })
         return
       }
     }
 
     setIsLoadingProfile(true)
-    
+
     try {
-      console.log('🔵 [loadUserProfile] Carregando perfil para:', userId)
-      
-      // Buscar perfil base usando função SQL (bypass RLS)
-      const { data: userDataArray, error: userError } = await supabase.rpc('get_user_profile', {
-        p_user_id: userId,
-      })
+      console.log(`🔵 [loadUserProfile] Carregando perfil para: ${userId} (force: ${!!options?.force})`)
 
+      // Variáveis para armazenar resultado
       let userData: User | null = null
+      let finalError: any = null
 
-      if (userError) {
-        console.error('❌ [loadUserProfile] Erro ao buscar user via função:', {
-          code: userError.code,
-          message: userError.message,
-          details: userError.details,
-          hint: userError.hint,
-        })
-        
-        // Fallback: tentar método direto
-        const { data: userDataDirect, error: directError } = await supabase
+      // --- TENTATIVA 1: Direct Select (Mais rápido e padrão) ---
+      try {
+        console.log('🔵 [loadUserProfile] Tentativa 1: Select Direto com Cliente Principal')
+
+        const timeoutPromise = new Promise((_, reject) => {
+          const id = setTimeout(() => {
+            clearTimeout(id);
+            reject(new Error('Select Timeout'));
+          }, 10000);
+        });
+
+        const selectPromise = supabase
           .from('users')
           .select('*')
           .eq('id', userId)
-          .single()
+          .single();
 
-        if (directError) {
-          console.error('❌ [loadUserProfile] Erro ao buscar user (fallback direto):', {
-            code: directError.code,
-            message: directError.message,
-            details: directError.details,
-            hint: directError.hint,
-          })
-          throw directError
+        const { data, error } = await Promise.race([selectPromise, timeoutPromise]) as any;
+
+        if (error) throw error
+        if (data) {
+          userData = data
+          console.log('✅ [loadUserProfile] Sucesso na Tentativa 1 (Select Direto)')
         }
-        
-        if (!userDataDirect) {
-          console.warn('⚠️ [loadUserProfile] UserData não encontrado')
-          return
-        }
-        
-        userData = userDataDirect
-      } else {
-        // A função retorna uma tabela, então pode ser array ou objeto único
-        if (Array.isArray(userDataArray)) {
-          userData = userDataArray.length > 0 ? userDataArray[0] : null
-        } else {
-          userData = userDataArray as User | null
-        }
-        
-        if (!userData) {
-          console.warn('⚠️ [loadUserProfile] UserData não encontrado via função')
-          return
+      } catch (error: any) {
+        console.warn('⚠️ [loadUserProfile] Falha na Tentativa 1 (Select Direto):', error.message)
+        finalError = error
+      }
+
+      // --- TENTATIVA 2: Cliente Global (RPC - Fallback para bypass RLS) ---
+      if (!userData) {
+        try {
+          console.log('🔄 [loadUserProfile] Tentativa 2: RPC com Cliente Global (Fallback)...')
+
+          const timeoutPromise = new Promise((_, reject) => {
+            const id = setTimeout(() => {
+              clearTimeout(id);
+              reject(new Error('RPC Timeout'));
+            }, 10000);
+          });
+
+          const rpcPromise = supabase.rpc('get_user_profile', { p_user_id: userId });
+
+          const { data, error } = await Promise.race([rpcPromise, timeoutPromise]) as any;
+
+          if (error) throw error
+          if (data) {
+            userData = Array.isArray(data) ? (data.length > 0 ? data[0] : null) : data
+            console.log('✅ [loadUserProfile] Sucesso na Tentativa 2 (RPC)')
+          }
+        } catch (error: any) {
+          console.warn('⚠️ [loadUserProfile] Falha na Tentativa 2 (RPC):', error.message)
+          finalError = error
         }
       }
 
-      console.log('✅ [loadUserProfile] UserData encontrado:', { tipo: userData.tipo })
+      // --- PROCESSAMENTO FINAL ---
+      if (!userData) {
+        throw new Error('Perfil de usuário não encontrado após todas as tentativas.')
+      }
+
+      console.log('✅ [loadUserProfile] UserData final:', { tipo: userData.tipo })
       setProfile(userData)
-      currentProfileRef.current = userData // Atualizar ref também
+      currentProfileRef.current = userData
       setUserType(userData.tipo)
 
-      // Carregar roles e permissões
-      try {
-        const { data: userRoles, error: rolesError } = await supabase.rpc('get_user_roles', {
-          p_user_id: userId,
-        })
+      // Start parallel fetching
+      const promises: Promise<any>[] = []
 
-        if (!rolesError && userRoles) {
-          console.log('✅ [loadUserProfile] Roles carregados:', userRoles)
-          setRoles(userRoles)
-          
-          // Buscar permissões
-          const { data: userPermissions, error: permissionsError } = await supabase.rpc('get_user_permissions', {
-            p_user_id: userId,
-          })
+      // 1. Roles and Permissions
+      const fetchRolesAndPermissions = async () => {
+        try {
+          const [rolesResult, permissionsResult] = await Promise.all([
+            supabase.rpc('get_user_roles', { p_user_id: userId }),
+            supabase.rpc('get_user_permissions', { p_user_id: userId })
+          ])
 
-          if (!permissionsError && userPermissions) {
-            const permissionSlugs = userPermissions.map((p: { permission_slug: string }) => p.permission_slug)
-            console.log('✅ [loadUserProfile] Permissões carregadas:', permissionSlugs)
+          if (rolesResult.data) setRoles(rolesResult.data)
+
+          if (permissionsResult.data) {
+            const permissionSlugs = permissionsResult.data.map((p: { permission_slug: string }) => p.permission_slug)
             setPermissions(permissionSlugs)
-          } else if (permissionsError) {
-            console.warn('⚠️ [loadUserProfile] Erro ao buscar permissões:', permissionsError)
           }
-        } else if (rolesError) {
-          console.warn('⚠️ [loadUserProfile] Erro ao buscar roles:', rolesError)
+        } catch (e) {
+          console.warn('⚠️ [loadUserProfile] Erro não-bloqueante ao carregar roles/permissions', e)
         }
-      } catch (rolesError) {
-        console.warn('⚠️ [loadUserProfile] Erro ao carregar roles/permissões:', rolesError)
-        // Continuar mesmo se não conseguir carregar roles
       }
+      promises.push(fetchRolesAndPermissions())
 
-      // Resetar perfis específicos antes de carregar novo tipo
-      // IMPORTANTE: Resetar apenas se o tipo mudou para evitar perda de estado
-      if (userData.tipo === 'empresa') {
-        // Se não é motorista, limpar motorista
-        if (motorista) {
-          setMotorista(null)
-        }
-        // Se não é admin, limpar admin
-        if (admin) {
-          setAdmin(null)
-        }
-        
-        const { data: empresaData, error: empresaError } = await supabase
-          .from('empresas')
-          .select('*')
-          .eq('id', userId)
-          .single()
+      // 2. Specific Profile Data (Empresa/Motorista/Admin)
+      const fetchSpecificProfile = async () => {
+        if (userData!.tipo === 'empresa') {
+          if (motorista) setMotorista(null)
+          if (admin) setAdmin(null)
 
-        if (!empresaError && empresaData) {
-          console.log('✅ [loadUserProfile] Empresa carregada')
-          setEmpresa(empresaData)
-        } else if (empresaError) {
-          console.error('❌ [loadUserProfile] Erro ao buscar empresa:', empresaError)
-          if (empresaError.code === 'PGRST116' || empresaError.message.includes('No rows')) {
-            throw new Error('Dados da empresa não encontrados. Entre em contato com o suporte.')
+          const { data: empresaData, error: empresaError } = await supabase
+            .from('empresas')
+            .select('*')
+            .eq('id', userId)
+            .single()
+
+          if (!empresaError && empresaData) {
+            setEmpresa(empresaData)
           } else {
-            throw new Error(`Erro ao carregar dados da empresa: ${empresaError.message}`)
-          }
-        } else if (!empresaData) {
-          console.error('❌ [loadUserProfile] Dados da empresa não encontrados para userId:', userId)
-          throw new Error('Dados da empresa não encontrados. Entre em contato com o suporte.')
-        }
-      } else if (userData.tipo === 'motorista') {
-        // Se não é empresa, limpar empresa
-        if (empresa) {
-          setEmpresa(null)
-        }
-        // Se não é admin, limpar admin
-        if (admin) {
-          setAdmin(null)
-        }
-        const { data: motoristaData, error: motoristaError } = await supabase
-          .from('motoristas')
-          .select('*')
-          .eq('id', userId)
-          .single()
+            // Fallback using main client retry
+            console.error('❌ [loadUserProfile] Erro ao carregar empresa:', empresaError)
+            const { data: empresaDataRetry, error: empresaErrorRetry } = await supabase
+              .from('empresas')
+              .select('*')
+              .eq('id', userId)
+              .single()
 
-        if (!motoristaError && motoristaData) {
-          console.log('✅ [loadUserProfile] Motorista carregado')
-          setMotorista(motoristaData)
-          currentMotoristaRef.current = motoristaData // Atualizar ref também
-        } else if (motoristaError) {
-          console.error('❌ [loadUserProfile] Erro ao buscar motorista:', motoristaError)
-          
-          // Tratamento específico por código de erro
-          if (motoristaError.code === 'PGRST116' || motoristaError.message.includes('No rows')) {
-            throw new Error('Dados do motorista não encontrados. Entre em contato com o suporte.')
-          } else if (motoristaError.code === '42501' || motoristaError.message.includes('permission')) {
-            throw new Error('Erro de permissão ao carregar dados. Entre em contato com o suporte.')
+            if (!empresaErrorRetry && empresaDataRetry) {
+              setEmpresa(empresaDataRetry)
+            } else {
+              throw new Error('Falha ao carregar dados da empresa.')
+            }
+          }
+        } else if (userData!.tipo === 'motorista') {
+          if (empresa) setEmpresa(null)
+          if (admin) setAdmin(null)
+
+          const { data: motoristaData, error: motoristaError } = await supabase
+            .from('motoristas')
+            .select('*')
+            .eq('id', userId)
+            .single()
+
+          if (!motoristaError && motoristaData) {
+            setMotorista(motoristaData)
+            currentMotoristaRef.current = motoristaData
           } else {
-            throw new Error(`Erro ao carregar dados do motorista: ${motoristaError.message}`)
-          }
-        } else if (!motoristaData) {
-          // Se não há erro mas também não há dados, pode ser que o registro não existe
-          console.error('❌ [loadUserProfile] Dados do motorista não encontrados para userId:', userId)
-          throw new Error('Dados do motorista não encontrados. Entre em contato com o suporte.')
-        }
-      } else if (userData.tipo === 'admin') {
-        // Se não é empresa, limpar empresa
-        if (empresa) {
-          setEmpresa(null)
-        }
-        // Se não é motorista, limpar motorista
-        if (motorista) {
-          setMotorista(null)
-        }
-        const { data: adminData, error: adminError } = await supabase
-          .from('admins')
-          .select('*')
-          .eq('id', userId)
-          .single()
+            console.error('❌ [loadUserProfile] Erro ao carregar motorista:', motoristaError)
+            // Retry
+            const { data: motoristaDataRetry, error: motoristaErrorRetry } = await supabase
+              .from('motoristas')
+              .select('*')
+              .eq('id', userId)
+              .single()
 
-        if (!adminError && adminData) {
-          console.log('✅ [loadUserProfile] Admin carregado')
-          setAdmin(adminData)
-        } else if (adminError) {
-          console.error('❌ [loadUserProfile] Erro ao buscar admin:', adminError)
-          
-          // Tratamento específico por código de erro
-          if (adminError.code === 'PGRST116' || adminError.message.includes('No rows')) {
-            throw new Error('Dados do admin não encontrados. Entre em contato com o suporte.')
-          } else if (adminError.code === '42501' || adminError.message.includes('permission')) {
-            throw new Error('Erro de permissão ao carregar dados do admin. Entre em contato com o suporte.')
-          } else {
-            throw new Error(`Erro ao carregar dados do admin: ${adminError.message}`)
+            if (!motoristaErrorRetry && motoristaDataRetry) {
+              setMotorista(motoristaDataRetry)
+              currentMotoristaRef.current = motoristaDataRetry
+            } else {
+              throw new Error('Falha ao carregar dados do motorista.')
+            }
           }
-        } else if (!adminData) {
-          console.error('❌ [loadUserProfile] Dados do admin não encontrados para userId:', userId)
-          throw new Error('Dados do admin não encontrados. Entre em contato com o suporte.')
+        } else if (userData!.tipo === 'admin') {
+          if (empresa) setEmpresa(null)
+          if (motorista) setMotorista(null)
+
+          const { data: adminData } = await supabase
+            .from('admins')
+            .select('*')
+            .eq('id', userId)
+            .single()
+
+          if (adminData) setAdmin(adminData)
         }
       }
+      promises.push(fetchSpecificProfile())
 
-      // Validar dados do perfil após carregamento completo
-      try {
-        if (userData.tipo === 'motorista' && currentMotoristaRef.current) {
-          const motorista = currentMotoristaRef.current
-          if (!motorista.id || !motorista.status) {
-            console.error('❌ [loadUserProfile] Dados do motorista incompletos:', { id: motorista.id, status: motorista.status })
-            throw new Error('Dados do motorista incompletos. Entre em contato com o suporte.')
-          }
-        } else if (userData.tipo === 'empresa' && empresa) {
-          if (!empresa.id || !empresa.status) {
-            console.error('❌ [loadUserProfile] Dados da empresa incompletos:', { id: empresa.id, status: empresa.status })
-            throw new Error('Dados da empresa incompletos. Entre em contato com o suporte.')
-          }
-        } else if (userData.tipo === 'admin' && admin) {
-          if (!admin.id) {
-            console.error('❌ [loadUserProfile] Dados do admin incompletos:', { id: admin.id })
-            throw new Error('Dados do admin incompletos. Entre em contato com o suporte.')
-          }
-        }
-        
-        console.log('✅ [loadUserProfile] Validação de dados do perfil concluída')
-      } catch (validationError) {
-        console.error('❌ [loadUserProfile] Erro na validação de dados:', validationError)
-        // Re-lançar erro para ser tratado pelo catch externo
-        throw validationError
-      }
+      // Await all parallel fetches
+      await Promise.all(promises)
 
-      // Atualizar último acesso (não crítico se falhar)
-      try {
-        await supabase
-          .from('users')
-          .update({ ultimo_acesso: new Date().toISOString() })
-          .eq('id', userId)
-      } catch (updateError) {
-        console.warn('⚠️ [loadUserProfile] Erro ao atualizar último acesso:', updateError)
-        // Não falhar o fluxo por isso
+      console.log('✅ [loadUserProfile] Perfil carregado com sucesso (Completo)')
+
+    } catch (error: any) {
+      if (error.name === 'AbortError' || error.message?.includes('AbortError')) {
+        console.log('⚠️ [loadUserProfile] Requisição abortada (provavelmente devido a navegação ou cancelamento). Ignorando.')
+        return
       }
-      
-      console.log('✅ [loadUserProfile] Perfil carregado com sucesso')
-    } catch (error) {
-      console.error('❌ [loadUserProfile] Erro ao carregar perfil:', error)
-      // Re-throw para que o chamador saiba que houve erro
+      console.error('❌ [loadUserProfile] Operação falhou definitivamente:', error)
       throw error
     } finally {
-      setIsLoadingProfile(false) // IMPORTANTE: Sempre resetar o flag
+      setIsLoadingProfile(false)
     }
   }
 
@@ -564,6 +534,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     password: string
   ): Promise<{ success: boolean; error?: string; blocked?: boolean; timeRemaining?: number }> => {
     try {
+      // Garantir que não existe sessão anterior ativa para evitar conflitos
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        console.log('🔵 [signIn] Sessão anterior detectada, realizando logout preventivo...')
+        await supabase.auth.signOut()
+        // Limpar estados locais
+        setUser(null)
+        setProfile(null)
+        setEmpresa(null)
+        setMotorista(null)
+        setAdmin(null)
+        setUserType(null)
+      }
+
       // Verificar tentativas antes de tentar login
       const attemptResult = await checkLoginAttempts(email)
 
@@ -577,10 +561,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       // Tentar login
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
+      // Tentar login
+      console.log('🔵 [AuthContext] Tentando login com cliente padrão...')
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
       if (error) {
         // Registrar tentativa falhada
@@ -600,67 +583,68 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       // Resetar tentativas após login bem-sucedido
-      await resetLoginAttempts(data.user.id)
-
-      // Verificar se email está confirmado
+      await resetLoginAttempts(data.user.id) // Verificar se email está confirmado
       if (!data.user.email_confirmed_at) {
         setUser(data.user)
         // Não retornar erro, mas o redirecionamento será feito pela página de login
         return { success: true }
       }
 
-      // Carregar perfil completo
-      
-      try {
-        await loadUserProfile(data.user.id)
-        
-        // Verificar se o perfil foi carregado corretamente
-        if (!currentProfileRef.current) {
-          console.error('❌ [signIn] Perfil não foi carregado após login')
-          return {
-            success: false,
-            error: 'Erro ao carregar perfil. Tente novamente ou entre em contato com o suporte.',
+      // IMPORTANTE: NÃO chamar loadUserProfile aqui
+      // O onAuthStateChange (SIGNED_IN) já dispara o carregamento
+      // Aqui apenas aguardamos o perfil estar pronto
+
+      console.log('🔵 [signIn] Login bem-sucedido, aguardando carregamento do perfil via listener...')
+
+      // Aguardar até que o perfil esteja carregado pelo listener (com timeout de 10s)
+      const timeout = 10000
+      const startTime = Date.now()
+
+      while (Date.now() - startTime < timeout) {
+        // Verificar se perfil carregou corretamente
+        if (currentProfileRef.current && currentUserRef.current?.id === data.user.id) {
+          console.log('✅ [signIn] Perfil detectado, concluindo login...')
+
+          // Verificar status específicos (bloqueios)
+          const userTipo = currentProfileRef.current.tipo
+          if (userTipo === 'motorista' && currentMotoristaRef.current) {
+            const status = currentMotoristaRef.current.status
+            if (status === 'bloqueado' || status === 'suspenso') {
+              await supabase.auth.signOut()
+              return {
+                success: false,
+                error: status === 'bloqueado'
+                  ? 'Sua conta está bloqueada. Entre em contato com o suporte.'
+                  : 'Sua conta está suspensa. Entre em contato com o suporte.',
+              }
+            }
+          } else if (userTipo === 'empresa' && empresa) {
+            const status = empresa.status
+            if (status === 'bloqueada' || status === 'suspensa') {
+              await supabase.auth.signOut()
+              return {
+                success: false,
+                error: status === 'bloqueada'
+                  ? 'Sua conta está bloqueada. Entre em contato com o suporte.'
+                  : 'Sua conta está suspensa. Entre em contato com o suporte.',
+              }
+            }
           }
+
+          return { success: true }
         }
 
-        // Verificar status do usuário baseado no tipo
-        const userTipo = currentProfileRef.current.tipo
-        if (userTipo === 'motorista' && currentMotoristaRef.current) {
-          const status = currentMotoristaRef.current.status
-          if (status === 'bloqueado' || status === 'suspenso') {
-            return {
-              success: false,
-              error: status === 'bloqueado' 
-                ? 'Sua conta está bloqueada. Entre em contato com o suporte.'
-                : 'Sua conta está suspensa. Entre em contato com o suporte.',
-            }
-          }
-        } else if (userTipo === 'empresa' && empresa) {
-          const status = empresa.status
-          if (status === 'bloqueado' || status === 'suspenso') {
-            return {
-              success: false,
-              error: status === 'bloqueado'
-                ? 'Sua conta está bloqueada. Entre em contato com o suporte.'
-                : 'Sua conta está suspensa. Entre em contato com o suporte.',
-            }
-          }
-        }
-      } catch (profileError) {
-        console.error('❌ [signIn] Erro ao carregar perfil:', profileError)
-        
-        // Retornar mensagem de erro específica se disponível
-        const errorMessage = profileError instanceof Error 
-          ? profileError.message 
-          : 'Erro ao carregar perfil. Tente novamente ou entre em contato com o suporte.'
-        
-        return {
-          success: false,
-          error: errorMessage,
-        }
+        // Aguardar 100ms antes de verificar novamente
+        await new Promise(resolve => setTimeout(resolve, 100))
       }
 
-      setUser(data.user)
+      console.error('❌ [signIn] Timeout aguardando perfil ser carregado')
+      return {
+        success: false,
+        error: 'Login realizado, mas houve demora no carregamento do perfil. Tente atualizar a página.',
+      }
+
+      // setUser será atualizado pelo listener
 
       return { success: true }
     } catch (error) {
@@ -679,7 +663,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signUpEmpresa = async (data: CadastroEmpresaFormData): Promise<{ success: boolean; error?: string }> => {
     try {
       console.log('🔵 [signUpEmpresa] Iniciando cadastro de empresa...', { email: data.email, cnpj: data.cnpj })
-      
+
       // Validações
       const emailValidation = validateEmail(data.email)
       if (!emailValidation.isValid) {
@@ -724,10 +708,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         },
       })
 
-      console.log('🔵 [signUpEmpresa] Auth signUp resultado:', { 
-        userId: authData?.user?.id, 
+      console.log('🔵 [signUpEmpresa] Auth signUp resultado:', {
+        userId: authData?.user?.id,
         email: authData?.user?.email,
-        error: authError 
+        error: authError
       })
 
       if (authError) {
@@ -760,7 +744,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           details: userError.details,
           hint: userError.hint,
         })
-        
+
         // Tentar método direto como fallback
         const { error: directError } = await supabase.from('users').insert({
           id: authData.user.id,
@@ -785,7 +769,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const cnpjCleaned = cnpjValidation.cleaned || cleanCNPJ(data.cnpj)
       console.log('🔵 [signUpEmpresa] CNPJ limpo:', cnpjCleaned)
       console.log('🔵 [signUpEmpresa] Criando registro em empresas via função SQL...')
-      
+
       const { data: empresaResult, error: empresaError } = await supabase.rpc('create_empresa_after_signup', {
         p_user_id: authData.user.id,
         p_cnpj: cnpjCleaned,
@@ -804,7 +788,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           details: empresaError.details,
           hint: empresaError.hint,
         })
-        
+
         // Tentar método direto como fallback
         const { error: directError } = await supabase.from('empresas').insert({
           id: authData.user.id,
@@ -947,7 +931,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           details: userError.details,
           hint: userError.hint,
         })
-        
+
         // Tentar método direto como fallback
         const { error: directError } = await supabase.from('users').insert({
           id: authData.user.id,
@@ -987,7 +971,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           details: motoristaError.details,
           hint: motoristaError.hint,
         })
-        
+
         // Tentar método direto como fallback
         const { error: directError } = await supabase.from('motoristas').insert({
           id: authData.user.id,
@@ -1064,16 +1048,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signOut = async (): Promise<void> => {
     try {
+      // 1. Tentar fazer logout no Supabase
       await supabase.auth.signOut()
+    } catch (error) {
+      console.error('⚠️ [signOut] Erro ao fazer logout no Supabase (ignorando):', error)
+    } finally {
+      // 2. Limpar estado local SEMPRE, mesmo se o Supabase falhar
       setUser(null)
       setProfile(null)
       setEmpresa(null)
       setMotorista(null)
       setAdmin(null)
       setUserType(null)
-      navigate('/')
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error)
+      setPermissions([])
+      setRoles([])
+
+      // 3. Limpar LocalStorage explicitamente
+      localStorage.removeItem('supabase.auth.token') // Chave padrão
+      localStorage.removeItem('pending_email_verification')
+      // Limpar chaves dinâmicas do projeto se houver (sb-*)
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          localStorage.removeItem(key)
+        }
+      })
+
+      console.log('✅ [signOut] Estado local limpo, redirecionando...')
+
+      // 4. Forçar redirecionamento e reload para garantir limpeza de memória
+      window.location.href = '/'
     }
   }
 
@@ -1138,7 +1141,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const verifyEmail = async (code: string): Promise<{ success: boolean; error?: string }> => {
     try {
       console.log('🔵 [verifyEmail] Iniciando verificação...', { codeLength: code?.length })
-      
+
       if (!code || code.length !== 8) {
         console.error('❌ [verifyEmail] Código inválido:', code)
         return { success: false, error: 'Código inválido' }
@@ -1146,7 +1149,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       // Buscar email de múltiplas fontes: contexto, sessão, ou localStorage
       let emailToVerify = user?.email
-      
+
       if (!emailToVerify) {
         console.log('🔵 [verifyEmail] Email não encontrado no contexto, buscando da sessão...')
         const { data: { session } } = await supabase.auth.getSession()
@@ -1172,9 +1175,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         email: emailToVerify, // ADICIONAR EMAIL AQUI
       })
 
-      console.log('🔵 [verifyEmail] Resultado verifyOtp:', { 
-        hasUser: !!data?.user, 
-        error: error?.message 
+      console.log('🔵 [verifyEmail] Resultado verifyOtp:', {
+        hasUser: !!data?.user,
+        error: error?.message
       })
 
       if (error) {
@@ -1216,10 +1219,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const resendVerificationCode = async (): Promise<{ success: boolean; error?: string }> => {
     try {
       console.log('🔵 [resendVerificationCode] Iniciando reenvio...')
-      
+
       // Tentar obter email de múltiplas fontes
       let emailToResend = user?.email
-      
+
       if (!emailToResend) {
         console.log('🔵 [resendVerificationCode] Email não encontrado no contexto, buscando da sessão...')
         const { data: { session } } = await supabase.auth.getSession()
@@ -1265,10 +1268,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // REFRESH USER
   // ============================================
 
-  const refreshUser = async (): Promise<void> => {
+  const refreshUser = async (options?: { force?: boolean }): Promise<void> => {
     if (!user?.id) return
-    // Usar queue para refresh também
-    await loadUserProfile(user.id)
+    // Usar queue para refresh também, repassando opções
+    await loadUserProfile(user.id, options)
   }
 
   // ============================================
@@ -1278,17 +1281,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const checkSession = async (): Promise<void> => {
     // Armazenar referência para uso no debounce
     checkSessionRef.current = checkSession
-    
-    
+
+
     // CRÍTICO: Prevenir múltiplas chamadas simultâneas usando ref (síncrono, sempre atualizado)
     if (isCheckingSessionRef.current) {
       console.log('⚠️ [checkSession] Já verificando sessão, ignorando chamada duplicada...')
       return
     }
-    
+
     try {
       isCheckingSessionRef.current = true
-      
+
       // CRÍTICO: Verificar ANTES de fazer operações assíncronas se já está carregando ou carregado
       // Isso previne múltiplas chamadas simultâneas e recarregamentos desnecessários
       if (isLoadingProfile) {
@@ -1296,29 +1299,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         isCheckingSessionRef.current = false
         return
       }
-      
+
       // Verificar se já temos perfil completo carregado usando refs (valores sempre atualizados)
       if (currentUserRef.current && currentProfileRef.current) {
-        const hasSpecificProfile = 
+        const hasSpecificProfile =
           (currentProfileRef.current.tipo === 'motorista' && currentMotoristaRef.current) ||
           (currentProfileRef.current.tipo === 'empresa' && empresa) ||
           (currentProfileRef.current.tipo === 'admin' && admin)
-        
+
         if (hasSpecificProfile) {
-          console.log('✅ [checkSession] Perfil completo já carregado, ignorando...', { 
+          console.log('✅ [checkSession] Perfil completo já carregado, ignorando...', {
             userId: currentUserRef.current.id,
-            tipo: currentProfileRef.current.tipo 
+            tipo: currentProfileRef.current.tipo
           })
-        setLoading(false)
-        setInitialized(true)
-        isCheckingSessionRef.current = false
-        return
+          setLoading(false)
+          setInitialized(true)
+          isCheckingSessionRef.current = false
+          return
+        }
       }
-      }
-      
+
       console.log('🔵 [checkSession] Verificando sessão...')
       const { data: { session }, error } = await supabase.auth.getSession()
-      
+
       // Limpar timeout de debounce se existir
       if (checkSessionTimeoutRef.current) {
         clearTimeout(checkSessionTimeoutRef.current)
@@ -1335,10 +1338,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (session?.user) {
         const userId = session.user.id
-        
+
         // Se já temos este usuário carregado completamente, não recarregar
-        if (currentUserRef.current?.id === userId && currentProfileRef.current && 
-            (currentProfileRef.current.tipo === 'motorista' ? currentMotoristaRef.current : true)) {
+        if (currentUserRef.current?.id === userId && currentProfileRef.current &&
+          (currentProfileRef.current.tipo === 'motorista' ? currentMotoristaRef.current : true)) {
           console.log('✅ [checkSession] Perfil já carregado, ignorando recarregamento', { userId })
           setUser(session.user)
           currentUserRef.current = session.user
@@ -1361,7 +1364,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(session.user)
         currentUserRef.current = session.user
         try {
-          await loadUserProfileInternal(userId)
+          await loadUserProfile(userId)
           console.log('✅ [checkSession] Perfil carregado com sucesso')
         } catch (profileError) {
           console.error('❌ [checkSession] Erro ao carregar perfil:', profileError)
@@ -1401,22 +1404,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   useEffect(() => {
     // Verificar sessão ao montar (sem debounce na primeira vez)
-    checkSession()
+    // checkSession() - REMOVIDO: onAuthStateChange já dispara INITIAL_SESSION e trata a inicialização
+
 
     // Escutar mudanças de auth state
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('🔵 [AuthContext] Auth state changed:', event)
-      
+
       // Tratar eventos INITIAL_SESSION com debounce
       if (event === 'INITIAL_SESSION') {
+        console.log('🔵 [AuthContext] INITIAL_SESSION recebido', { hasSession: !!session })
         debouncedHandleInitialSession(session)
-        setLoading(false)
-        setInitialized(true)
+        // Garantir que loading seja falso mesmo se não houver sessão
+        if (!session) {
+          setLoading(false)
+          setInitialized(true)
+        }
         return
       }
-      
+
       // Prevenir processamento duplicado do mesmo evento
       if (processingAuthEventRef.current) {
         console.log('⚠️ [AuthContext] Já processando evento de auth, ignorando...')
@@ -1426,7 +1434,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Prevenir processamento duplicado do mesmo evento
       if (event === 'SIGNED_IN' && session?.user) {
         const userId = session.user.id
-        
+
         // Verificar se já temos este usuário carregado (usando refs para valores atuais)
         if (currentUserRef.current?.id === userId && currentProfileRef.current) {
           console.log('✅ [AuthContext] Usuário já carregado, ignorando SIGNED_IN duplicado')
@@ -1448,7 +1456,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser(session.user)
         currentUserRef.current = session.user // Atualizar ref também
         try {
-          await loadUserProfileInternal(userId)
+          await loadUserProfile(userId)
           console.log('✅ [AuthContext] Perfil carregado após SIGNED_IN')
         } catch (error) {
           console.error('❌ [AuthContext] Erro ao carregar perfil após SIGNED_IN:', error)
@@ -1487,8 +1495,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         processingAuthEventRef.current = false
       }
 
-      setLoading(false)
-      setInitialized(true)
     })
 
     return () => {
@@ -1502,6 +1508,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     }
   }, []) // Manter array vazio - o listener deve ser criado apenas uma vez
+
+  // Safety Timeout: Prevent infinite loading state
+  useEffect(() => {
+    const safetyTimeout = setTimeout(() => {
+      if (loading) {
+        console.warn('⚠️ [AuthContext] Safety timeout atingido (15s): forçando fim do carregamento.')
+        setLoading(false)
+        setInitialized(true)
+      }
+    }, 15000) // 15 seconds
+
+    return () => clearTimeout(safetyTimeout)
+  }, [loading])
 
   // ============================================
   // VALUE

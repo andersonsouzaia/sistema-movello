@@ -125,7 +125,7 @@ export function CityStateSelector({
             {resultadosCidade.length > 0 && (
               <div className="space-y-2">
                 <Label>Resultados</Label>
-                <ScrollArea className="h-32 border rounded-lg p-2">
+                <div className="h-32 border rounded-lg p-2 overflow-y-auto custom-scrollbar">
                   <div className="space-y-1">
                     {resultadosCidade.map((cidade, index) => (
                       <Button
@@ -140,7 +140,7 @@ export function CityStateSelector({
                       </Button>
                     ))}
                   </div>
-                </ScrollArea>
+                </div>
               </div>
             )}
 
@@ -184,7 +184,7 @@ export function CityStateSelector({
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Lista de Estados */}
-            <ScrollArea className="h-64 border rounded-lg p-4">
+            <div className="h-64 border rounded-lg p-4 overflow-y-auto custom-scrollbar">
               <div className="space-y-2">
                 {ESTADOS_BRASIL.map((estado) => (
                   <div key={estado.sigla} className="flex items-center space-x-2">
@@ -203,7 +203,7 @@ export function CityStateSelector({
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Estados Selecionados */}
             {estadosSelecionados.length > 0 && (

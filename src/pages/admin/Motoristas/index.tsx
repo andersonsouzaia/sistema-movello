@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { DashboardLayout } from '@/components/layouts/DashboardLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { RequirePermission } from '@/components/auth/RequirePermission'
 import { useAuth } from '@/contexts/AuthContext'
-import { useMotoristas } from '@/hooks/useMotoristas'
+import { useMotoristas, type MotoristaWithUser } from '@/hooks/useMotoristas'
 import { adminService } from '@/services/adminService'
 import { DataTable, Column } from '@/components/ui/DataTable'
 import { Button } from '@/components/ui/button'
@@ -35,12 +36,24 @@ const statusConfig: Record<MotoristaStatus, { label: string; variant: 'default' 
 export default function AdminMotoristas() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  
-  const { motoristas, loading, refetch } = useMotoristas({})
+  const [page, setPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const { motoristas, loading, totalPages, count, refetch } = useMotoristas({
+    page,
+    perPage: 10,
+    searchTerm
+  })
+
+  // Reset page when search changes
+  const handleSearch = (term: string) => {
+    setSearchTerm(term)
+    setPage(1)
+  }
 
   const handleApprove = async (motoristaId: string) => {
     if (!user?.id) return
-    
+
     const result = await adminService.approveMotorista({
       userId: motoristaId,
       adminId: user.id,
@@ -53,7 +66,7 @@ export default function AdminMotoristas() {
 
   const handleBlock = async (motoristaId: string) => {
     if (!user?.id) return
-    
+
     const motivo = prompt('Informe o motivo do bloqueio:')
     if (!motivo) return
 
@@ -70,7 +83,7 @@ export default function AdminMotoristas() {
 
   const handleSuspend = async (motoristaId: string) => {
     if (!user?.id) return
-    
+
     const motivo = prompt('Informe o motivo da suspensão:')
     if (!motivo) return
 
@@ -85,7 +98,11 @@ export default function AdminMotoristas() {
     }
   }
 
-  const columns: Column<MotoristaRow>[] = [
+
+
+  // ... existing code ...
+
+  const columns: Column<MotoristaWithUser>[] = [
     {
       key: 'nome',
       header: 'Nome',
@@ -199,6 +216,12 @@ export default function AdminMotoristas() {
               ]}
               onRowClick={(row) => navigate(`/admin/motoristas/${row.id}`)}
               emptyMessage="Nenhum motorista encontrado"
+              // Props de paginação manual
+              manualPagination={true}
+              pageCount={totalPages}
+              rowCount={count}
+              onPageChange={setPage}
+              onSearch={handleSearch}
             />
           </div>
         </DashboardLayout>

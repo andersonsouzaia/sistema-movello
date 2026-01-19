@@ -11,14 +11,16 @@ export interface GetCampanhasFilters {
   orcamento_min?: number
   orcamento_max?: number
   search?: string
+  page?: number
+  limit?: number
 }
 
 export const campanhaService = {
-  async getCampanhas(filters: GetCampanhasFilters = {}): Promise<CampanhaWithEmpresa[]> {
+  async getCampanhas(filters: GetCampanhasFilters = {}): Promise<{ data: CampanhaWithEmpresa[]; count: number }> {
     try {
       let query = supabase
         .from('campanhas')
-        .select('*, empresa:empresa_id(id, razao_social, nome_fantasia)')
+        .select('*, empresa:empresa_id(id, razao_social, nome_fantasia)', { count: 'exact' })
         .order('criado_em', { ascending: false })
 
       if (filters.status) {
@@ -49,21 +51,30 @@ export const campanhaService = {
         query = query.or(`titulo.ilike.%${filters.search}%,descricao.ilike.%${filters.search}%`)
       }
 
-      const { data, error } = await query
+      // Pagination
+      const page = filters.page || 1
+      const limit = filters.limit || 10
+      const from = (page - 1) * limit
+      const to = from + limit - 1
+
+      const { data, error, count } = await query.range(from, to)
 
       if (error) {
         throw error
       }
 
-      return (data || []).map((item: any) => ({
-        ...item,
-        empresa: item.empresa || undefined,
-      })) as CampanhaWithEmpresa[]
+      return {
+        data: (data || []).map((item: any) => ({
+          ...item,
+          empresa: item.empresa || undefined,
+        })) as CampanhaWithEmpresa[],
+        count: count || 0
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao buscar campanhas'
       console.error('Erro ao buscar campanhas:', error)
       toast.error(errorMessage)
-      return []
+      return { data: [], count: 0 }
     }
   },
 
@@ -94,7 +105,7 @@ export const campanhaService = {
   async approveCampanha(id: string, adminId: string): Promise<{ success: boolean; error?: string }> {
     try {
       const campanha = await this.getCampanha(id)
-      
+
       const { error } = await supabase.rpc('approve_campanha', {
         p_campanha_id: id,
         p_admin_id: adminId,
@@ -129,7 +140,7 @@ export const campanhaService = {
   ): Promise<{ success: boolean; error?: string }> {
     try {
       const campanha = await this.getCampanha(id)
-      
+
       const { error } = await supabase.rpc('reject_campanha', {
         p_campanha_id: id,
         p_admin_id: adminId,

@@ -1,38 +1,51 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { Motorista, MotoristaStatus } from '@/types/database'
 import { toast } from 'sonner'
 
-interface MotoristaWithUser extends Motorista {
+export interface MotoristaWithUser extends Motorista {
   user_email: string
   user_nome: string
 }
 
 interface UseMotoristasOptions {
   status?: MotoristaStatus
+  page?: number
+  perPage?: number
+  searchTerm?: string
 }
 
+import { useQuery } from '@tanstack/react-query'
+
 export const useMotoristas = (options: UseMotoristasOptions = {}) => {
-  const [motoristas, setMotoristas] = useState<MotoristaWithUser[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { page = 1, perPage = 10, searchTerm = '', status } = options
 
-  const fetchMotoristas = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
+  const { data, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['motoristas', { page, perPage, searchTerm, status }],
+    queryFn: async ({ signal }) => {
       let query = supabase
         .from('motoristas')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('created_at', { ascending: false })
 
       // Aplicar filtro de status
-      if (options.status) {
-        query = query.eq('status', options.status)
+      if (status) {
+        query = query.eq('status', status)
       }
 
-      const { data, error: queryError } = await query
+      // Paginação
+      const from = (page - 1) * perPage
+      const to = from + perPage - 1
+      query = query.range(from, to)
+
+      // Busca (Search)
+      if (searchTerm) {
+        query = query.or(`cpf.ilike.%${searchTerm}%,veiculo.ilike.%${searchTerm}%`)
+      }
+
+      // Supabase supports abortSignal in v2
+      // @ts-ignore
+      const { data, error: queryError, count: totalCount } = await query.abortSignal(signal)
 
       if (queryError) {
         throw queryError
@@ -47,6 +60,7 @@ export const useMotoristas = (options: UseMotoristasOptions = {}) => {
           .from('users')
           .select('id, email, nome')
           .in('id', userIds)
+          .abortSignal(signal)
 
         const usersMap = new Map((usersData || []).map((u: any) => [u.id, u]))
 
@@ -57,76 +71,66 @@ export const useMotoristas = (options: UseMotoristasOptions = {}) => {
         })))
       }
 
-      setMotoristas(motoristasWithUser)
-    } catch (err: any) {
-      console.error('Erro ao buscar motoristas:', err)
-      setError(err.message || 'Erro ao buscar motoristas')
-      toast.error('Erro ao carregar motoristas')
-    } finally {
-      setLoading(false)
-    }
-  }
+      return {
+        motoristas: motoristasWithUser,
+        count: totalCount || 0,
+        totalPages: totalCount ? Math.ceil(totalCount / perPage) : 0
+      }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
 
-  useEffect(() => {
-    fetchMotoristas()
-  }, [options.status])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao carregar motoristas' : null
 
   return {
-    motoristas,
+    motoristas: data?.motoristas || [],
     loading,
     error,
-    refetch: fetchMotoristas,
+    count: data?.count || 0,
+    totalPages: data?.totalPages || 0,
+    refetch,
   }
 }
 
 export const useMotorista = (id: string) => {
-  const [motorista, setMotorista] = useState<MotoristaWithUser | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: motorista, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ['motorista', id],
+    queryFn: async ({ signal }) => {
+      const { data, error: queryError } = await supabase
+        .from('motoristas')
+        .select('*')
+        .eq('id', id)
+        .single()
+        // @ts-ignore
+        .abortSignal(signal)
 
-  useEffect(() => {
-    const fetchMotorista = async () => {
-      try {
-        setLoading(true)
-        setError(null)
+      if (queryError) {
+        throw queryError
+      }
 
-        const { data, error: queryError } = await supabase
-          .from('motoristas')
-          .select('*')
+      if (data) {
+        // Buscar dados do usuário
+        const { data: userData } = await supabase
+          .from('users')
+          .select('email, nome, telefone')
           .eq('id', id)
           .single()
+          // @ts-ignore
+          .abortSignal(signal)
 
-        if (queryError) {
-          throw queryError
-        }
-
-        if (data) {
-          // Buscar dados do usuário
-          const { data: userData } = await supabase
-            .from('users')
-            .select('email, nome, telefone')
-            .eq('id', id)
-            .single()
-
-          setMotorista({
-            ...data,
-            user_email: userData?.email || '',
-            user_nome: userData?.nome || '',
-          })
-        }
-      } catch (err: any) {
-        console.error('Erro ao buscar motorista:', err)
-        setError(err.message || 'Erro ao buscar motorista')
-        toast.error('Erro ao carregar motorista')
-      } finally {
-        setLoading(false)
+        return {
+          ...data,
+          user_email: userData?.email || '',
+          user_nome: userData?.nome || '',
+        } as MotoristaWithUser
       }
-    }
+      return null
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+  })
 
-    if (id) {
-      fetchMotorista()
-    }
-  }, [id])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao carregar motorista' : null
 
   return {
     motorista,

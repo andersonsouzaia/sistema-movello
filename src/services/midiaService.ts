@@ -99,7 +99,7 @@ export const midiaService = {
 
       // Upload para Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('campanhas')
+        .from('campanha_midias')
         .upload(filePath, file)
 
       if (uploadError) {
@@ -155,7 +155,7 @@ export const midiaService = {
         const urlParts = midia.url.split('/campanhas/')
         if (urlParts.length > 1) {
           const filePath = urlParts[1]
-          await supabase.storage.from('campanhas').remove([filePath])
+          await supabase.storage.from('campanha_midias').remove([filePath])
         }
       }
 

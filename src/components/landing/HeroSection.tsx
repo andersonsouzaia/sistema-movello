@@ -2,6 +2,9 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { UserMenu } from "@/components/auth/UserMenu";
+import { useNavigate } from "react-router-dom";
 import heroImage from "@/assets/woman-movello-tablet.png";
 import movelloLogo from "@/assets/movello-logo.png";
 import movellinhoMascote from "@/assets/movellinho-mascote.png";
@@ -14,6 +17,26 @@ import {
 
 const HeroSection = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user, signOut, userType, profile } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    setMobileMenuOpen(false);
+    navigate('/');
+  };
+
+  const handleDashboard = () => {
+    if (userType) {
+      navigate(`/${userType}/dashboard`);
+    } else if (profile?.tipo) {
+      navigate(`/${profile.tipo}/dashboard`);
+    } else {
+      // Fallback
+      window.location.href = '/empresa/dashboard';
+    }
+    setMobileMenuOpen(false);
+  };
 
   return (
     <section className="relative min-h-screen bg-gradient-hero overflow-hidden">
@@ -29,9 +52,9 @@ const HeroSection = () => {
           <div className="flex items-center justify-between py-4">
             {/* Logo à esquerda */}
             <div className="flex items-center gap-2">
-              <img 
-                src={movelloLogo} 
-                alt="Movello" 
+              <img
+                src={movelloLogo}
+                alt="Movello"
                 className="h-10 sm:h-12 w-auto"
               />
             </div>
@@ -43,7 +66,11 @@ const HeroSection = () => {
             </nav>
             {/* Botões à direita - Desktop */}
             <div className="hidden md:flex items-center gap-4">
-              <a href="/login" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold h-9">Entrar</a>
+              {user ? (
+                <UserMenu />
+              ) : (
+                <a href="/login" className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold h-9 flex items-center">Entrar</a>
+              )}
             </div>
             {/* Botão Menu Mobile */}
             <button
@@ -66,41 +93,52 @@ const HeroSection = () => {
           <div className="flex flex-col gap-6 mt-8">
             {/* Links de navegação */}
             <nav className="flex flex-col gap-4" aria-label="Menu de navegação mobile">
-              <a 
-                href="#beneficios" 
+              <a
+                href="#beneficios"
                 className="text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Benefícios e diferenciais
               </a>
-              <a 
-                href="#como-funciona" 
+              <a
+                href="#como-funciona"
                 className="text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Como funciona
               </a>
-              <a 
-                href="#faq" 
+              <a
+                href="#faq"
                 className="text-foreground hover:text-primary transition-colors py-2"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 FAQ
               </a>
             </nav>
-            
+
             {/* Separador */}
             <div className="border-t border-border" />
-            
+
             {/* Botões de ação */}
             <div className="flex flex-col gap-3">
-              <a 
-                href="/login" 
-                className="bg-primary text-primary-foreground px-4 py-3 rounded-lg text-sm font-semibold text-center w-full"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Entrar
-              </a>
+              {user ? (
+                <>
+                  <Button onClick={handleDashboard} className="w-full">
+                    Dashboard
+                  </Button>
+                  <Button onClick={handleSignOut} variant="outline" className="w-full">
+                    Sair
+                  </Button>
+                </>
+              ) : (
+                <a
+                  href="/login"
+                  className="bg-primary text-primary-foreground px-4 py-3 rounded-lg text-sm font-semibold text-center w-full"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Entrar
+                </a>
+              )}
             </div>
           </div>
         </SheetContent>
@@ -167,8 +205,8 @@ const HeroSection = () => {
             className="relative"
           >
             <div className="relative rounded-3xl overflow-visible">
-              <img 
-                src={heroImage} 
+              <img
+                src={heroImage}
                 alt="Tablet exibindo anúncio geolocalizado em carro de aplicativo"
                 className="w-full h-auto rounded-3xl shadow-2xl"
                 loading="eager"

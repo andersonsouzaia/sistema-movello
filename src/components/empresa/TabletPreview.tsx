@@ -1,134 +1,115 @@
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Tablet, Maximize2, Minimize2, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils';
+import { Tablet, Smartphone } from 'lucide-react';
+import QRCode from 'react-qr-code';
 
 interface TabletPreviewProps {
-  midiaUrl: string
-  tipo: 'imagem' | 'video'
-  className?: string
-  trigger?: React.ReactNode
+  mediaUrl?: string; // URL da imagem ou vídeo
+  qrCodeLink?: string; // Link para gerar o QR Code
+  className?: string;
+  orientation?: 'landscape' | 'portrait';
+  title?: string;
+  description?: string;
 }
 
-export function TabletPreview({ midiaUrl, tipo, className, trigger }: TabletPreviewProps) {
-  const [isFullscreen, setIsFullscreen] = useState(false)
-  const [isOpen, setIsOpen] = useState(false)
-
-  const content = (
-    <div
-      className={cn(
-        "relative mx-auto bg-black rounded-lg overflow-hidden shadow-2xl",
-        "border-8 border-gray-800",
-        isFullscreen ? "w-full h-[80vh]" : "w-[768px] h-[1024px] max-w-full",
-        className
-      )}
-      style={{
-        aspectRatio: '3/4',
-        maxHeight: isFullscreen ? '80vh' : '1024px',
-        maxWidth: isFullscreen ? '100%' : '768px',
-      }}
-    >
-      {/* Simulação de bordas do tablet */}
-      <div className="absolute inset-0 pointer-events-none z-10">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 h-2 bg-black rounded-t-lg" />
-      </div>
-      
-      {/* Conteúdo da mídia */}
-      <div className="w-full h-full flex items-center justify-center bg-gray-900">
-        {tipo === 'imagem' ? (
-          <img
-            src={midiaUrl}
-            alt="Preview Tablet"
-            className="w-full h-full object-contain"
-          />
-        ) : (
-          <video
-            src={midiaUrl}
-            controls
-            className="w-full h-full object-contain"
-            autoPlay
-            loop
-            muted
-          />
-        )}
-      </div>
-
-      {/* Botão de fullscreen */}
-      <div className="absolute top-4 right-4 z-20">
-        <Button
-          variant="secondary"
-          size="icon"
-          onClick={() => setIsFullscreen(!isFullscreen)}
-          className="bg-black/50 hover:bg-black/70 text-white"
-        >
-          {isFullscreen ? (
-            <Minimize2 className="h-4 w-4" />
-          ) : (
-            <Maximize2 className="h-4 w-4" />
-          )}
-        </Button>
-      </div>
-    </div>
-  )
-
-  if (trigger) {
-    return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <div onClick={() => setIsOpen(true)} className="cursor-pointer">
-          {trigger}
-        </div>
-        <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Tablet className="h-5 w-5" />
-              Preview em Tablet
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex justify-center items-center p-4">
-            {content}
-          </div>
-          <div className="text-center text-sm text-muted-foreground mt-4">
-            <p>Resolução: 768x1024 (iPad Portrait)</p>
-            <p className="text-xs mt-1">Este é um preview aproximado</p>
-          </div>
-        </DialogContent>
-      </Dialog>
-    )
-  }
+export function TabletPreview({
+  mediaUrl,
+  qrCodeLink,
+  className,
+  orientation = 'landscape',
+  title,
+  description,
+}: TabletPreviewProps) {
+  // Dimensões relativas para simular proporção de tablet (aprox 16:10 ou 4:3)
+  const isLandscape = orientation === 'landscape';
 
   return (
-    <Card className={cn("w-full", className)}>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="flex items-center gap-2">
-          <Tablet className="h-5 w-5" />
-          Preview em Tablet
-        </CardTitle>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsFullscreen(!isFullscreen)}
-        >
-          {isFullscreen ? (
-            <Minimize2 className="h-4 w-4" />
+    <div className={cn("relative flex items-center justify-center p-4", className)}>
+      {/* Moldura do Tablet */}
+      <div
+        className={cn(
+          "relative bg-black rounded-[32px] shadow-2xl border-8 border-gray-900 overflow-hidden",
+          isLandscape ? "w-[600px] h-[375px]" : "w-[375px] h-[600px]"
+        )}
+      >
+        {/* Tela */}
+        <div className="absolute inset-0 bg-black flex items-center justify-center overflow-hidden">
+          {mediaUrl ? (
+            // Mídia (Imagem ou Vídeo)
+            // Se for vídeo, usar tag video. Se imagem, img.
+            // Para MVP simples, vamos assumir imagem ou detectar extensão básica.
+            (mediaUrl.match(/\.(mp4|webm|ogg)$/i)) ? (
+              <video
+                src={mediaUrl}
+                className="w-full h-full object-cover"
+                autoPlay
+                muted
+                loop
+                playsInline
+              />
+            ) : (
+              <img
+                src={mediaUrl}
+                alt="Campanha Preview"
+                className="w-full h-full object-cover"
+              />
+            )
           ) : (
-            <Maximize2 className="h-4 w-4" />
+            // Placeholder se sem mídia
+            <div className="text-gray-500 flex flex-col items-center gap-2">
+              <Tablet className="h-16 w-16 opacity-20" />
+              <span className="text-sm opacity-50">Sua mídia aparecerá aqui</span>
+            </div>
           )}
-        </Button>
-      </CardHeader>
-      <CardContent>
-        <div className="flex justify-center items-center">
-          {content}
+
+          {/* Text Overlay (Title & Description) */}
+          {(title || description) && (
+            <div className="absolute bottom-6 left-6 max-w-[60%] text-white text-shadow-sm z-10 pointer-events-none">
+              {title && (
+                <h3 className="text-xl font-bold leading-tight mb-1 drop-shadow-md">
+                  {title}
+                </h3>
+              )}
+              {description && (
+                <p className="text-sm opacity-90 font-medium leading-snug drop-shadow-md line-clamp-2">
+                  {description}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* QR Code Overlay */}
+          {qrCodeLink && (
+            <div className={cn(
+              "absolute bg-white/90 p-3 rounded-xl shadow-lg transition-all duration-300",
+              // Posicionamento do QR Code (Canto inferior direito geralmente)
+              "bottom-6 right-6"
+            )}>
+              <div className="h-24 w-24">
+                <QRCode
+                  value={qrCodeLink}
+                  size={256}
+                  style={{ height: "100%", width: "100%", maxWidth: "100%" }}
+                  viewBox={`0 0 256 256`}
+                />
+              </div>
+
+            </div>
+          )}
         </div>
-        <div className="text-center text-sm text-muted-foreground mt-4">
-          <p>Resolução: 768x1024 (iPad Portrait)</p>
-          <p className="text-xs mt-1">Este é um preview aproximado</p>
-        </div>
-      </CardContent>
-    </Card>
-  )
+
+        {/* Câmera Frontal (Detalhe visual) */}
+        <div className={cn(
+          "absolute bg-gray-800 rounded-full",
+          isLandscape ? "w-2 h-2 left-4 top-1/2 -translate-y-1/2" : "w-2 h-2 top-4 left-1/2 -translate-x-1/2"
+        )} />
+      </div>
+
+      {/* Brilho da tela (Efeito vidro) */}
+      <div className={cn(
+        "absolute inset-0 pointer-events-none rounded-[30px]",
+        "bg-gradient-to-tr from-white/5 to-transparent opacity-20"
+      )} />
+
+    </div>
+  );
 }
-
-

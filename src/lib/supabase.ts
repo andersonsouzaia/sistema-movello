@@ -11,6 +11,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
   )
 }
 
+// Ensure a single instance of the Supabase client is created and exported
+// to avoid "Multiple GoTrueClient instances detected" warnings and connection issues.
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,

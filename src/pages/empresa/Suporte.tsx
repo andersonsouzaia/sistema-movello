@@ -85,10 +85,10 @@ export default function EmpresaSuporte() {
 
   const columns: Column<TicketWithDetails>[] = [
     {
-      key: 'assunto',
+      key: 'titulo',
       header: 'Assunto',
       render: (row) => (
-        <div className="font-medium">{row.assunto}</div>
+        <div className="font-medium">{row.titulo}</div>
       ),
     },
     {
@@ -103,7 +103,7 @@ export default function EmpresaSuporte() {
       key: 'status',
       header: 'Status',
       render: (row) => {
-        const config = statusConfig[row.status] || { label: row.status, variant: 'secondary' as const }
+        const config = statusConfig[row.status] || { label: row.status, variant: 'secondary' as const, icon: MessageSquare }
         const Icon = config.icon || MessageSquare
         return (
           <Badge variant={config.variant} className="gap-1">
@@ -290,7 +290,7 @@ export default function EmpresaSuporte() {
               <DataTable
                 data={tickets}
                 columns={columns}
-                searchKey="assunto"
+                searchKey="titulo"
                 searchPlaceholder="Buscar tickets por assunto..."
                 emptyMessage="Nenhum ticket encontrado. Crie seu primeiro ticket!"
                 onRowClick={(row) => setSelectedTicket(row.id)}
@@ -353,15 +353,19 @@ function TicketDetails({ ticketId, onClose }: { ticketId: string; onClose: () =>
         <p className="text-muted-foreground">Ticket não encontrado</p>
       </div>
     )
-  }  const status = statusConfig[ticket.status] || { label: ticket.status, variant: 'secondary' as const }
-  const prioridade = prioridadeConfig[ticket.prioridade] || { label: ticket.prioridade, variant: 'secondary' as const }  return (
+  }
+
+  const status = statusConfig[ticket.status] || { label: ticket.status, variant: 'secondary' as const }
+  const prioridade = prioridadeConfig[ticket.prioridade] || { label: ticket.prioridade, variant: 'secondary' as const }
+
+  return (
     <div className="space-y-6">
       {/* Informações do Ticket */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <CardTitle>{ticket.assunto}</CardTitle>
+              <CardTitle>{ticket.titulo}</CardTitle>
               <CardDescription className="mt-2">
                 Criado em {formatDateTime(ticket.criado_em)}
               </CardDescription>

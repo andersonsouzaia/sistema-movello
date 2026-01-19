@@ -11,6 +11,7 @@ export interface GetPagamentosFilters {
   data_fim?: string
   valor_min?: number
   valor_max?: number
+  search?: string
 }
 
 export interface GetRepassesFilters {
@@ -20,6 +21,7 @@ export interface GetRepassesFilters {
   data_fim?: string
   valor_min?: number
   valor_max?: number
+  search?: string
 }
 
 export const pagamentoService = {
@@ -65,6 +67,21 @@ export const pagamentoService = {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao buscar pagamentos'
       console.error('Erro ao buscar pagamentos:', error)
       toast.error(errorMessage)
+      return []
+    }
+  },
+
+  async getFinancialHistory(filters: GetPagamentosFilters = {}): Promise<any[]> {
+    try {
+      const { data, error } = await supabase.rpc('get_admin_financial_history', {
+        p_status: filters.status || null,
+        p_search: filters.search || null
+      })
+
+      if (error) throw error
+      return data || []
+    } catch (error) {
+      console.error('Erro ao buscar histórico financeiro:', error)
       return []
     }
   },

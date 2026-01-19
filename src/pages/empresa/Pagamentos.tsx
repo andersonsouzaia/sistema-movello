@@ -142,6 +142,15 @@ export default function EmpresaPagamentos() {
       ),
     },
     {
+      key: 'descricao',
+      header: 'Descrição',
+      render: (row) => (
+        <div className="text-sm text-muted-foreground italic">
+          {row.descricao || row.tipo || '-'}
+        </div>
+      ),
+    },
+    {
       key: 'status',
       header: 'Status',
       render: (row) => {

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -82,7 +82,7 @@ export function NichoSelector({
 
   const nichosFiltrados = useMemo(() => {
     if (!busca.trim()) return NICHOS
-    
+
     const buscaLower = busca.toLowerCase()
     return NICHOS.filter(
       (n) =>
@@ -128,7 +128,7 @@ export function NichoSelector({
             {nichosFiltrados.map((nichoItem) => {
               const Icon = nichoItem.icone
               const selecionado = nicho === nichoItem.slug
-              
+
               return (
                 <button
                   key={nichoItem.slug}
@@ -174,7 +174,7 @@ export function NichoSelector({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-48">
+            <div className="h-48 overflow-y-auto pr-2 custom-scrollbar">
               <div className="space-y-2">
                 {categoriasDisponiveis.map((categoria) => (
                   <div key={categoria.id} className="flex items-center space-x-2">
@@ -198,7 +198,7 @@ export function NichoSelector({
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
 
             {/* Categorias Selecionadas */}
             {categorias.length > 0 && (

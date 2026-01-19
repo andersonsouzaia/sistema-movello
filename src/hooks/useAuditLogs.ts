@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { auditService } from '@/services/auditService'
-import type { AuditLog } from '@/types/database'
 
 interface UseAuditLogsOptions {
   action?: string
@@ -13,75 +12,45 @@ interface UseAuditLogsOptions {
 }
 
 export const useAuditLogs = (options: UseAuditLogsOptions = {}) => {
-  const [logs, setLogs] = useState<AuditLog[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [totalCount, setTotalCount] = useState(0)
-
-  const fetchLogs = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
+  const { data, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['audit-logs', options],
+    queryFn: async () => {
       const offset = options.page ? (options.page - 1) * (options.limit || 50) : 0
-
-      const result = await auditService.getAuditLogs({
+      return auditService.getAuditLogs({
         ...options,
         offset,
       })
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
 
-      setLogs(result.data)
-      setTotalCount(result.count)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar logs'
-      setError(errorMessage)
-      console.error('Erro ao buscar logs:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [options.action, options.resourceType, options.userId, options.startDate, options.endDate, options.limit, options.page])
-
-  useEffect(() => {
-    fetchLogs()
-  }, [fetchLogs])
+  const logs = data?.data || []
+  const totalCount = data?.count || 0
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar logs' : null
 
   return {
     logs,
     loading,
     error,
     totalCount,
-    refetch: fetchLogs,
+    refetch,
   }
 }
 
 export const useRecentActivity = (limit: number = 10) => {
-  const [activities, setActivities] = useState<AuditLog[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        setLoading(true)
-        const result = await auditService.getAuditLogs({
-          limit,
-        })
-        setActivities(result.data)
-      } catch (err) {
-        console.error('Erro ao buscar atividades recentes:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchActivities()
-
-    // Refresh a cada 30 segundos
-    const interval = setInterval(fetchActivities, 30000)
-    return () => clearInterval(interval)
-  }, [limit])
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['recent-activity', limit],
+    queryFn: async () => {
+      return auditService.getAuditLogs({
+        limit,
+      })
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+    staleTime: 1000 * 10,
+  })
 
   return {
-    activities,
+    activities: data?.data || [],
     loading,
   }
 }

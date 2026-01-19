@@ -41,7 +41,7 @@ export default function EmpresaMidias() {
 
   // Buscar mídias de todas as campanhas
   const todasMidias: Array<Midia & { campanha_titulo?: string }> = []
-  
+
   // Para cada campanha, buscar suas mídias
   campanhas.forEach((campanha) => {
     // Usar hook para cada campanha (simplificado - em produção usar query agregada)
@@ -80,7 +80,7 @@ export default function EmpresaMidias() {
           .from('midias')
           .select('*')
           .in('campanha_id', campanhaIds)
-          .order('criado_em', { ascending: false })
+          .order('created_at', { ascending: false })
 
         if (error) {
           throw error
@@ -277,32 +277,32 @@ export default function EmpresaMidias() {
                       ))}
                     </SelectContent>
                   </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Tipo</Label>
-                    <Select value={tipoFilter} onValueChange={(value) => setTipoFilter(value === '__all__' ? '' : value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todos os tipos" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__all__">Todos os tipos</SelectItem>
-                        <SelectItem value="imagem">Imagem</SelectItem>
-                        <SelectItem value="video">Vídeo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value === '__all__' ? '' : value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Todos os status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__all__">Todos os status</SelectItem>
-                        <SelectItem value="em_analise">Em Análise</SelectItem>
-                        <SelectItem value="aprovada">Aprovada</SelectItem>
-                        <SelectItem value="reprovada">Reprovada</SelectItem>
-                      </SelectContent>
+                </div>
+                <div className="space-y-2">
+                  <Label>Tipo</Label>
+                  <Select value={tipoFilter} onValueChange={(value) => setTipoFilter(value === '__all__' ? '' : value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os tipos" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">Todos os tipos</SelectItem>
+                      <SelectItem value="imagem">Imagem</SelectItem>
+                      <SelectItem value="video">Vídeo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value === '__all__' ? '' : value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Todos os status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">Todos os status</SelectItem>
+                      <SelectItem value="em_analise">Em Análise</SelectItem>
+                      <SelectItem value="aprovada">Aprovada</SelectItem>
+                      <SelectItem value="reprovada">Reprovada</SelectItem>
+                    </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">

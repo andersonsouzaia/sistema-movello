@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { RequirePermission } from '@/components/auth/RequirePermission'
 import { useAuth } from '@/contexts/AuthContext'
-import { useEmpresas } from '@/hooks/useEmpresas'
+import { useEmpresas, type EmpresaWithUser } from '@/hooks/useEmpresas'
 import { adminService } from '@/services/adminService'
 import { DataTable, Column } from '@/components/ui/DataTable'
 import { Button } from '@/components/ui/button'
@@ -36,12 +36,24 @@ const statusConfig: Record<EmpresaStatus, { label: string; variant: 'default' | 
 export default function AdminEmpresas() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  
-  const { empresas, loading, refetch } = useEmpresas({})
+  const [page, setPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const { empresas, loading, totalPages, count, refetch } = useEmpresas({
+    page,
+    perPage: 10,
+    searchTerm
+  })
+
+  // Reset page when search changes
+  const handleSearch = (term: string) => {
+    setSearchTerm(term)
+    setPage(1)
+  }
 
   const handleApprove = async (empresaId: string) => {
     if (!user?.id) return
-    
+
     const result = await adminService.approveEmpresa({
       userId: empresaId,
       adminId: user.id,
@@ -54,7 +66,7 @@ export default function AdminEmpresas() {
 
   const handleBlock = async (empresaId: string) => {
     if (!user?.id) return
-    
+
     const motivo = prompt('Informe o motivo do bloqueio:')
     if (!motivo) return
 
@@ -71,7 +83,7 @@ export default function AdminEmpresas() {
 
   const handleSuspend = async (empresaId: string) => {
     if (!user?.id) return
-    
+
     const motivo = prompt('Informe o motivo da suspensão:')
     if (!motivo) return
 
@@ -86,7 +98,11 @@ export default function AdminEmpresas() {
     }
   }
 
-  const columns: Column<EmpresaRow>[] = [
+
+
+  // ...
+
+  const columns: Column<EmpresaWithUser>[] = [
     {
       key: 'razao_social',
       header: 'Razão Social',
@@ -195,6 +211,12 @@ export default function AdminEmpresas() {
               ]}
               onRowClick={(row) => navigate(`/admin/empresas/${row.id}`)}
               emptyMessage="Nenhuma empresa encontrada"
+              // Props de paginação manual
+              manualPagination={true}
+              pageCount={totalPages}
+              rowCount={count}
+              onPageChange={setPage}
+              onSearch={handleSearch}
             />
           </div>
         </DashboardLayout>

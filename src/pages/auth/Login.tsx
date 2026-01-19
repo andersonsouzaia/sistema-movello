@@ -25,7 +25,27 @@ type LoginFormData = z.infer<typeof loginSchema>
 export default function Login() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { signIn, user, userType } = useAuth()
+  const { signIn, signOut, user, userType, refreshUser } = useAuth()
+
+  // DEBUG: Expor supabase para depuração
+  useEffect(() => {
+    import('@/lib/supabase').then(module => {
+      // @ts-ignore
+      window.supabase = module.supabase
+      console.log('🔧 [Debug] window.supabase exposed')
+    })
+  }, [])
+
+  // DEBUG: Expor supabase para depuração
+  useEffect(() => {
+    import('@/lib/supabase').then(module => {
+      // @ts-ignore
+      window.supabase = module.supabase
+      console.log('🔧 [Debug] window.supabase exposed')
+      console.log('🔧 [Debug] Env URL:', import.meta.env.VITE_SUPABASE_URL)
+    })
+  }, [])
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [blocked, setBlocked] = useState(false)
@@ -54,26 +74,46 @@ export default function Login() {
       console.log('✅ [Login] Redirecionando após login:', { userType, redirectPath })
       navigate(redirectPath, { replace: true })
     } else if (user && !userType) {
-      // Se tem user mas não tem userType ainda, aguardar com timeout de 10 segundos
+      // Se tem user mas não tem userType ainda
       console.log('⏳ [Login] Aguardando userType ser carregado...')
-      
-      // Timeout de 10 segundos para evitar espera infinita
-      const timeoutId = setTimeout(() => {
-        console.warn('⚠️ [Login] Timeout aguardando userType após 10 segundos')
-        console.warn('⚠️ [Login] userType não carregado após 10 segundos')
-        // Se email não confirmado, redirecionar para confirmação
-        if (!user.email_confirmed_at) {
-          navigate('/confirmar-email', { replace: true })
-        } else {
-          // Mostrar erro específico
-          setError('Erro ao carregar perfil. Tente fazer login novamente ou entre em contato com o suporte.')
-          setLoading(false) // Resetar loading para permitir nova tentativa
+
+      // Tentar forçar atualização após 5 segundos se ainda não carregou
+      const refreshTimeoutId = setTimeout(() => {
+        if (!userType) {
+          console.log('🔄 [Login] userType demorando (5s), forçando refreshUser...')
+          refreshUser({ force: true }).catch(console.error)
         }
+      }, 5000)
+
+      // Timeout de 15 segundos para evitar espera infinita (match AuthContext safety)
+      const timeoutId = setTimeout(async () => {
+        console.warn('⚠️ [Login] Timeout aguardando userType após 15 segundos')
+        console.warn('⚠️ [Login] userType não carregado após 15 segundos')
+
+        // Failsafe: Fazer logout para limpar estado inválido
+        try {
+          if (typeof signOut === 'function') {
+            await signOut()
+          } else {
+            console.error('❌ [Login] signOut não disponível, forçando reload')
+            window.location.reload()
+          }
+        } catch (e) {
+          console.error('❌ [Login] Erro ao tentar signOut:', e)
+          window.location.reload()
+        }
+
+        // Mostrar erro específico
+        setError('Erro ao carregar perfil. Tente fazer login novamente.')
+        setLoading(false)
       }, 10000) // 10 segundos
 
-      return () => clearTimeout(timeoutId)
+      return () => {
+        clearTimeout(timeoutId)
+        clearTimeout(refreshTimeoutId)
+      }
     }
-  }, [user, userType, navigate, location])
+  }, [user, userType, navigate, location, signOut]) // Adicionado signOut
 
   // Timer de bloqueio
   useEffect(() => {
@@ -103,10 +143,6 @@ export default function Login() {
 
       if (result.success) {
         toast.success('Login realizado com sucesso!')
-        
-        // O redirecionamento será feito pelo useEffect que observa userType
-        // Não precisa mais de polling - useEffect já observa mudanças reativas
-        // Não resetar loading ainda - será resetado quando redirecionar ou após timeout
         // O loading será resetado pelo useEffect quando redirecionar ou pelo timeout
       } else {
         if (result.blocked && result.timeRemaining) {

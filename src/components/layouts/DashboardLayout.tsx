@@ -6,15 +6,7 @@ import { useNotifications, useNotificationCount } from '@/hooks/useNotifications
 import { NotificationBell } from '@/components/admin/NotificationBell'
 import { GlobalSearch } from '@/components/admin/GlobalSearch'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { UserMenu } from '@/components/auth/UserMenu'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
@@ -101,31 +93,8 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [searchOpen])
 
+
   const navigationItems = getNavigationItems(userType)
-
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/')
-  }
-
-  const getUserInitials = () => {
-    if (profile?.nome) {
-      return profile.nome
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2)
-    }
-    return user?.email?.[0].toUpperCase() || 'U'
-  }
-
-  const getUserName = () => {
-    if (profile?.nome) return profile.nome
-    if (empresa?.nome_fantasia) return empresa.nome_fantasia
-    if (empresa?.razao_social) return empresa.razao_social
-    return user?.email || 'Usuário'
-  }
 
   const getStatusMessage = () => {
     // Mensagem para empresas apenas (motoristas têm mensagem no próprio Dashboard)
@@ -318,34 +287,9 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   onMarkAllAsRead={markAllAsRead}
                 />
               )}
-              
+
               {/* User Menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 rounded-full hover:bg-primary/10 transition-all">
-                    <Avatar className="h-10 w-10 ring-2 ring-primary/20 hover:ring-primary/40 transition-all">
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-movello-blue-dark text-primary-foreground font-semibold">
-                        {getUserInitials()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-card/95 backdrop-blur-xl border-border/50 shadow-xl">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{getUserName()}</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sair</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <UserMenu />
             </div>
           </div>
         </header>

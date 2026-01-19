@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { DashboardLayout } from '@/components/layouts/DashboardLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
-import { useEmpresaCampanhas } from '@/hooks/useEmpresaCampanhas'
+import { useEmpresaCampanhas, useDeleteCampanha } from '@/hooks/useEmpresaCampanhas'
 import { useAtivarRascunho } from '@/hooks/useEmpresaRascunhos'
 import { DataTable, Column } from '@/components/ui/DataTable'
 import { Button } from '@/components/ui/button'
@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, Eye, Edit, RefreshCw, Loader2, Download, Play, Search, LayoutGrid, Table as TableIcon, TrendingUp, DollarSign, Calendar, Filter, X } from 'lucide-react'
+import { Plus, Eye, Edit, RefreshCw, Loader2, Download, Play, Search, LayoutGrid, Table as TableIcon, TrendingUp, DollarSign, Calendar, Filter, X, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { formatCurrency, formatDate } from '@/lib/utils/formatters'
@@ -23,6 +23,7 @@ import { ErrorDisplay } from '@/components/ui/ErrorDisplay'
 import { AlertCircle } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { CampanhaCard } from '@/components/empresa/CampanhaCard'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 
 const statusConfig: Record<CampanhaStatus, { label: string; variant: 'default' | 'destructive' | 'secondary' }> = {
   em_analise: { label: 'Em Análise', variant: 'secondary' },
@@ -42,34 +43,36 @@ export default function EmpresaCampanhas() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
   const [searchQuery, setSearchQuery] = useState('')
   const [dateFilter, setDateFilter] = useState<'all' | 'active' | 'upcoming' | 'past'>('all')
-  
+
   const { campanhas, loading, error, refetch } = useEmpresaCampanhas({
     status: statusFilter && statusFilter !== 'rascunho' ? statusFilter : undefined,
   })
   const { ativarRascunho, loading: ativando } = useAtivarRascunho()
+  const { deleteCampanha, loading: deleting } = useDeleteCampanha()
+  const [campanhaToDelete, setCampanhaToDelete] = useState<string | null>(null)
 
   // Filtrar e processar campanhas
   const campanhasFiltradas = useMemo(() => {
     let filtered = [...campanhas]
-    
+
     // Filtro de rascunho
     if (statusFilter === 'rascunho') {
       filtered = filtered.filter((c) => c.is_rascunho)
     }
-    
+
     // Filtro de busca
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
-      filtered = filtered.filter((c) => 
+      filtered = filtered.filter((c) =>
         c.titulo.toLowerCase().includes(query) ||
         (c.descricao && c.descricao.toLowerCase().includes(query))
       )
     }
-    
+
     // Filtro de data
     const now = new Date()
     now.setHours(0, 0, 0, 0)
-    
+
     if (dateFilter === 'active') {
       filtered = filtered.filter((c) => {
         const inicio = new Date(c.data_inicio)
@@ -91,7 +94,7 @@ export default function EmpresaCampanhas() {
         return fim < now
       })
     }
-    
+
     return filtered
   }, [campanhas, statusFilter, searchQuery, dateFilter])
 
@@ -103,7 +106,7 @@ export default function EmpresaCampanhas() {
     const rascunhos = campanhas.filter((c) => c.is_rascunho).length
     const orcamentoTotal = campanhas.reduce((sum, c) => sum + c.orcamento, 0)
     const gastoTotal = campanhas.reduce((sum, c) => sum + (c.orcamento_utilizado || 0), 0)
-    
+
     return {
       total,
       ativas,
@@ -121,6 +124,17 @@ export default function EmpresaCampanhas() {
       if (resultado.sucesso) {
         refetch()
       }
+    } catch (error) {
+      // Erro já tratado no hook
+    }
+  }
+
+  const handleDeleteCampanha = async () => {
+    if (!campanhaToDelete) return
+    try {
+      await deleteCampanha(campanhaToDelete)
+      setCampanhaToDelete(null)
+      refetch()
     } catch (error) {
       // Erro já tratado no hook
     }
@@ -261,10 +275,26 @@ export default function EmpresaCampanhas() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(`/empresa/campanhas/${row.id}`)}
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate(`/empresa/campanhas/nova?id=${row.id}`)
+              }}
               className="w-full sm:w-auto"
             >
               <Edit className="h-4 w-4" />
+            </Button>
+          )}
+          {(row.is_rascunho || row.status === 'em_analise' || row.status === 'reprovada') && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation()
+                setCampanhaToDelete(row.id)
+              }}
+              className="w-full sm:w-auto text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -392,8 +422,8 @@ export default function EmpresaCampanhas() {
                   )}>
                     {formatCurrency(stats.saldoDisponivel)}
                   </div>
-                  <Progress 
-                    value={stats.orcamentoTotal > 0 ? (stats.gastoTotal / stats.orcamentoTotal) * 100 : 0} 
+                  <Progress
+                    value={stats.orcamentoTotal > 0 ? (stats.gastoTotal / stats.orcamentoTotal) * 100 : 0}
                     className="h-1.5 mt-2"
                   />
                 </CardContent>
@@ -436,8 +466,8 @@ export default function EmpresaCampanhas() {
               </div>
 
               {/* Filtro de Status */}
-              <Select 
-                value={statusFilter || '__all__'} 
+              <Select
+                value={statusFilter || '__all__'}
                 onValueChange={(value) => setStatusFilter(value === '__all__' ? '' : value)}
               >
                 <SelectTrigger className="w-full lg:w-[180px] h-11">
@@ -454,8 +484,8 @@ export default function EmpresaCampanhas() {
               </Select>
 
               {/* Filtro de Data */}
-              <Select 
-                value={dateFilter} 
+              <Select
+                value={dateFilter}
                 onValueChange={(v: 'all' | 'active' | 'upcoming' | 'past') => setDateFilter(v)}
               >
                 <SelectTrigger className="w-full lg:w-[180px] h-11">
@@ -560,7 +590,7 @@ export default function EmpresaCampanhas() {
                         key={campanha.id}
                         campanha={campanha}
                         onView={(id) => navigate(`/empresa/campanhas/${id}`)}
-                        onEdit={(id) => navigate(`/empresa/campanhas/${id}`)}
+                        onEdit={(id) => navigate(`/empresa/campanhas/nova?id=${id}`)}
                         onActivate={async (id) => {
                           try {
                             const resultado = await ativarRascunho(id)
@@ -571,6 +601,7 @@ export default function EmpresaCampanhas() {
                             // Erro já tratado no hook
                           }
                         }}
+                        onDelete={(id) => setCampanhaToDelete(id)}
                       />
                     ))
                   )}
@@ -589,6 +620,30 @@ export default function EmpresaCampanhas() {
             </>
           )}
         </div>
+
+        <AlertDialog open={!!campanhaToDelete} onOpenChange={(open) => !open && setCampanhaToDelete(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir Campanha</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir esta campanha? Esta ação não pode ser desfeita e removerá todos os dados associados, incluindo mídias e estatísticas.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault()
+                  handleDeleteCampanha()
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deleting}
+              >
+                {deleting ? 'Excluindo...' : 'Sim, excluir'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DashboardLayout>
     </ProtectedRoute>
   )

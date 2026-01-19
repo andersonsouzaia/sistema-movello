@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Slider } from '@/components/ui/slider'
+
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -39,81 +39,93 @@ export function PublicoAlvoEditor({
   className,
   disabled = false,
 }: PublicoAlvoEditorProps) {
-  const [idadeMin, setIdadeMin] = useState<number>(value?.idade_min || 18)
-  const [idadeMax, setIdadeMax] = useState<number>(value?.idade_max || 65)
-  const [generos, setGeneros] = useState<Genero[]>(value?.genero || ['Todos'])
-  const [interesses, setInteresses] = useState<string[]>(value?.interesses || [])
+  const idadeMin = value?.idade_min ?? 18
+  const idadeMax = value?.idade_max ?? 65
+  const generos = value?.genero || ['Todos']
+  const interesses = value?.interesses || []
   const [interesseCustomizado, setInteresseCustomizado] = useState('')
 
-  useEffect(() => {
-    if (value) {
-      setIdadeMin(value.idade_min || 18)
-      setIdadeMax(value.idade_max || 65)
-      setGeneros(value.genero || ['Todos'])
-      setInteresses(value.interesses || [])
-    }
-  }, [value])
-
   const handleIdadeChange = (tipo: 'min' | 'max', valor: number) => {
+    let novoMin = idadeMin
+    let novoMax = idadeMax
+
     if (tipo === 'min') {
-      setIdadeMin(valor)
-      if (valor > idadeMax) setIdadeMax(valor)
+      novoMin = valor
+      if (valor > novoMax) novoMax = valor
     } else {
-      setIdadeMax(valor)
-      if (valor < idadeMin) setIdadeMin(valor)
+      novoMax = valor
+      if (valor < novoMin) novoMin = valor
     }
-    
-    atualizarPublicoAlvo()
+
+    onChange({
+      ...value,
+      idade_min: novoMin,
+      idade_max: novoMax,
+      genero: generos,
+      interesses: interesses.length > 0 ? interesses : undefined,
+    } as PublicoAlvo)
   }
 
   const handleGeneroToggle = (genero: Genero) => {
+    let novosGeneros: Genero[]
+
     if (genero === 'Todos') {
-      setGeneros(['Todos'])
+      novosGeneros = ['Todos']
     } else {
-      const novosGeneros = generos.includes(genero)
+      novosGeneros = generos.includes(genero)
         ? generos.filter((g) => g !== genero)
         : [...generos.filter((g) => g !== 'Todos'), genero]
-      
-      setGeneros(novosGeneros.length > 0 ? novosGeneros : ['Todos'])
+
+      if (novosGeneros.length === 0) novosGeneros = ['Todos']
     }
-    atualizarPublicoAlvo()
+
+    onChange({
+      ...value,
+      idade_min: idadeMin,
+      idade_max: idadeMax,
+      genero: novosGeneros,
+      interesses: interesses.length > 0 ? interesses : undefined,
+    } as PublicoAlvo)
   }
 
   const handleInteresseToggle = (interesse: string) => {
-    if (interesses.includes(interesse)) {
-      setInteresses(interesses.filter((i) => i !== interesse))
-    } else {
-      setInteresses([...interesses, interesse])
-    }
-    atualizarPublicoAlvo()
+    const novosInteresses = interesses.includes(interesse)
+      ? interesses.filter((i) => i !== interesse)
+      : [...interesses, interesse]
+
+    onChange({
+      ...value,
+      idade_min: idadeMin,
+      idade_max: idadeMax,
+      genero: generos,
+      interesses: novosInteresses.length > 0 ? novosInteresses : undefined,
+    } as PublicoAlvo)
   }
 
   const handleAdicionarInteresse = () => {
     if (interesseCustomizado.trim() && !interesses.includes(interesseCustomizado.trim())) {
-      setInteresses([...interesses, interesseCustomizado.trim()])
+      const novosInteresses = [...interesses, interesseCustomizado.trim()]
+      onChange({
+        ...value,
+        idade_min: idadeMin,
+        idade_max: idadeMax,
+        genero: generos,
+        interesses: novosInteresses,
+      } as PublicoAlvo)
       setInteresseCustomizado('')
-      atualizarPublicoAlvo()
     }
   }
 
   const handleRemoverInteresse = (interesse: string) => {
-    setInteresses(interesses.filter((i) => i !== interesse))
-    atualizarPublicoAlvo()
-  }
-
-  const atualizarPublicoAlvo = () => {
+    const novosInteresses = interesses.filter((i) => i !== interesse)
     onChange({
+      ...value,
       idade_min: idadeMin,
       idade_max: idadeMax,
       genero: generos,
-      interesses: interesses.length > 0 ? interesses : undefined,
-    })
+      interesses: novosInteresses.length > 0 ? novosInteresses : undefined,
+    } as PublicoAlvo)
   }
-
-  useEffect(() => {
-    atualizarPublicoAlvo()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [idadeMin, idadeMax, generos, interesses])
 
   const generosDisponiveis: Array<{ value: Genero; label: string }> = [
     { value: 'Todos', label: 'Todos' },
@@ -138,29 +150,11 @@ export function PublicoAlvoEditor({
         <div className="space-y-4">
           <div>
             <Label>Faixa Etária</Label>
-            <div className="flex items-center gap-4 mt-2">
-              <div className="flex-1">
-                <Label className="text-xs text-muted-foreground">Mínima: {idadeMin} anos</Label>
-                <Slider
-                  value={[idadeMin]}
-                  onValueChange={(values) => handleIdadeChange('min', values[0])}
-                  min={13}
-                  max={100}
-                  step={1}
-                  disabled={disabled}
-                />
-              </div>
-              <div className="flex-1">
-                <Label className="text-xs text-muted-foreground">Máxima: {idadeMax} anos</Label>
-                <Slider
-                  value={[idadeMax]}
-                  onValueChange={(values) => handleIdadeChange('max', values[0])}
-                  min={13}
-                  max={100}
-                  step={1}
-                  disabled={disabled}
-                />
-              </div>
+            <div className="flex-1">
+              <Label className="text-xs text-muted-foreground">Mínima</Label>
+            </div>
+            <div className="flex-1">
+              <Label className="text-xs text-muted-foreground">Máxima</Label>
             </div>
             <div className="flex items-center gap-2 mt-2">
               <Input
@@ -218,7 +212,7 @@ export function PublicoAlvoEditor({
         {/* Interesses */}
         <div className="space-y-2">
           <Label>Interesses</Label>
-          <ScrollArea className="h-32 border rounded-lg p-3">
+          <div className="h-32 border rounded-lg p-3 overflow-y-auto custom-scrollbar">
             <div className="grid grid-cols-2 gap-2">
               {INTERESSES_PADRAO.map((interesse) => (
                 <div key={interesse} className="flex items-center space-x-2">
@@ -237,7 +231,7 @@ export function PublicoAlvoEditor({
                 </div>
               ))}
             </div>
-          </ScrollArea>
+          </div>
 
           {/* Adicionar interesse customizado */}
           <div className="flex gap-2">

@@ -63,289 +63,289 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
           <AuthProvider>
             <Routes>
               {/* Rotas Públicas */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
-              <Route 
-                path="/cadastro-empresa" 
+              <Route
+                path="/cadastro-empresa"
                 element={
                   <Suspense fallback={<LoadingFallback message="Carregando página..." />}>
                     <CadastroEmpresa />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/cadastro-motorista" 
+              <Route
+                path="/cadastro-motorista"
                 element={
                   <Suspense fallback={<LoadingFallback message="Carregando página..." />}>
                     <CadastroMotorista />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/recuperar-senha" 
+              <Route
+                path="/recuperar-senha"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <RecuperarSenha />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/redefinir-senha" 
+              <Route
+                path="/redefinir-senha"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <RedefinirSenha />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/confirmar-email" 
+              <Route
+                path="/confirmar-email"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <ConfirmarEmail />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/setup" 
+              <Route
+                path="/setup"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <CreateFirstAdmin />
                   </Suspense>
-                } 
+                }
               />
 
               {/* Rotas Protegidas - Empresa */}
-              <Route 
-                path="/empresa/dashboard" 
+              <Route
+                path="/empresa/dashboard"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <EmpresaDashboard />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/empresa/campanhas" 
+              <Route
+                path="/empresa/campanhas"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <EmpresaCampanhas />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/empresa/campanhas/nova" 
+              <Route
+                path="/empresa/campanhas/nova"
                 element={
                   <Suspense fallback={<LoadingFallback message="Carregando criação de campanha..." />}>
                     <EmpresaNovaCampanha />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/empresa/campanhas/:id" 
+              <Route
+                path="/empresa/campanhas/:id"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <EmpresaCampanhaDetalhes />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/empresa/midias" 
+              <Route
+                path="/empresa/midias"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <EmpresaMidias />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/empresa/pagamentos" 
+              <Route
+                path="/empresa/pagamentos"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <EmpresaPagamentos />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/empresa/perfil" 
+              <Route
+                path="/empresa/perfil"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <EmpresaPerfil />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/empresa/suporte" 
+              <Route
+                path="/empresa/suporte"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <EmpresaSuporte />
                   </Suspense>
-                } 
+                }
               />
 
               {/* Rotas Protegidas - Motorista */}
-              <Route 
-                path="/motorista/dashboard" 
+              <Route
+                path="/motorista/dashboard"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <MotoristaDashboard />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/motorista/ganhos" 
+              <Route
+                path="/motorista/ganhos"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <MotoristaGanhos />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/motorista/tablet" 
+              <Route
+                path="/motorista/tablet"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <MotoristaTablet />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/motorista/perfil" 
+              <Route
+                path="/motorista/perfil"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <MotoristaPerfil />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/motorista/suporte" 
+              <Route
+                path="/motorista/suporte"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <MotoristaSuporte />
                   </Suspense>
-                } 
+                }
               />
 
               {/* Rotas Protegidas - Admin */}
-              <Route 
-                path="/admin/dashboard" 
+              <Route
+                path="/admin/dashboard"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminDashboard />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/empresas" 
+              <Route
+                path="/admin/empresas"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminEmpresas />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/empresas/:id" 
+              <Route
+                path="/admin/empresas/:id"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminEmpresaDetalhes />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/motoristas" 
+              <Route
+                path="/admin/motoristas"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminMotoristas />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/motoristas/:id" 
+              <Route
+                path="/admin/motoristas/:id"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminMotoristaDetalhes />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/campanhas" 
+              <Route
+                path="/admin/campanhas"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminCampanhas />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/campanhas/:id" 
+              <Route
+                path="/admin/campanhas/:id"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminCampanhaDetalhes />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/pagamentos" 
+              <Route
+                path="/admin/pagamentos"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminPagamentos />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/suporte" 
+              <Route
+                path="/admin/suporte"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminSuporte />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/suporte/:id" 
+              <Route
+                path="/admin/suporte/:id"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminTicketDetalhes />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/configuracoes" 
+              <Route
+                path="/admin/configuracoes"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminConfiguracoes />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/roles" 
+              <Route
+                path="/admin/roles"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminRoles />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/relatorios" 
+              <Route
+                path="/admin/relatorios"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminRelatorios />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/logs" 
+              <Route
+                path="/admin/logs"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminLogs />
                   </Suspense>
-                } 
+                }
               />
-              <Route 
-                path="/admin/notificacoes" 
+              <Route
+                path="/admin/notificacoes"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <AdminNotificacoes />
                   </Suspense>
-                } 
+                }
               />
 
               {/* 404 */}

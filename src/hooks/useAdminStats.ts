@@ -15,6 +15,13 @@ export interface AdminStats {
   campanhas_ativas?: number
 }
 
+export interface AdvancedStats {
+  empresas_crescimento_30d: number
+  motoristas_crescimento_30d: number
+  empresas_aprovadas_30d: number
+  motoristas_aprovados_30d: number
+}
+
 export const useAdminStats = () => {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)

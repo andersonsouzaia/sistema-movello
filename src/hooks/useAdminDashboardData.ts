@@ -1,15 +1,15 @@
 import { useQueries } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import type { AdminStats, AdvancedStats } from './useAdminStats'
-import type { 
-  Empresa, 
-  Motorista, 
-  Campanha, 
+import type {
+  Empresa,
+  Motorista,
+  Campanha,
   CampanhaWithEmpresa,
-  Ticket, 
-  AuditLog, 
-  Notification, 
-  FinancialSummary 
+  Ticket,
+  AuditLog,
+  Notification,
+  FinancialSummary
 } from '@/types/database'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -46,6 +46,7 @@ interface AdminDashboardLoading {
  * Reduz número de chamadas e melhora performance
  */
 export const useAdminDashboardData = () => {
+  // Force HMR Update
   const { user } = useAuth()
 
   const queries = useQueries({
@@ -144,7 +145,7 @@ export const useAdminDashboardData = () => {
             .from('tickets')
             .select('*')
             .eq('status', 'aberto')
-            .order('created_at', { ascending: false })
+            .order('criado_em', { ascending: false })
           if (error) throw error
           return (data || []) as Ticket[]
         },
@@ -158,7 +159,7 @@ export const useAdminDashboardData = () => {
           const { data, error } = await supabase
             .from('tickets')
             .select('*')
-            .order('created_at', { ascending: false })
+            .order('criado_em', { ascending: false })
             .limit(100)
           if (error) throw error
           return (data || []) as Ticket[]

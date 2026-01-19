@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { DataTable, Column } from '@/components/ui/DataTable'
-import { Plus, Loader2, MessageSquare, AlertCircle, CheckCircle2, Clock, XCircle } from 'lucide-react'
+import { Plus, Loader2, MessageSquare, AlertCircle, CheckCircle2, Clock, XCircle, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -26,7 +26,7 @@ import type { TicketWithDetails } from '@/types/database'
 const useMotoristaTickets = (filters: { status?: string } = {}) => {
   const [tickets, setTickets] = useState<TicketWithDetails[]>([])
   const [loading, setLoading] = useState(false)
-  
+
   return {
     tickets,
     loading,
@@ -43,32 +43,32 @@ const useMotoristaTicket = (id: string | null) => {
 
 const useCreateMotoristaTicket = () => {
   const [loading, setLoading] = useState(false)
-  
-  const createTicket = async (data: { assunto: string; descricao: string; prioridade: string }) => {
+
+  const createTicket = async (data: { titulo: string; descricao: string; prioridade: string }) => {
     setLoading(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
     setLoading(false)
     toast.success('Ticket criado com sucesso!')
   }
-  
+
   return { createTicket, loading }
 }
 
 const useAddMotoristaTicketComment = () => {
   const [loading, setLoading] = useState(false)
-  
+
   const addComment = async (ticketId: string, comment: string, interno: boolean) => {
     setLoading(true)
     await new Promise(resolve => setTimeout(resolve, 1000))
     setLoading(false)
     toast.success('Comentário adicionado com sucesso!')
   }
-  
+
   return { addComment, loading }
 }
 
 const ticketSchema = z.object({
-  assunto: z.string().min(3, 'Assunto deve ter no mínimo 3 caracteres'),
+  titulo: z.string().min(3, 'Assunto deve ter no mínimo 3 caracteres'),
   descricao: z.string().min(10, 'Descrição deve ter no mínimo 10 caracteres'),
   prioridade: z.enum(['baixa', 'media', 'alta', 'urgente']),
 })
@@ -102,7 +102,7 @@ export default function MotoristaSuporte() {
   const form = useForm<TicketFormData>({
     resolver: zodResolver(ticketSchema),
     defaultValues: {
-      assunto: '',
+      titulo: '',
       descricao: '',
       prioridade: 'media',
     },
@@ -111,7 +111,7 @@ export default function MotoristaSuporte() {
   const handleCreateTicket = async (data: TicketFormData) => {
     try {
       await createTicket({
-        assunto: data.assunto,
+        titulo: data.titulo,
         descricao: data.descricao,
         prioridade: data.prioridade,
       })
@@ -125,10 +125,10 @@ export default function MotoristaSuporte() {
 
   const columns: Column<TicketWithDetails>[] = [
     {
-      key: 'assunto',
+      key: 'titulo',
       header: 'Assunto',
       render: (row) => (
-        <div className="font-medium">{row.assunto}</div>
+        <div className="font-medium">{row.titulo}</div>
       ),
     },
     {
@@ -143,7 +143,7 @@ export default function MotoristaSuporte() {
       key: 'status',
       header: 'Status',
       render: (row) => {
-        const config = statusConfig[row.status] || { label: row.status, variant: 'secondary' as const }
+        const config = statusConfig[row.status] || { label: row.status, variant: 'secondary' as const, icon: FileText }
         const Icon = config.icon || MessageSquare
         return (
           <Badge variant={config.variant} className="gap-1">
@@ -212,16 +212,16 @@ export default function MotoristaSuporte() {
                 </DialogHeader>
                 <form onSubmit={form.handleSubmit(handleCreateTicket)} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="assunto">Assunto *</Label>
+                    <Label htmlFor="titulo">Assunto *</Label>
                     <Input
-                      id="assunto"
-                      {...form.register('assunto')}
+                      id="titulo"
+                      {...form.register('titulo')}
                       placeholder="Ex: Problema com tablet"
                       className="h-11"
                     />
-                    {form.formState.errors.assunto && (
+                    {form.formState.errors.titulo && (
                       <p className="text-sm text-destructive">
-                        {form.formState.errors.assunto.message}
+                        {form.formState.errors.titulo.message}
                       </p>
                     )}
                   </div>
@@ -339,7 +339,7 @@ export default function MotoristaSuporte() {
                 <DataTable
                   data={tickets}
                   columns={columns}
-                  searchKey="assunto"
+                  searchKey="titulo"
                   searchPlaceholder="Buscar tickets por assunto..."
                   emptyMessage="Nenhum ticket encontrado. Crie seu primeiro ticket!"
                   onRowClick={(row) => setSelectedTicket(row.id)}
@@ -401,15 +401,19 @@ function TicketDetails({ ticketId, onClose }: { ticketId: string; onClose: () =>
         <p className="text-muted-foreground">Ticket não encontrado</p>
       </div>
     )
-  }  const status = statusConfig[ticket.status] || { label: ticket.status, variant: 'secondary' as const }
-  const prioridade = prioridadeConfig[ticket.prioridade] || { label: ticket.prioridade, variant: 'secondary' as const }  return (
+  }
+
+  const status = statusConfig[ticket.status] || { label: ticket.status, variant: 'secondary' as const, icon: FileText }
+  const prioridade = prioridadeConfig[ticket.prioridade] || { label: ticket.prioridade, variant: 'secondary' as const }
+
+  return (
     <div className="space-y-6">
       {/* Informações do Ticket */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <CardTitle>{ticket.assunto}</CardTitle>
+              <CardTitle>{ticket.titulo}</CardTitle>
               <CardDescription className="mt-2">
                 Criado em {formatDateTime(ticket.criado_em)}
               </CardDescription>
@@ -434,7 +438,9 @@ function TicketDetails({ ticketId, onClose }: { ticketId: string; onClose: () =>
             )}
           </div>
         </CardContent>
-      </Card>      {/* Comentários */}
+      </Card>
+
+      {/* Comentários */}
       <TicketComments
         comments={[]}
         loading={false}

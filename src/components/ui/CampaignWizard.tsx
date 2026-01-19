@@ -82,7 +82,7 @@ export function CampaignWizard({
 
   const validateStep = useCallback(async (stepIndex: number): Promise<boolean> => {
     const step = steps[stepIndex]
-    
+
     if (step.onValidate) {
       setValidatingStep(stepIndex)
       try {
@@ -95,13 +95,13 @@ export function CampaignWizard({
         setValidatingStep(null)
       }
     }
-    
+
     return step.isValid !== false
   }, [steps])
 
   const handleStepClick = useCallback(async (stepIndex: number) => {
     if (isLoading) return
-    
+
     // Se navegação livre está desabilitada, só permitir avançar sequencialmente
     if (!allowFreeNavigation && stepIndex > currentStep) {
       return
@@ -120,7 +120,7 @@ export function CampaignWizard({
 
   const handleNext = useCallback(async () => {
     if (isLoading) return
-    
+
     // Validar etapa atual antes de avançar
     const isValid = await validateStep(currentStep)
     if (!isValid) {
@@ -140,7 +140,7 @@ export function CampaignWizard({
 
   const handleFinish = useCallback(async () => {
     if (isLoading) return
-    
+
     // Validar etapa atual antes de finalizar
     const isValid = await validateStep(currentStep)
     if (!isValid) {
@@ -169,7 +169,7 @@ export function CampaignWizard({
                     <Progress value={progress} className="h-2" />
                   </div>
 
-                  <ScrollArea className="h-[calc(100vh-300px)]">
+                  <div className="h-[calc(100vh-300px)] overflow-y-auto pr-2 custom-scrollbar">
                     <div className="space-y-2">
                       {steps.map((step, index) => {
                         const isActive = index === currentStep
@@ -241,7 +241,7 @@ export function CampaignWizard({
                         )
                       })}
                     </div>
-                  </ScrollArea>
+                  </div>
 
                   {/* Dica de Atalhos */}
                   <div className="pt-4 border-t text-xs text-muted-foreground">
@@ -347,11 +347,7 @@ export function CampaignWizard({
             <CardContent className="pt-6">
               <div className="space-y-6">
                 {/* Preview Component - apenas na primeira etapa */}
-                {currentStep === 0 && previewComponent && (
-                  <div className="mb-6">
-                    {previewComponent}
-                  </div>
-                )}
+
 
                 <div className="space-y-4">
                   <div>

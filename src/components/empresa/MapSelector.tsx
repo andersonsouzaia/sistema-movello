@@ -81,7 +81,7 @@ export function MapSelector({
   // Sincronizar valor externo apenas quando realmente mudar
   useEffect(() => {
     if (!value) return
-    
+
     // Comparar valores para evitar atualizações desnecessárias
     if (value.tipo && value.tipo !== tipo) {
       setTipo(value.tipo)
@@ -110,7 +110,7 @@ export function MapSelector({
   // Atualizar onChange apenas quando valores realmente mudarem (não quando onChange mudar)
   useEffect(() => {
     const novoValor: any = { tipo }
-    
+
     if (tipo === 'raio' && centro && raio) {
       novoValor.centro_latitude = centro[0]
       novoValor.centro_longitude = centro[1]
@@ -123,17 +123,17 @@ export function MapSelector({
       novoValor.centro_latitude = latMedia
       novoValor.centro_longitude = lngMedia
     }
-    
+
     // Usar ref para evitar dependência de onChange
     onChangeRef.current(novoValor)
-     
+
   }, [tipo, centro, raio, poligono])
 
   const handleMapClick = (e: L.LeafletMouseEvent) => {
     if (readOnly || tipo === 'cidade' || tipo === 'estado') return
-    
+
     const { lat, lng } = e.latlng
-    
+
     if (tipo === 'raio') {
       setCentro([lat, lng])
       // Atualizar onChange imediatamente para raio
@@ -254,12 +254,33 @@ export function MapSelector({
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 <MapUpdater center={centro} />
-                
-                {/* Marcador central */}
+
+                {/* Marcador central (Arrastável) */}
                 {tipo === 'raio' && centro && (
-                  <Marker position={centro} />
+                  <Marker
+                    position={centro}
+                    draggable={!readOnly}
+                    eventHandlers={{
+                      dragend: (e) => {
+                        const marker = e.target
+                        const position = marker.getLatLng()
+                        const newLat = position.lat
+                        const newLng = position.lng
+
+                        setCentro([newLat, newLng])
+                        // Atualizar onChange imediatamente
+                        onChangeRef.current({
+                          tipo: 'raio',
+                          centro_latitude: newLat,
+                          centro_longitude: newLng,
+                          raio_km: raio,
+                        })
+                      },
+                    }}
+                    ref={markerRef}
+                  />
                 )}
-                
+
                 {/* Círculo de raio */}
                 {tipo === 'raio' && centro && raio && (
                   <Circle
@@ -268,7 +289,7 @@ export function MapSelector({
                     pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.2 }}
                   />
                 )}
-                
+
                 {/* Polígono */}
                 {tipo === 'poligono' && poligono.length > 0 && (
                   <Polygon
@@ -276,14 +297,14 @@ export function MapSelector({
                     pathOptions={{ color: '#3b82f6', fillColor: '#3b82f6', fillOpacity: 0.2 }}
                   />
                 )}
-                
+
                 {/* Marcadores dos pontos do polígono */}
                 {tipo === 'poligono' &&
                   poligono.map((point, index) => (
                     <Marker key={`polygon-point-${index}-${point[0]}-${point[1]}`} position={point} />
                   ))}
               </MapContainer>
-              
+
               {/* Controles do polígono */}
               {tipo === 'poligono' && !readOnly && (
                 <div className="absolute top-2 right-2 bg-background p-2 rounded-lg shadow-lg space-y-2 z-[1000]">
@@ -318,27 +339,81 @@ export function MapSelector({
                 </div>
               )}
             </div>
-            
-            {/* Informações */}
-            {tipo === 'raio' && centro && (
-              <div className="mt-4 text-sm text-muted-foreground">
-                <p>
-                  Centro: {centro[0].toFixed(6)}, {centro[1].toFixed(6)}
-                </p>
-                <p>Raio: {raio} km</p>
+
+            {/* Informações Calculadas */}
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+              <div>
+                <Label className="text-xs text-muted-foreground">Centro da Área</Label>
+                <div className="font-medium text-sm">
+                  {tipo === 'raio' && centro
+                    ? `${centro[0].toFixed(6)}, ${centro[1].toFixed(6)}`
+                    : tipo === 'poligono' && poligono.length > 0
+                      ? (() => {
+                        const lat = poligono.reduce((s, p) => s + p[0], 0) / poligono.length
+                        const lng = poligono.reduce((s, p) => s + p[1], 0) / poligono.length
+                        return `${lat.toFixed(6)}, ${lng.toFixed(6)}`
+                      })()
+                      : '-'}
+                </div>
               </div>
-            )}
-            
-            {tipo === 'poligono' && poligono.length > 0 && (
-              <div className="mt-4 text-sm text-muted-foreground">
-                <p>Pontos: {poligono.length}</p>
-                {poligono.length < 3 && (
-                  <p className="text-yellow-600">
-                    Adicione pelo menos 3 pontos para formar um polígono
-                  </p>
-                )}
+
+              <div>
+                <Label className="text-xs text-muted-foreground">Raio de Cobertura</Label>
+                <div className="font-medium text-sm">
+                  {tipo === 'raio' ? `${raio.toFixed(2)} km` : '-'}
+                </div>
               </div>
-            )}
+
+              <div>
+                <Label className="text-xs text-muted-foreground">Área Total</Label>
+                <div className="font-medium text-sm">
+                  {tipo === 'raio'
+                    ? `${(Math.PI * raio * raio).toFixed(2)} km²`
+                    : tipo === 'poligono' && poligono.length >= 3
+                      ? (() => {
+                        // Shoelace formula para área de polígono (aproximada em km)
+                        // Conversão lat/lng para km: ~111km por grau (simplificado)
+                        let area = 0
+                        for (let i = 0; i < poligono.length; i++) {
+                          const j = (i + 1) % poligono.length
+                          area += poligono[i][0] * poligono[j][1]
+                          area -= poligono[j][0] * poligono[i][1]
+                        }
+                        const areaDeg = Math.abs(area) / 2
+                        // Ajuste latitude média para longitude
+                        const latMean = poligono.reduce((s, p) => s + p[0], 0) / poligono.length
+                        const kmPerLat = 111.32
+                        const kmPerLng = 111.32 * Math.cos(latMean * (Math.PI / 180))
+
+                        return `${(areaDeg * kmPerLat * kmPerLng).toFixed(2)} km²`
+                      })()
+                      : '-'}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-xs text-muted-foreground">Perímetro</Label>
+                <div className="font-medium text-sm">
+                  {tipo === 'raio'
+                    ? `${(2 * Math.PI * raio).toFixed(2)} km`
+                    : tipo === 'poligono' && poligono.length >= 2
+                      ? (() => {
+                        let perimeter = 0
+                        for (let i = 0; i < poligono.length; i++) {
+                          const j = (i + 1) % poligono.length
+                          // Haversine simplificado ou Euclidiano local
+                          const p1 = poligono[i]
+                          const p2 = poligono[j]
+                          const dLat = (p2[0] - p1[0]) * 111.32
+                          const dLng = (p2[1] - p1[1]) * (111.32 * Math.cos(p1[0] * (Math.PI / 180)))
+                          perimeter += Math.sqrt(dLat * dLat + dLng * dLng)
+                        }
+                        return `${perimeter.toFixed(2)} km`
+                      })()
+                      : '-'}
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

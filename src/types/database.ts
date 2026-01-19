@@ -10,24 +10,24 @@ export type EmpresaStatus = 'aguardando_aprovacao' | 'ativa' | 'bloqueada' | 'su
 
 export type MotoristaStatus = 'aguardando_aprovacao' | 'aprovado' | 'bloqueado' | 'suspenso'
 
-export type CampanhaStatus = 
-  | 'em_analise' 
-  | 'aprovada' 
-  | 'reprovada' 
-  | 'ativa' 
-  | 'pausada' 
-  | 'finalizada' 
+export type CampanhaStatus =
+  | 'em_analise'
+  | 'aprovada'
+  | 'reprovada'
+  | 'ativa'
+  | 'pausada'
+  | 'finalizada'
   | 'cancelada'
   | 'rascunho'
 
 export type MidiaStatus = 'em_analise' | 'aprovada' | 'reprovada'
 
-export type PagamentoStatus = 
-  | 'pendente' 
-  | 'processando' 
-  | 'pago' 
-  | 'falhou' 
-  | 'cancelado' 
+export type PagamentoStatus =
+  | 'pendente'
+  | 'processando'
+  | 'pago'
+  | 'falhou'
+  | 'cancelado'
   | 'reembolsado'
 
 export type RepasseStatus = 'pendente' | 'processando' | 'pago' | 'falhou'
@@ -335,6 +335,8 @@ export interface Campanha {
   orcamento_utilizado: number
   data_inicio: string
   data_fim: string
+  horario_inicio?: string
+  horario_fim?: string
   status: CampanhaStatus
   aprovado_por: string | null
   aprovado_em: string | null
@@ -603,7 +605,7 @@ export interface Repasse {
 
 export interface Transacao {
   id: string
-  tipo: 'pagamento' | 'repasse'
+  tipo: 'pagamento' | 'repasse' | 'ajuste'
   origem_id: string | null
   destino_id: string | null
   valor: number
@@ -719,6 +721,8 @@ export interface CreateCampanhaFormData {
   orcamento: number
   data_inicio: string
   data_fim: string
+  horario_inicio?: string
+  horario_fim?: string
 }
 
 export interface UpdateCampanhaFormData {
@@ -727,6 +731,8 @@ export interface UpdateCampanhaFormData {
   orcamento?: number
   data_inicio?: string
   data_fim?: string
+  horario_inicio?: string
+  horario_fim?: string
 }
 
 export interface CreateTicketFormData {

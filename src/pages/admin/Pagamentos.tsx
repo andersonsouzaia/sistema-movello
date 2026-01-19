@@ -17,13 +17,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { usePagamentos, useRepasses, useFinancialSummary } from '@/hooks/usePagamentos'
+import { usePagamentos, useRepasses, useFinancialSummary, useAdminFinancialHistory } from '@/hooks/usePagamentos'
 import { pagamentoService, GetPagamentosFilters, GetRepassesFilters } from '@/services/pagamentoService'
 import { useAuth } from '@/contexts/AuthContext'
 import { CheckCircle, RefreshCw, Eye, Download } from 'lucide-react'
 import { formatCurrency, formatDateTime } from '@/lib/utils/formatters'
 import { exportToCSV, exportToExcel, exportToPDF, formatDataForExport } from '@/utils/exportUtils'
 import type { Pagamento, Repasse, PagamentoStatus, RepasseStatus } from '@/types/database'
+import { cn } from '@/lib/utils'
 
 const paymentStatusConfig: Record<PagamentoStatus, { label: string; variant: 'default' | 'destructive' | 'secondary' }> = {
   pendente: { label: 'Pendente', variant: 'secondary' },
@@ -45,7 +46,7 @@ export default function AdminPagamentos() {
   const { user } = useAuth()
   const [paymentFilters, setPaymentFilters] = useState<GetPagamentosFilters>({})
   const [repasseFilters, setRepasseFilters] = useState<GetRepassesFilters>({})
-  const { pagamentos, loading: loadingPayments, refetch: refetchPayments } = usePagamentos(paymentFilters)
+  const { history: financialHistory, loading: loadingHistory, refetch: refetchHistory } = useAdminFinancialHistory(paymentFilters)
   const { repasses, loading: loadingRepasses, refetch: refetchRepasses } = useRepasses(repasseFilters)
   const { summary, loading: loadingSummary } = useFinancialSummary()
 
@@ -53,7 +54,7 @@ export default function AdminPagamentos() {
     if (!user?.id) return
     const result = await pagamentoService.processPayment(id, user.id)
     if (result.success) {
-      refetchPayments()
+      refetchHistory()
     }
   }
 
@@ -69,29 +70,27 @@ export default function AdminPagamentos() {
     if (!user?.id) return
     const result = await pagamentoService.retryFailedPayment(id, user.id)
     if (result.success) {
-      refetchPayments()
+      refetchHistory()
     }
   }
 
   const handleExportPayments = async (format: 'csv' | 'excel' | 'pdf') => {
-    if (pagamentos.length === 0) {
+    if (financialHistory.length === 0) {
       return
     }
 
-    const headers: Record<keyof Pagamento, string> = {
+    const headers = {
       id: 'ID',
-      empresa_id: 'ID Empresa',
+      empresa_nome: 'Empresa',
+      tipo: 'Tipo',
+      descricao: 'Descrição',
       valor: 'Valor',
-      valor_liquido: 'Valor Líquido',
-      taxa: 'Taxa',
       status: 'Status',
       metodo_pagamento: 'Método de Pagamento',
-      referencia_externa: 'Referência Externa',
       criado_em: 'Criado em',
-      processado_em: 'Processado em',
     }
 
-    const formattedData = formatDataForExport(pagamentos, {
+    const formattedData = formatDataForExport(financialHistory, {
       valor: (v) => formatCurrency(v),
       valor_liquido: (v) => formatCurrency(v),
       taxa: (v) => formatCurrency(v),
@@ -150,33 +149,52 @@ export default function AdminPagamentos() {
     }
   }
 
-  const paymentColumns: Column<Pagamento>[] = [
+  const paymentColumns: Column<any>[] = [
     {
-      key: 'id',
-      header: 'ID',
-      render: (row) => `#${row.id.slice(0, 8)}`,
+      key: 'empresa_nome',
+      header: 'Empresa',
+      render: (row) => (
+        <div className="font-medium text-sm">{row.empresa_nome || 'N/A'}</div>
+      ),
+    },
+    {
+      key: 'tipo',
+      header: 'Tipo',
+      render: (row) => (
+        <Badge variant={row.tipo === 'ajuste' ? 'outline' : 'secondary'}>
+          {row.tipo === 'ajuste' ? 'Ajuste Manual' : 'Pagamento'}
+        </Badge>
+      ),
+    },
+    {
+      key: 'descricao',
+      header: 'Descrição',
+      render: (row) => (
+        <div className="text-sm text-muted-foreground truncate max-w-[200px]" title={row.descricao}>
+          {row.descricao || '-'}
+        </div>
+      ),
     },
     {
       key: 'valor',
       header: 'Valor',
-      render: (row) => formatCurrency(row.valor),
-    },
-    {
-      key: 'valor_liquido',
-      header: 'Valor Líquido',
-      render: (row) => formatCurrency(row.valor_liquido),
+      render: (row) => (
+        <div className={cn("font-medium", row.valor < 0 ? "text-destructive" : "")}>
+          {formatCurrency(row.valor)}
+        </div>
+      ),
     },
     {
       key: 'status',
       header: 'Status',
       render: (row) => {
-        const status = paymentStatusConfig[row.status]
-        return <Badge variant={status.variant}>{status.label}</Badge>
+        const config = paymentStatusConfig[row.status as PagamentoStatus] || { label: row.status, variant: 'default' }
+        return <Badge variant={config.variant}>{config.label}</Badge>
       },
     },
     {
       key: 'criado_em',
-      header: 'Criado em',
+      header: 'Data',
       render: (row) => formatDateTime(row.criado_em),
     },
     {
@@ -184,15 +202,19 @@ export default function AdminPagamentos() {
       header: 'Ações',
       render: (row) => (
         <div className="flex gap-2">
-          {(row.status === 'pendente' || row.status === 'processando') && (
-            <Button variant="ghost" size="sm" onClick={() => handleProcessPayment(row.id)}>
-              <CheckCircle className="h-4 w-4" />
-            </Button>
-          )}
-          {row.status === 'falhou' && (
-            <Button variant="ghost" size="sm" onClick={() => handleRetryPayment(row.id)}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+          {row.tipo === 'pagamento' && (
+            <>
+              {(row.status === 'pendente' || row.status === 'processando') && (
+                <Button variant="ghost" size="sm" onClick={() => handleProcessPayment(row.id)}>
+                  <CheckCircle className="h-4 w-4" />
+                </Button>
+              )}
+              {row.status === 'falhou' && (
+                <Button variant="ghost" size="sm" onClick={() => handleRetryPayment(row.id)}>
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              )}
+            </>
           )}
         </div>
       ),
@@ -326,11 +348,11 @@ export default function AdminPagamentos() {
                     </div>
                   </div>
                   <DataTable
-                    data={pagamentos}
+                    data={financialHistory}
                     columns={paymentColumns}
-                    loading={loadingPayments}
-                    searchKeys={['id', 'referencia_externa']}
-                    searchPlaceholder="Buscar pagamentos..."
+                    loading={loadingHistory}
+                    searchKeys={['empresa_nome', 'descricao']}
+                    searchPlaceholder="Buscar por empresa, descrição..."
                   />
                 </TabsContent>
                 <TabsContent value="repasses" className="space-y-4">

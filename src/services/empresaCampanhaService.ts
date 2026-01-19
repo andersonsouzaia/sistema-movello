@@ -41,6 +41,9 @@ export interface CreateCampanhaData {
     roi?: number
   } | null
   estrategia?: 'cpc' | 'cpm' | 'cpa' | 'cpl' | null
+  // Novos campos de mídia
+  midias_urls?: string[] | null
+  qr_code_link?: string | null
 }
 
 export interface UpdateCampanhaData {
@@ -49,6 +52,9 @@ export interface UpdateCampanhaData {
   orcamento: number
   data_inicio: string
   data_fim: string
+  // Novos campos opcionais
+  midias_urls?: string[] | null
+  qr_code_link?: string | null
 }
 
 export const empresaCampanhaService = {
@@ -57,47 +63,44 @@ export const empresaCampanhaService = {
    */
   async createCampanha(data: CreateCampanhaData): Promise<string> {
     try {
-      // Usar INSERT direto para suportar todos os novos campos
-      const { data: campanha, error } = await supabase
-        .from('campanhas')
-        .insert({
-          titulo: data.titulo,
-          descricao: data.descricao,
-          orcamento: data.orcamento,
-          data_inicio: data.data_inicio,
-          data_fim: data.data_fim,
-          status: 'em_analise',
-          // Campos de geolocalização
-          localizacao_tipo: data.localizacao_tipo,
-          raio_km: data.raio_km,
-          centro_latitude: data.centro_latitude,
-          centro_longitude: data.centro_longitude,
-          poligono_coordenadas: data.poligono_coordenadas,
-          cidades: data.cidades,
-          estados: data.estados,
-          regioes: data.regioes,
-          // Campos de nicho
-          nicho: data.nicho,
-          categorias: data.categorias,
-          // Campos de público-alvo
-          publico_alvo: data.publico_alvo,
-          horarios_exibicao: data.horarios_exibicao,
-          dias_semana: data.dias_semana,
-          // Campos de objetivos
-          objetivo_principal: data.objetivo_principal,
-          objetivos_secundarios: data.objetivos_secundarios,
-          kpis_meta: data.kpis_meta,
-          estrategia: data.estrategia,
-        })
-        .select('id')
-        .single()
+      const { data: campanhaId, error } = await supabase.rpc('create_campanha_empresa', {
+        p_titulo: data.titulo,
+        p_descricao: data.descricao,
+        p_orcamento: data.orcamento,
+        p_data_inicio: data.data_inicio,
+        p_data_fim: data.data_fim,
+        // Segmentação: Nicho
+        p_nicho: data.nicho,
+        p_categorias: data.categorias,
+        // Segmentação: Localização
+        p_localizacao_tipo: data.localizacao_tipo,
+        p_raio_km: data.raio_km,
+        p_centro_latitude: data.centro_latitude,
+        p_centro_longitude: data.centro_longitude,
+        p_poligono_coordenadas: data.poligono_coordenadas,
+        p_cidades: data.cidades,
+        p_estados: data.estados,
+        p_regioes: data.regioes,
+        // Segmentação: Público Alvo
+        p_publico_alvo: data.publico_alvo,
+        p_horarios_exibicao: data.horarios_exibicao,
+        p_dias_semana: data.dias_semana,
+        // Objetivos
+        p_objetivo_principal: data.objetivo_principal,
+        p_objetivos_secundarios: data.objetivos_secundarios,
+        p_kpis_meta: data.kpis_meta,
+        p_estrategia: data.estrategia,
+        // Mídias
+        p_midias_urls: data.midias_urls,
+        p_qr_code_link: data.qr_code_link,
+      })
 
       if (error) {
         throw error
       }
 
       toast.success('Campanha criada com sucesso!')
-      return campanha.id
+      return campanhaId
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao criar campanha'
       console.error('Erro ao criar campanha:', error)
@@ -118,6 +121,8 @@ export const empresaCampanhaService = {
         p_orcamento: data.orcamento,
         p_data_inicio: data.data_inicio,
         p_data_fim: data.data_fim,
+        p_midias_urls: data.midias_urls,
+        p_qr_code_link: data.qr_code_link,
       })
 
       if (error) {
@@ -177,6 +182,29 @@ export const empresaCampanhaService = {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao ativar campanha'
       console.error('Erro ao ativar campanha:', error)
+      toast.error(errorMessage)
+      throw error
+    }
+  },
+
+  /**
+   * Deletar uma campanha (apenas rascunho, em_analise ou reprovada)
+   */
+  async deleteCampanha(campanhaId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase.rpc('delete_campanha_empresa', {
+        p_campanha_id: campanhaId,
+      })
+
+      if (error) {
+        throw error
+      }
+
+      toast.success('Campanha excluída com sucesso!')
+      return true
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao excluir campanha'
+      console.error('Erro ao excluir campanha:', error)
       toast.error(errorMessage)
       throw error
     }

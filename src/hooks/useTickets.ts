@@ -1,16 +1,10 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useMemo } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ticketService, GetTicketsFilters } from '@/services/ticketService'
-import type { TicketWithDetails } from '@/types/database'
 
 export const useTickets = (filters: GetTicketsFilters = {}) => {
-  const [tickets, setTickets] = useState<TicketWithDetails[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const filtersRef = useRef<string>('')
-  const isFetchingRef = useRef(false)
-  const hasInitializedRef = useRef(false)
-
-  // Estabilizar o objeto filters usando useMemo
+  // Estabilizar o objeto filters com useMemo não é estritamente necessário se passado diretamente para a queryKey
+  // mas ajuda a evitar re-renders desnecessários se o objeto não for estável
   const stableFilters = useMemo(() => filters, [
     filters.status,
     filters.prioridade,
@@ -21,123 +15,54 @@ export const useTickets = (filters: GetTicketsFilters = {}) => {
     filters.search,
   ])
 
-  const fetchTickets = useCallback(async () => {
-    // Prevenir múltiplas chamadas simultâneas
-    if (isFetchingRef.current) return
-    
-    try {
-      isFetchingRef.current = true
-      setLoading(true)
-      setError(null)
-      const data = await ticketService.getTickets(stableFilters)
-      setTickets(data || [])
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar tickets'
-      setError(errorMessage)
-      console.error('Erro ao buscar tickets:', err)
-      setTickets([])
-    } finally {
-      setLoading(false)
-      isFetchingRef.current = false
-    }
-  }, [stableFilters])
+  const { data: tickets = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['tickets', stableFilters],
+    queryFn: () => ticketService.getTickets(stableFilters),
+    staleTime: 1000 * 60 * 1, // 1 minuto de cache
+  })
 
-  useEffect(() => {
-    // Buscar na primeira renderização ou quando os filtros mudarem
-    const filtersKey = JSON.stringify(stableFilters)
-    const filtersChanged = filtersRef.current !== filtersKey
-    
-    if (!hasInitializedRef.current || filtersChanged) {
-      hasInitializedRef.current = true
-      filtersRef.current = filtersKey
-      fetchTickets()
-    }
-  }, [stableFilters, fetchTickets])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar tickets' : null
 
   return {
     tickets,
     loading,
     error,
-    refetch: fetchTickets,
+    refetch,
   }
 }
 
-export const useTicket = (id: string) => {
-  const [ticket, setTicket] = useState<TicketWithDetails | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export const useTicket = (id: string | null) => {
+  const { data: ticket, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['ticket', id],
+    queryFn: () => (id ? ticketService.getTicket(id) : Promise.resolve(null)),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5, // 5 minutos para detalhes
+  })
 
-  useEffect(() => {
-    const fetchTicket = async () => {
-      if (!id) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await ticketService.getTicket(id)
-        setTicket(data)
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar ticket'
-        setError(errorMessage)
-        console.error('Erro ao buscar ticket:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchTicket()
-  }, [id])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar ticket' : null
 
   return {
     ticket,
     loading,
     error,
-    refetch: async () => {
-      if (id) {
-        const data = await ticketService.getTicket(id)
-        setTicket(data)
-      }
-    },
+    refetch,
   }
 }
 
 export const useTicketComments = (ticketId: string) => {
-  const [comments, setComments] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: comments = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['ticket-comments', ticketId],
+    queryFn: () => ticketService.getComments(ticketId),
+    enabled: !!ticketId,
+  })
 
-  const fetchComments = useCallback(async () => {
-    if (!ticketId) {
-      setLoading(false)
-      return
-    }
-
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await ticketService.getComments(ticketId)
-      setComments(data)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar comentários'
-      setError(errorMessage)
-      console.error('Erro ao buscar comentários:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [ticketId])
-
-  useEffect(() => {
-    fetchComments()
-  }, [fetchComments])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar comentários' : null
 
   return {
     comments,
     loading,
     error,
-    refetch: fetchComments,
+    refetch,
   }
 }
 

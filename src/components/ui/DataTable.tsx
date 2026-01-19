@@ -44,6 +44,11 @@ interface DataTableProps<T> {
   onRowClick?: (row: T) => void
   emptyMessage?: string
   loading?: boolean
+  manualPagination?: boolean
+  pageCount?: number
+  rowCount?: number
+  onPageChange?: (page: number) => void
+  onSearch?: (term: string) => void
   pageSize?: number
   className?: string
 }
@@ -60,6 +65,11 @@ export function DataTable<T extends Record<string, any>>({
   loading = false,
   pageSize = 10,
   className,
+  manualPagination = false,
+  pageCount: manualPageCount,
+  rowCount: manualRowCount,
+  onPageChange,
+  onSearch,
 }: DataTableProps<T>) {
   const isMobile = useIsMobile()
   const [search, setSearch] = useState('')
@@ -70,13 +80,19 @@ export function DataTable<T extends Record<string, any>>({
 
   // Debounce da busca
   useEffect(() => {
+    // Cleanup previous timer
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current)
     }
 
     debounceTimerRef.current = setTimeout(() => {
       setDebouncedSearch(search)
-      setCurrentPage(1) // Reset para primeira página ao buscar
+      if (onSearch) {
+        onSearch(search)
+      }
+      if (!manualPagination) {
+        setCurrentPage(1) // Reset para primeira página ao buscar localmente
+      }
     }, 300)
 
     return () => {
@@ -84,17 +100,19 @@ export function DataTable<T extends Record<string, any>>({
         clearTimeout(debounceTimerRef.current)
       }
     }
-  }, [search])
+  }, [search, manualPagination, onSearch])
 
-  // Filtrar dados
+  // Filtrar dados (apenas se não for paginação manual)
   const filteredData = useMemo(() => {
+    if (manualPagination) return data
+
     let result = [...data]
 
     // Busca - suporte para múltiplas chaves ou chave única
     if (debouncedSearch && (searchKey || searchKeys)) {
       const searchLower = debouncedSearch.toLowerCase()
       const keysToSearch = searchKeys || (searchKey ? [searchKey] : [])
-      
+
       result = result.filter((row) => {
         // Buscar em todas as chaves especificadas
         return keysToSearch.some((key) => {
@@ -118,22 +136,48 @@ export function DataTable<T extends Record<string, any>>({
     })
 
     return result
-  }, [data, debouncedSearch, searchKey, filters, filterValues])
+  }, [data, debouncedSearch, searchKey, filters, filterValues, manualPagination])
 
   // Paginação
-  const totalPages = Math.ceil(filteredData.length / pageSize)
-  const startIndex = (currentPage - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedData = filteredData.slice(startIndex, endIndex)
+  const totalPages = manualPagination
+    ? (manualPageCount || 1)
+    : Math.ceil(filteredData.length / pageSize)
+
+  const startIndex = manualPagination
+    ? (currentPage - 1) * pageSize
+    : (currentPage - 1) * pageSize
+
+  const endIndex = manualPagination
+    ? startIndex + data.length
+    : startIndex + pageSize
+
+  const paginatedData = manualPagination
+    ? data
+    : filteredData.slice(startIndex, endIndex)
+
+  const totalRecords = manualPagination
+    ? (manualRowCount || 0)
+    : filteredData.length
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+    if (onPageChange) {
+      onPageChange(newPage)
+    }
+  }
 
   const handleFilterChange = (key: string, value: string) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }))
-    setCurrentPage(1)
+    if (!manualPagination) {
+      setCurrentPage(1)
+    }
   }
 
   const handleSearchChange = (value: string) => {
     setSearch(value)
-    setCurrentPage(1)
+    if (!manualPagination) {
+      setCurrentPage(1)
+    }
   }
 
   return (
@@ -202,9 +246,9 @@ export function DataTable<T extends Record<string, any>>({
                     const content = column.render
                       ? column.render(row)
                       : column.accessor
-                      ? column.accessor(row)
-                      : row[column.key]
-                    
+                        ? column.accessor(row)
+                        : row[column.key]
+
                     // Não mostrar coluna de ações como campo separado em mobile
                     if (column.key === 'actions') {
                       return (
@@ -216,7 +260,7 @@ export function DataTable<T extends Record<string, any>>({
                         </div>
                       )
                     }
-                    
+
                     return (
                       <div key={column.key}>
                         <div className="text-xs font-medium text-muted-foreground mb-1">
@@ -273,8 +317,8 @@ export function DataTable<T extends Record<string, any>>({
                           {column.render
                             ? column.render(row)
                             : column.accessor
-                            ? column.accessor(row)
-                            : row[column.key]}
+                              ? column.accessor(row)
+                              : row[column.key]}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -290,13 +334,13 @@ export function DataTable<T extends Record<string, any>>({
       {totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-sm text-muted-foreground text-center sm:text-left">
-            Mostrando {startIndex + 1} a {Math.min(endIndex, filteredData.length)} de {filteredData.length} resultados
+            Mostrando {manualPagination ? startIndex + 1 : startIndex + 1} a {manualPagination ? Math.min(startIndex + data.length, totalRecords) : Math.min(endIndex, filteredData.length)} de {manualPagination ? totalRecords : filteredData.length} resultados
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
             >
               <ChevronLeft className="h-4 w-4" />
@@ -317,7 +361,7 @@ export function DataTable<T extends Record<string, any>>({
                     <Button
                       variant={currentPage === page ? 'default' : 'outline'}
                       size="sm"
-                      onClick={() => setCurrentPage(page)}
+                      onClick={() => handlePageChange(page)}
                       className="min-w-[40px]"
                     >
                       {page}
@@ -328,11 +372,12 @@ export function DataTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
+
           </div>
         </div>
       )}

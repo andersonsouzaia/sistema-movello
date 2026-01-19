@@ -73,9 +73,11 @@ export function KPIsEditor({
 
   const handleAplicarSugestao = () => {
     if (!objetivoPrincipal) return
-    
+
     const sugestao = SUGESTOES_POR_OBJETIVO[objetivoPrincipal]
+
     const novosKpis = { ...kpis, ...sugestao }
+
     setKpis(novosKpis)
     onChange(novosKpis)
   }
@@ -148,7 +150,7 @@ export function KPIsEditor({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cliques">Cliques</Label>
+            <Label htmlFor="cliques">Leituras de QR Code</Label>
             <Input
               id="cliques"
               type="number"
@@ -160,7 +162,7 @@ export function KPIsEditor({
               className="h-11"
             />
             <p className="text-xs text-muted-foreground">
-              Número total de cliques esperados
+              Número total de leituras esperadas
             </p>
           </div>
 
@@ -182,7 +184,7 @@ export function KPIsEditor({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="ctr">CTR (%)</Label>
+            <Label htmlFor="ctr">Taxa de Leitura (%)</Label>
             <Input
               id="ctr"
               type="number"
@@ -196,7 +198,7 @@ export function KPIsEditor({
               className="h-11"
             />
             <p className="text-xs text-muted-foreground">
-              Taxa de clique (calculada automaticamente)
+              Taxa de conversão de visualização em leitura
             </p>
           </div>
         </div>
@@ -209,12 +211,12 @@ export function KPIsEditor({
           </Label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-3 bg-muted rounded-lg">
-              <p className="text-xs text-muted-foreground">CTR</p>
+              <p className="text-xs text-muted-foreground">Taxa de Leitura</p>
               <p className="text-lg font-semibold">{calcularCTR()}%</p>
             </div>
             {orcamento && kpis.cliques && (
               <div className="p-3 bg-muted rounded-lg">
-                <p className="text-xs text-muted-foreground">CPC Estimado</p>
+                <p className="text-xs text-muted-foreground">Custo por Leitura</p>
                 <p className="text-lg font-semibold">
                   {formatCurrency(parseFloat(calcularCPC()))}
                 </p>

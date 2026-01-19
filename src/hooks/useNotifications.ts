@@ -1,71 +1,55 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { notificationService } from '@/services/notificationService'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Notification } from '@/types/database'
 
 export const useNotifications = (read?: boolean) => {
   const { user } = useAuth()
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  const fetchNotifications = useCallback(async () => {
-    if (!user?.id) {
-      setLoading(false)
-      return
-    }
-
-    try {
-      setLoading(true)
-      setError(null)
-
-      const data = await notificationService.getNotifications(user.id, read)
-      setNotifications(data)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar notificações'
-      setError(errorMessage)
-      console.error('Erro ao buscar notificações:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [user?.id, read])
-
-  useEffect(() => {
-    fetchNotifications()
-
-    // Auto-refresh a cada 30 segundos
-    const interval = setInterval(fetchNotifications, 30000)
-    return () => clearInterval(interval)
-  }, [fetchNotifications])
-
-  const markAsRead = useCallback(
-    async (notificationId: string) => {
-      const success = await notificationService.markAsRead(notificationId)
-      if (success) {
-        setNotifications((prev) =>
-          prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
-        )
-      }
-      return success
+  const { data: notifications = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['notifications', user?.id, read],
+    queryFn: async () => {
+      if (!user?.id) return []
+      return notificationService.getNotifications(user.id, read)
     },
-    []
-  )
+    enabled: !!user?.id,
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    staleTime: 1000 * 10, // 10 seconds
+  })
 
-  const markAllAsRead = useCallback(async () => {
-    if (!user?.id) return false
-
-    const success = await notificationService.markAllAsRead(user.id)
-    if (success) {
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+  // Mutations
+  const { mutateAsync: markAsReadMutation } = useMutation({
+    mutationFn: (notificationId: string) => notificationService.markAsRead(notificationId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications-count'] })
     }
-    return success
-  }, [user?.id])
+  })
+
+  const { mutateAsync: markAllAsReadMutation } = useMutation({
+    mutationFn: (userId: string) => notificationService.markAllAsRead(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] })
+      queryClient.invalidateQueries({ queryKey: ['notifications-count'] })
+    }
+  })
+
+  const markAsRead = async (notificationId: string) => {
+    return markAsReadMutation(notificationId)
+  }
+
+  const markAllAsRead = async () => {
+    if (!user?.id) return false
+    return markAllAsReadMutation(user.id)
+  }
+
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar notificações' : null
 
   return {
     notifications,
-    loading,
+    loading: loading && !!user?.id,
     error,
-    refetch: fetchNotifications,
+    refetch,
     markAsRead,
     markAllAsRead,
   }
@@ -77,36 +61,21 @@ export const useUnreadNotifications = () => {
 
 export const useNotificationCount = () => {
   const { user } = useAuth()
-  const [count, setCount] = useState(0)
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchCount = async () => {
-      if (!user?.id) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        const unreadCount = await notificationService.getUnreadCount(user.id)
-        setCount(unreadCount)
-      } catch (err) {
-        console.error('Erro ao contar notificações:', err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchCount()
-
-    // Refresh a cada 30 segundos
-    const interval = setInterval(fetchCount, 30000)
-    return () => clearInterval(interval)
-  }, [user?.id])
+  const { data: count = 0, isLoading: loading } = useQuery({
+    queryKey: ['notifications-count', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0
+      return notificationService.getUnreadCount(user.id)
+    },
+    enabled: !!user?.id,
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+    staleTime: 1000 * 10,
+  })
 
   return {
     count,
-    loading,
+    loading: loading && !!user?.id,
   }
 }
 

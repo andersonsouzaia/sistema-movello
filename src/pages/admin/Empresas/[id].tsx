@@ -15,8 +15,12 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { ArrowLeft, CheckCircle2, Ban, Loader2, Building2, Mail, Phone, Globe, Instagram } from 'lucide-react'
-import { formatCNPJ, formatPhone, formatDate } from '@/lib/utils/formatters'
+import { formatCNPJ, formatPhone, formatDate, formatCurrency } from '@/lib/utils/formatters'
 import { toast } from 'sonner'
+import { AdminBalanceAdjustmentDialog } from '@/components/admin/AdminBalanceAdjustmentDialog'
+import { DollarSign, Wallet } from 'lucide-react'
+import { useEmpresaStats } from '@/hooks/useEmpresaStats'
+import { cn } from '@/lib/utils'
 
 const statusConfig: Record<string, { label: string; variant: 'default' | 'destructive' | 'secondary' }> = {
   aguardando_aprovacao: { label: 'Aguardando Aprovação', variant: 'secondary' },
@@ -29,18 +33,21 @@ export default function AdminEmpresaDetalhes() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { empresa, loading, error } = useEmpresa(id || '')
+  const { empresa, loading, error, refetch: refetchEmpresa } = useEmpresa(id || '')
   const [blockDialogOpen, setBlockDialogOpen] = useState(false)
   const [suspendDialogOpen, setSuspendDialogOpen] = useState(false)
+  const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false)
   const [motivo, setMotivo] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
+
+  const { stats, loading: statsLoading, refetch: refetchStats } = useEmpresaStats(id)
 
   const handleApprove = async () => {
     if (!user?.id || !id) {
       toast.error('Dados insuficientes para aprovar empresa')
       return
     }
-    
+
     setActionLoading(true)
     try {
       const result = await adminService.approveEmpresa({
@@ -67,7 +74,7 @@ export default function AdminEmpresaDetalhes() {
       toast.error('Informe o motivo do bloqueio')
       return
     }
-    
+
     setActionLoading(true)
     const result = await adminService.blockEmpresa({
       userId: id,
@@ -88,7 +95,7 @@ export default function AdminEmpresaDetalhes() {
       toast.error('Informe o motivo da suspensão')
       return
     }
-    
+
     setActionLoading(true)
     const result = await adminService.suspendEmpresa({
       userId: id,
@@ -187,6 +194,17 @@ export default function AdminEmpresaDetalhes() {
                   </Button>
                 )}
               </RequirePermission>
+              <RequirePermission permission="empresas.manage_balance">
+                <Button
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => setAdjustmentDialogOpen(true)}
+                >
+                  <DollarSign className="h-4 w-4" />
+                  Ajustar Saldo
+                </Button>
+              </RequirePermission>
+
               <RequirePermission permission="empresas.block">
                 {empresa.status === 'ativa' && (
                   <>
@@ -266,6 +284,18 @@ export default function AdminEmpresaDetalhes() {
                   </>
                 )}
               </RequirePermission>
+
+              <AdminBalanceAdjustmentDialog
+                open={adjustmentDialogOpen}
+                onOpenChange={setAdjustmentDialogOpen}
+                empresaId={id || ''}
+                empresaNome={empresa.razao_social}
+                currentBalance={stats?.saldo_disponivel || 0}
+                onSuccess={() => {
+                  refetchStats()
+                  refetchEmpresa()
+                }}
+              />
             </motion.div>
 
             {/* Informações Gerais */}
@@ -383,11 +413,66 @@ export default function AdminEmpresaDetalhes() {
                   </CardContent>
                 </Card>
               </motion.div>
+
+              {/* Financeiro / Carteira */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+              >
+                <Card className="card-premium h-full">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Wallet className="h-5 w-5 text-primary" />
+                      Financeiro & Carteira
+                    </CardTitle>
+                    <CardDescription>Gestão de saldo e créditos</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="p-4 bg-muted/50 rounded-xl">
+                      <Label className="text-muted-foreground text-xs uppercase tracking-wider">Saldo Disponível</Label>
+                      <div className="flex items-baseline gap-2 mt-1">
+                        <span className={cn(
+                          "text-3xl font-bold font-display",
+                          (stats?.saldo_disponivel || 0) < 0 ? "text-destructive" : "text-primary"
+                        )}>
+                          {formatCurrency(stats?.saldo_disponivel || 0)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Este é o saldo real que a empresa pode usar para novas campanhas.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground text-xs">Total Gasto</Label>
+                        <p className="font-semibold text-lg">{formatCurrency(stats?.total_gasto || 0)}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-muted-foreground text-xs">Orçamento Total</Label>
+                        <p className="font-semibold text-lg">{formatCurrency(stats?.orcamento_total || 0)}</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-border/50">
+                      <Button
+                        className="w-full gap-2 h-11"
+                        variant="secondary"
+                        onClick={() => setAdjustmentDialogOpen(true)}
+                      >
+                        <DollarSign className="h-4 w-4" />
+                        Realizar Ajuste de Saldo
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             </div>
           </div>
         </DashboardLayout>
       </RequirePermission>
-    </ProtectedRoute>
+    </ProtectedRoute >
   )
 }
 

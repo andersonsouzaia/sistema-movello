@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Settings, MousePointerClick, Eye, ShoppingCart, UserPlus } from 'lucide-react'
+import { Settings, Eye, ShoppingCart, UserPlus, QrCode } from 'lucide-react'
 import type { Estrategia, ObjetivoPrincipal } from '@/types/database'
 import { cn } from '@/lib/utils'
 
@@ -18,10 +18,10 @@ interface EstrategiaInfo {
 const ESTRATEGIAS: EstrategiaInfo[] = [
   {
     value: 'cpc',
-    nome: 'CPC - Custo por Clique',
-    descricao: 'Você paga apenas quando alguém clica no seu anúncio',
-    icone: MousePointerClick,
-    quandoUsar: 'Ideal para campanhas focadas em tráfego e engajamento',
+    nome: 'CPQR - Custo por Leitura',
+    descricao: 'Você paga apenas quando alguém escaneia o seu QR Code',
+    icone: QrCode,
+    quandoUsar: 'Ideal para campanhas focadas em tráfego via leitura de código',
     objetivosRecomendados: ['consideracao', 'engajamento'],
   },
   {

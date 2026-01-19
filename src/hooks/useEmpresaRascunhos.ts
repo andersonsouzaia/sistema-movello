@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/contexts/AuthContext'
-import { empresaRascunhoService, type AtivarRascunhoResult } from '@/services/empresaRascunhoService'
-import type { Campanha } from '@/types/database'
+import { empresaRascunhoService } from '@/services/empresaRascunhoService'
 import type { CreateCampanhaData } from '@/services/empresaCampanhaService'
 
 /**
@@ -9,41 +8,25 @@ import type { CreateCampanhaData } from '@/services/empresaCampanhaService'
  */
 export const useRascunhos = () => {
   const { empresa } = useAuth()
-  const [rascunhos, setRascunhos] = useState<Campanha[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
-  const fetchRascunhos = useCallback(async () => {
-    if (!empresa?.id) {
-      setLoading(false)
-      return
-    }
+  const { data: rascunhos = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['empresa-rascunhos', empresa?.id],
+    queryFn: async () => {
+      if (!empresa?.id) return []
+      return empresaRascunhoService.listarRascunhos()
+    },
+    enabled: !!empresa?.id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
 
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await empresaRascunhoService.listarRascunhos()
-      setRascunhos(data)
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Erro ao buscar rascunhos'
-      setError(errorMessage)
-      console.error('Erro ao buscar rascunhos:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [empresa?.id])
-
-  useEffect(() => {
-    fetchRascunhos()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [empresa?.id])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar rascunhos' : null
 
   return {
     rascunhos,
-    loading,
+    loading: loading && !!empresa?.id,
     error,
-    refetch: fetchRascunhos,
+    refetch,
+    invalidateCache: refetch,
   }
 }
 
@@ -51,31 +34,23 @@ export const useRascunhos = () => {
  * Hook para salvar/atualizar rascunho
  */
 export const useSalvarRascunho = () => {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { empresa } = useAuth()
+  const queryClient = useQueryClient()
 
-  const salvarRascunho = useCallback(
-    async (campanhaId: string | null, dados: CreateCampanhaData) => {
-      setLoading(true)
-      setError(null)
-
-      try {
-        const id = await empresaRascunhoService.salvarRascunho(
-          campanhaId,
-          dados
-        )
-        return id
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Erro ao salvar rascunho'
-        setError(errorMessage)
-        throw err
-      } finally {
-        setLoading(false)
-      }
+  const { mutateAsync: salvarRascunhoMutation, isPending: loading, error: queryError } = useMutation({
+    mutationFn: async ({ campanhaId, dados }: { campanhaId: string | null; dados: CreateCampanhaData }) => {
+      return empresaRascunhoService.salvarRascunho(campanhaId, dados)
     },
-    []
-  )
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['empresa-rascunhos'] })
+    },
+  })
+
+  const salvarRascunho = async (campanhaId: string | null, dados: CreateCampanhaData) => {
+    return salvarRascunhoMutation({ campanhaId, dados })
+  }
+
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao salvar rascunho' : null
 
   return {
     salvarRascunho,
@@ -88,25 +63,28 @@ export const useSalvarRascunho = () => {
  * Hook para ativar rascunho
  */
 export const useAtivarRascunho = () => {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  const ativarRascunho = useCallback(async (campanhaId: string) => {
-    setLoading(true)
-    setError(null)
+  const { mutateAsync: ativarRascunhoMutation, isPending: loading, error: queryError } = useMutation({
+    mutationFn: async (campanhaId: string) => {
+      return empresaRascunhoService.ativarRascunho(campanhaId)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['empresa-rascunhos'] })
+      queryClient.invalidateQueries({ queryKey: ['empresa-campanhas'] })
+      queryClient.invalidateQueries({ queryKey: ['empresa-stats'] })
+    },
+  })
 
+  const ativarRascunho = async (campanhaId: string) => {
     try {
-      const resultado = await empresaRascunhoService.ativarRascunho(campanhaId)
-      return resultado
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : 'Erro ao ativar rascunho'
-      setError(errorMessage)
-      return { sucesso: false, mensagem: errorMessage }
-    } finally {
-      setLoading(false)
+      return await ativarRascunhoMutation(campanhaId)
+    } catch (err: any) {
+      return { sucesso: false, mensagem: err.message || 'Erro ao ativar rascunho' }
     }
-  }, [])
+  }
+
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao ativar rascunho' : null
 
   return {
     ativarRascunho,

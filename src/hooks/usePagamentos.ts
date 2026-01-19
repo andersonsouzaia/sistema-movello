@@ -1,151 +1,80 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { pagamentoService, GetPagamentosFilters, GetRepassesFilters } from '@/services/pagamentoService'
-import type { Pagamento, Repasse, FinancialSummary } from '@/types/database'
 
 export const usePagamentos = (filters: GetPagamentosFilters = {}) => {
-  const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: pagamentos = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['pagamentos', filters],
+    queryFn: () => pagamentoService.getPagamentos(filters),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
 
-  const fetchPagamentos = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await pagamentoService.getPagamentos(filters)
-      setPagamentos(data)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar pagamentos'
-      setError(errorMessage)
-      console.error('Erro ao buscar pagamentos:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [filters.status, filters.empresa_id, filters.data_inicio, filters.data_fim, filters.valor_min, filters.valor_max])
-
-  useEffect(() => {
-    fetchPagamentos()
-  }, [fetchPagamentos])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar pagamentos' : null
 
   return {
     pagamentos,
     loading,
     error,
-    refetch: fetchPagamentos,
+    refetch,
   }
 }
 
 export const useRepasses = (filters: GetRepassesFilters = {}) => {
-  const [repasses, setRepasses] = useState<Repasse[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { data: repasses = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['repasses', filters],
+    queryFn: () => pagamentoService.getRepasses(filters),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
 
-  const fetchRepasses = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const data = await pagamentoService.getRepasses(filters)
-      setRepasses(data)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar repasses'
-      setError(errorMessage)
-      console.error('Erro ao buscar repasses:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [filters.status, filters.motorista_id, filters.data_inicio, filters.data_fim, filters.valor_min, filters.valor_max])
-
-  useEffect(() => {
-    fetchRepasses()
-  }, [fetchRepasses])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar repasses' : null
 
   return {
     repasses,
     loading,
     error,
-    refetch: fetchRepasses,
+    refetch,
   }
 }
 
 export const useFinancialSummary = (periodo?: { inicio: string; fim: string }) => {
-  const [summary, setSummary] = useState<FinancialSummary | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const hasAttemptedRef = useRef(false)
-  const hasErrorRef = useRef(false)
-  const periodoKeyRef = useRef<string>('')
-
-  useEffect(() => {
-    // Criar chave única para o período atual
-    const currentPeriodoKey = `${periodo?.inicio || ''}_${periodo?.fim || ''}`
-    
-    // Se o período mudou, resetar flags
-    if (periodoKeyRef.current !== currentPeriodoKey) {
-      hasAttemptedRef.current = false
-      hasErrorRef.current = false
-      periodoKeyRef.current = currentPeriodoKey
-    }
-
-    // Se já tentou buscar para este período e teve erro, não tenta novamente
-    if (hasErrorRef.current && periodoKeyRef.current === currentPeriodoKey) {
-      setLoading(false)
-      return
-    }
-
-    // Se já tentou buscar para este período, não tenta novamente
-    if (hasAttemptedRef.current && periodoKeyRef.current === currentPeriodoKey) {
-      return
-    }
-
-    const fetchSummary = async () => {
-      // Marcar que já tentou buscar
-      hasAttemptedRef.current = true
-
-      try {
-        setLoading(true)
-        setError(null)
-        const data = await pagamentoService.getFinancialSummary(periodo)
-        
-        // O serviço sempre retorna um objeto (nunca null após a correção)
-        if (data) {
-          setSummary(data)
-          hasErrorRef.current = false
-        } else {
-          // Fallback: definir valores padrão
-          setSummary({
-            total_receitas: 0,
-            total_despesas: 0,
-            saldo: 0,
-            pagamentos_pendentes: 0,
-            repasses_pendentes: 0,
-          })
-          hasErrorRef.current = false
-        }
-      } catch (err) {
-        // Marcar que houve erro para não tentar novamente para este período
-        hasErrorRef.current = true
-        const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar resumo financeiro'
-        setError(errorMessage)
-        
-        // Definir valores padrão em caso de erro
-        setSummary({
-          total_receitas: 0,
-          total_despesas: 0,
-          saldo: 0,
-          pagamentos_pendentes: 0,
-          repasses_pendentes: 0,
-        })
-      } finally {
-        setLoading(false)
+  const { data: summary, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ['financial-summary', periodo],
+    queryFn: async () => {
+      const data = await pagamentoService.getFinancialSummary(periodo)
+      if (data) return data
+      return {
+        total_receitas: 0,
+        total_despesas: 0,
+        saldo: 0,
+        pagamentos_pendentes: 0,
+        repasses_pendentes: 0,
       }
-    }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
 
-    fetchSummary()
-  }, [periodo?.inicio, periodo?.fim])
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar resumo financeiro' : null
 
   return {
-    summary,
+    summary: summary || null,
     loading,
     error,
+  }
+}
+
+export const useAdminFinancialHistory = (filters: GetPagamentosFilters = {}) => {
+  const { data: history = [], isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: ['admin-financial-history', filters],
+    queryFn: () => pagamentoService.getFinancialHistory(filters),
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  })
+
+  const error = queryError instanceof Error ? queryError.message : queryError ? 'Erro ao buscar histórico financeiro' : null
+
+  return {
+    history,
+    loading,
+    error,
+    refetch,
   }
 }
 
