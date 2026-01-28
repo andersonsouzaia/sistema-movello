@@ -61,7 +61,7 @@ const HowItWorksSection = () => {
             >
               {/* Connection Line - entre os cards */}
               {index < steps.length - 1 && (
-                <div 
+                <div
                   className="hidden lg:block absolute top-1/2 right-0 w-8 h-0.5 bg-gradient-to-r from-primary/30 to-primary/10 -translate-y-1/2 translate-x-full z-0"
                 />
               )}
@@ -97,16 +97,16 @@ const HowItWorksSection = () => {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="card-premium p-3 sm:p-4 md:p-6"
         >
-          <a 
-            href="https://movello-tablet.lovable.app/" 
-            target="_blank" 
+          <a
+            href="#"
+            target="_blank"
             rel="noopener noreferrer"
             className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-black block group cursor-pointer max-h-[500px] lg:max-h-[600px]"
-            style={{ 
+            style={{
               aspectRatio: isMobile ? '9/16' : '16/10'
             }}
           >
-            <img 
+            <img
               src={tabletInteracao}
               alt="Tablet exibindo anúncio no carro"
               className="w-full h-full object-cover rounded-2xl sm:rounded-3xl blur-md group-hover:blur-sm transition-all duration-300"
