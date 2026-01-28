@@ -45,6 +45,7 @@ import { KPIsEditor } from '@/components/empresa/KPIsEditor'
 import { EstrategiaSelector } from '@/components/empresa/EstrategiaSelector'
 import type { LocalizacaoTipo, PublicoAlvo, HorarioExibicao, KPIsMeta, ObjetivoPrincipal, Estrategia } from '@/types/database'
 import { validarCoordenadas } from '@/utils/geocoding'
+import { empresaCampanhaService } from '@/services/empresaCampanhaService'
 
 // Schemas Zod para cada etapa
 const campanhaBasicaSchema = z.object({
@@ -95,7 +96,7 @@ const campanhaLocalizacaoSchema = z.object({
 
 const campanhaNichoSchema = z.object({
   nicho: z.string().min(1, 'Selecione um nicho'),
-  categorias: z.array(z.string()).optional(),
+  categoria: z.enum(['News', 'Food', 'Saúde', 'Jogos', 'Kids', 'Shopping', 'Turismo', 'Fitness', 'Educação']),
 })
 
 
@@ -319,7 +320,8 @@ export default function NovaCampanha() {
     resolver: zodResolver(campanhaNichoSchema),
     defaultValues: {
       nicho: '',
-      categorias: [],
+      // @ts-ignore
+      categoria: undefined,
     },
   })
 
@@ -379,7 +381,7 @@ export default function NovaCampanha() {
 
       // Nicho
       if (dados.nicho) formNicho.setValue('nicho', dados.nicho)
-      if (dados.categorias) formNicho.setValue('categorias', dados.categorias)
+      if (dados.categoria) formNicho.setValue('categoria', dados.categoria)
 
       // Público-alvo
       if (dados.publico_alvo) formPublicoAlvo.setValue('publico_alvo', dados.publico_alvo)
@@ -445,7 +447,7 @@ export default function NovaCampanha() {
     // Adicionar dados de nicho apenas se preenchidos
     if (nichoData?.nicho) {
       dadosRascunho.nicho = nichoData.nicho
-      if (nichoData.categorias && nichoData.categorias.length > 0) dadosRascunho.categorias = nichoData.categorias
+      if (nichoData.categoria) dadosRascunho.categoria = nichoData.categoria
     }
 
     // Adicionar dados de público-alvo apenas se preenchidos
@@ -798,24 +800,24 @@ export default function NovaCampanha() {
     {
       id: 'nicho',
       title: 'Nicho e Categorias',
-      description: 'Selecione o nicho do seu negócio',
+      description: 'Selecione a categoria principal da sua campanha',
       onValidate: async () => {
         const isValid = await formNicho.trigger()
         if (!isValid) {
-          toast.error('Por favor, selecione um nicho')
+          toast.error('Por favor, selecione uma categoria')
         }
         return isValid
       },
       component: (
         <NichoSelector
           nicho={formNicho.watch('nicho')}
-          categorias={formNicho.watch('categorias')}
-          onNichoChange={(nicho) => formNicho.setValue('nicho', nicho)}
-          onCategoriasChange={(categorias) => formNicho.setValue('categorias', categorias)}
+          categoria={formNicho.watch('categoria')}
+          onNichoChange={(nicho) => formNicho.setValue('nicho', nicho, { shouldDirty: true })}
+          onCategoriaChange={(categoria) => formNicho.setValue('categoria', categoria, { shouldDirty: true })}
         />
       ),
       isValid: formNicho.formState.isValid,
-      isComplete: !!formNicho.watch('nicho'),
+      isComplete: !!formNicho.watch('categoria'),
     },
     {
       id: 'publico-alvo',
@@ -931,9 +933,10 @@ export default function NovaCampanha() {
                           // Assumindo que supabase já está disponível ou importaremos
                           const { supabase } = await import('@/lib/supabase')
 
+                          const categoria = formNicho.getValues('categoria') || 'SemCategoria'
                           const fileExt = file.name.split('.').pop()
                           const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-                          const filePath = `${fileName}`
+                          const filePath = `${categoria}/${fileName}`
 
                           const { error: uploadError } = await supabase.storage
                             .from('campanha_midias')
@@ -1133,7 +1136,7 @@ export default function NovaCampanha() {
       // 3. Nicho
       formNicho.reset({
         nicho: draftData.nicho || '',
-        categorias: draftData.categorias || [],
+        categoria: draftData.categoria as any || undefined, // Type cast se necessário
       })
 
       // 4. Público Alvo

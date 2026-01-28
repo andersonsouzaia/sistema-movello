@@ -279,6 +279,7 @@ export type LocalizacaoTipo = 'raio' | 'poligono' | 'cidade' | 'estado' | 'regia
 export type ObjetivoPrincipal = 'awareness' | 'consideracao' | 'conversao' | 'retencao' | 'engajamento'
 export type Estrategia = 'cpc' | 'cpm' | 'cpa' | 'cpl'
 export type Genero = 'M' | 'F' | 'Outro' | 'Todos'
+export type CategoriaCampanha = 'News' | 'Food' | 'Saúde' | 'Jogos' | 'Kids' | 'Shopping' | 'Turismo' | 'Fitness' | 'Educação'
 
 export interface CampanhaLocalizacao {
   tipo: LocalizacaoTipo
@@ -366,7 +367,8 @@ export interface Campanha {
   }>
   // Campos de nicho
   nicho?: string
-  categorias?: string[]
+  categoria?: CategoriaCampanha
+  categorias?: string[] // Deprecated but kept for compatibility
   // Campos de público-alvo
   publico_alvo?: PublicoAlvo
   horarios_exibicao?: HorarioExibicao
@@ -380,6 +382,9 @@ export interface Campanha {
   is_rascunho?: boolean
   saldo_insuficiente?: boolean
   rascunho_salvo_em?: string
+  // Campos de mídia e QR Code
+  qr_code_link?: string
+  midias_urls?: string[]
 }
 
 export interface Midia {
