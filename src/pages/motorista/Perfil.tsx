@@ -38,14 +38,14 @@ const motoristaSchema = z.object({
     const telefoneRegex = /^\+?55\d{10,11}$/
     const cpfRegex = /^\d{11}$/
     const chaveAleatoriaRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    
+
     const pixLimpo = data.pix.replace(/[\s.-]/g, '')
-    
-    return emailRegex.test(data.pix) || 
-           telefoneRegex.test(pixLimpo) || 
-           cpfRegex.test(pixLimpo) || 
-           chaveAleatoriaRegex.test(data.pix) ||
-           pixLimpo.length >= 26 // Chave aleatória sem hífens
+
+    return emailRegex.test(data.pix) ||
+      telefoneRegex.test(pixLimpo) ||
+      cpfRegex.test(pixLimpo) ||
+      chaveAleatoriaRegex.test(data.pix) ||
+      pixLimpo.length >= 26 // Chave aleatória sem hífens
   }
   return true
 }, {
@@ -82,7 +82,7 @@ const senhaSchema = z.object({
   path: ['confirmar_senha'],
 }).refine((data) => {
   const validation = validatePassword(data.nova_senha)
-  return validation.valid
+  return validation.isValid
 }, {
   message: 'Senha deve conter pelo menos 8 caracteres, uma letra maiúscula, uma minúscula e um número',
   path: ['nova_senha'],
@@ -171,7 +171,7 @@ export default function MotoristaPerfil() {
       }
 
       toast.success('Dados atualizados com sucesso!')
-      refreshUser()
+      refreshUser({ force: true })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao atualizar dados'
       toast.error(errorMessage)
@@ -268,7 +268,7 @@ export default function MotoristaPerfil() {
       }
 
       toast.success('Avatar atualizado com sucesso!')
-      refreshUser()
+      refreshUser({ force: true })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao fazer upload do avatar'
       toast.error(errorMessage)
@@ -432,7 +432,7 @@ export default function MotoristaPerfil() {
                     >
                       Cancelar
                     </Button>
-                    <Button 
+                    <Button
                       type="button"
                       onClick={motoristaForm.handleSubmit(handleUpdateMotorista)}
                       disabled={updatingMotorista}

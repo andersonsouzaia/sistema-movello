@@ -139,9 +139,9 @@ export function EstrategiaSelector({
                     selecionada ? "text-primary" : "text-muted-foreground"
                   )} />
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className={cn(
-                        "font-medium",
+                        "font-medium mr-auto",
                         selecionada && "text-primary"
                       )}>
                         {estrategia.nome}

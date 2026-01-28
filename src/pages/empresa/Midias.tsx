@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 import type { Midia, MidiaStatus } from '@/types/database'
 import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/utils/formatters'
+import { LazyImage } from '@/utils/lazyImage'
 
 const midiaStatusConfig: Record<MidiaStatus, { label: string; variant: 'default' | 'destructive' | 'secondary' }> = {
   em_analise: { label: 'Em Análise', variant: 'secondary' },
@@ -52,57 +53,57 @@ export default function EmpresaMidias() {
   const [midias, setMidias] = useState<Array<Midia & { campanha_titulo?: string }>>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchAllMidias = async () => {
-      if (!empresa?.id) {
+  const fetchAllMidias = useCallback(async () => {
+    if (!empresa?.id) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      setLoading(true)
+      // Buscar todas as campanhas da empresa e suas mídias
+      const { data: campanhasData } = await supabase
+        .from('campanhas')
+        .select('id, titulo')
+        .eq('empresa_id', empresa.id)
+
+      if (!campanhasData || campanhasData.length === 0) {
+        setMidias([])
         setLoading(false)
         return
       }
 
-      try {
-        setLoading(true)
-        // Buscar todas as campanhas da empresa e suas mídias
-        const { data: campanhasData } = await supabase
-          .from('campanhas')
-          .select('id, titulo')
-          .eq('empresa_id', empresa.id)
+      const campanhaIds = campanhasData.map((c) => c.id)
+      const campanhaMap = new Map(campanhasData.map((c) => [c.id, c.titulo]))
 
-        if (!campanhasData || campanhasData.length === 0) {
-          setMidias([])
-          setLoading(false)
-          return
-        }
+      const { data: midiasData, error } = await supabase
+        .from('midias')
+        .select('*')
+        .in('campanha_id', campanhaIds)
+        .order('created_at', { ascending: false })
 
-        const campanhaIds = campanhasData.map((c) => c.id)
-        const campanhaMap = new Map(campanhasData.map((c) => [c.id, c.titulo]))
-
-        const { data: midiasData, error } = await supabase
-          .from('midias')
-          .select('*')
-          .in('campanha_id', campanhaIds)
-          .order('created_at', { ascending: false })
-
-        if (error) {
-          throw error
-        }
-
-        const midiasComCampanha = (midiasData || []).map((midia) => ({
-          ...midia,
-          campanha_titulo: campanhaMap.get(midia.campanha_id),
-        }))
-
-        setMidias(midiasComCampanha as Array<Midia & { campanha_titulo?: string }>)
-      } catch (error) {
-        console.error('Erro ao buscar mídias:', error)
-        toast.error('Erro ao buscar mídias')
-        setMidias([])
-      } finally {
-        setLoading(false)
+      if (error) {
+        throw error
       }
-    }
 
-    fetchAllMidias()
+      const midiasComCampanha = (midiasData || []).map((midia) => ({
+        ...midia,
+        campanha_titulo: campanhaMap.get(midia.campanha_id),
+      }))
+
+      setMidias(midiasComCampanha as Array<Midia & { campanha_titulo?: string }>)
+    } catch (error) {
+      console.error('Erro ao buscar mídias:', error)
+      toast.error('Erro ao buscar mídias')
+      setMidias([])
+    } finally {
+      setLoading(false)
+    }
   }, [empresa?.id])
+
+  useEffect(() => {
+    fetchAllMidias()
+  }, [fetchAllMidias])
 
   const filteredMidias = useMemo(() => {
     return midias.filter((midia) => {
@@ -127,7 +128,7 @@ export default function EmpresaMidias() {
       setSelectedFiles([])
       setSelectedCampanha('')
       // Recarregar mídias
-      window.location.reload()
+      await fetchAllMidias()
     } catch (error) {
       // Erro já é tratado no hook
     }

@@ -9,13 +9,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Tablet, 
-  CheckCircle2, 
-  AlertCircle, 
-  Loader2, 
-  QrCode, 
-  Wifi, 
+import {
+  Tablet,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  QrCode,
+  Wifi,
   WifiOff,
   RefreshCw,
   Link as LinkIcon,
@@ -37,7 +37,7 @@ type VincularTabletFormData = z.infer<typeof vincularTabletSchema>
 export default function MotoristaTablet() {
   const { motorista, refreshUser } = useAuth()
   const [loading, setLoading] = useState(false)
-  const [vincularDialogOpen, setVincularDialogOpen] = useState(false)
+
 
   const form = useForm<VincularTabletFormData>({
     resolver: zodResolver(vincularTabletSchema),
@@ -71,7 +71,7 @@ export default function MotoristaTablet() {
       const result = await tabletService.vincularTablet(motorista.id, data.tablet_id)
 
       if (result.sucesso) {
-        setVincularDialogOpen(false)
+
         form.reset()
         refreshUser()
       }
@@ -153,7 +153,7 @@ export default function MotoristaTablet() {
               </Button>
             ) : (
               <Button
-                onClick={() => setVincularDialogOpen(true)}
+                onClick={() => document.getElementById('tablet_id')?.focus()}
                 className="gap-2"
               >
                 <LinkIcon className="h-4 w-4" />
@@ -170,8 +170,8 @@ export default function MotoristaTablet() {
           >
             <Alert className={cn(
               "border-2",
-              tabletVinculado 
-                ? "border-green-500/20 bg-green-500/5" 
+              tabletVinculado
+                ? "border-green-500/20 bg-green-500/5"
                 : "border-yellow-500/20 bg-yellow-500/5"
             )}>
               <div className={cn(

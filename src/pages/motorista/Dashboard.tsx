@@ -52,13 +52,7 @@ export default function MotoristaDashboard() {
       color: 'accent',
       description: 'Este mês',
     },
-    {
-      label: 'Viagens Realizadas',
-      value: '0', // TODO: Implementar quando houver sistema de viagens
-      icon: Car,
-      color: 'primary',
-      description: 'Total de viagens',
-    },
+
     {
       label: 'Status do Tablet',
       value: motorista?.tablet_id ? 'Conectado' : 'Não vinculado',
@@ -142,36 +136,36 @@ export default function MotoristaDashboard() {
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {statsCards.map((stat, index) => {
-              const Icon = stat.icon
-              return (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.1 }}
-                  whileHover={{ y: -8, transition: { duration: 0.2 } }}
-                >
-                  <Card className="card-premium p-6 hover:shadow-xl transition-all duration-300">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                      <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
-                      <div className={cn(
-                        "w-12 h-12 rounded-2xl flex items-center justify-center",
-                        stat.color === 'primary' ? "bg-primary/10" : "bg-accent/10"
-                      )}>
-                        <Icon className={cn(
-                          "h-6 w-6",
-                          stat.color === 'primary' ? "text-primary" : "text-accent"
-                        )} />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold mb-1">{stat.value}</div>
-                      <p className="text-xs text-muted-foreground">{stat.description}</p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )
-            })}
+                const Icon = stat.icon
+                return (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    whileHover={{ y: -8, transition: { duration: 0.2 } }}
+                  >
+                    <Card className="card-premium p-6 hover:shadow-xl transition-all duration-300">
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                        <CardTitle className="text-sm font-medium">{stat.label}</CardTitle>
+                        <div className={cn(
+                          "w-12 h-12 rounded-2xl flex items-center justify-center",
+                          stat.color === 'primary' ? "bg-primary/10" : "bg-accent/10"
+                        )}>
+                          <Icon className={cn(
+                            "h-6 w-6",
+                            stat.color === 'primary' ? "text-primary" : "text-accent"
+                          )} />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold mb-1">{stat.value}</div>
+                        <p className="text-xs text-muted-foreground">{stat.description}</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )
+              })}
             </div>
           )}
 
@@ -244,9 +238,9 @@ export default function MotoristaDashboard() {
                     </Button>
                   </Link>
                   <Link to="/motorista/tablet">
-                    <Button 
-                      variant="outline" 
-                      className="w-full justify-start gap-2" 
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2"
                       size="lg"
                     >
                       <Tablet className="h-4 w-4" />

@@ -36,7 +36,7 @@ const senhaSchema = z.object({
   path: ['confirmar_senha'],
 }).refine((data) => {
   const validation = validatePassword(data.nova_senha)
-  return validation.valid
+  return validation.isValid
 }, {
   message: 'Senha deve conter pelo menos 8 caracteres, uma letra maiúscula, uma minúscula e um número',
   path: ['nova_senha'],
@@ -110,7 +110,7 @@ export default function EmpresaPerfil() {
       }
 
       toast.success('Dados atualizados com sucesso!')
-      refreshUser()
+      refreshUser({ force: true })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao atualizar dados'
       toast.error(errorMessage)
@@ -207,7 +207,7 @@ export default function EmpresaPerfil() {
       }
 
       toast.success('Avatar atualizado com sucesso!')
-      refreshUser()
+      refreshUser({ force: true })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao fazer upload do avatar'
       toast.error(errorMessage)
