@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: movello-frontend
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "80:80"
+    volumes:
+      - ../logs:/var/log/nginx
+    restart: always
