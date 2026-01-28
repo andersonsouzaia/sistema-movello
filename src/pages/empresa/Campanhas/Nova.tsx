@@ -165,37 +165,49 @@ function LocalizacaoStepContent({ formLocalizacao }: { formLocalizacao: ReturnTy
     cidades?: string[]
     estados?: string[]
   }) => {
-    formLocalizacao.setValue('localizacao_tipo', value.tipo, { shouldDirty: true })
-    if (value.raio_km !== undefined) formLocalizacao.setValue('raio_km', value.raio_km, { shouldDirty: true })
-    if (value.centro_latitude !== undefined) formLocalizacao.setValue('centro_latitude', value.centro_latitude, { shouldDirty: true })
-    if (value.centro_longitude !== undefined) formLocalizacao.setValue('centro_longitude', value.centro_longitude, { shouldDirty: true })
-    if (value.poligono_coordenadas !== undefined) formLocalizacao.setValue('poligono_coordenadas', value.poligono_coordenadas, { shouldDirty: true })
-    if (value.cidades !== undefined) formLocalizacao.setValue('cidades', value.cidades, { shouldDirty: true })
-    if (value.estados !== undefined) formLocalizacao.setValue('estados', value.estados, { shouldDirty: true })
+    formLocalizacao.setValue('localizacao_tipo', value.tipo, { shouldDirty: true, shouldValidate: true })
+    if (value.raio_km !== undefined) formLocalizacao.setValue('raio_km', value.raio_km, { shouldDirty: true, shouldValidate: true })
+    if (value.centro_latitude !== undefined) formLocalizacao.setValue('centro_latitude', value.centro_latitude, { shouldDirty: true, shouldValidate: true })
+    if (value.centro_longitude !== undefined) formLocalizacao.setValue('centro_longitude', value.centro_longitude, { shouldDirty: true, shouldValidate: true })
+    if (value.poligono_coordenadas !== undefined) formLocalizacao.setValue('poligono_coordenadas', value.poligono_coordenadas, { shouldDirty: true, shouldValidate: true })
+    if (value.cidades !== undefined) formLocalizacao.setValue('cidades', value.cidades, { shouldDirty: true, shouldValidate: true })
+    if (value.estados !== undefined) formLocalizacao.setValue('estados', value.estados, { shouldDirty: true, shouldValidate: true })
   }, [formLocalizacao])
 
   const handleTemplateSelect = useCallback((template: any) => {
-    formLocalizacao.setValue('localizacao_tipo', template.localizacao_tipo, { shouldDirty: true })
-    if (template.raio_km !== undefined) formLocalizacao.setValue('raio_km', template.raio_km, { shouldDirty: true })
-    if (template.centro_latitude !== undefined) formLocalizacao.setValue('centro_latitude', template.centro_latitude, { shouldDirty: true })
-    if (template.centro_longitude !== undefined) formLocalizacao.setValue('centro_longitude', template.centro_longitude, { shouldDirty: true })
-    if (template.poligono_coordenadas) formLocalizacao.setValue('poligono_coordenadas', template.poligono_coordenadas, { shouldDirty: true })
-    if (template.cidades) formLocalizacao.setValue('cidades', template.cidades, { shouldDirty: true })
-    if (template.estados) formLocalizacao.setValue('estados', template.estados, { shouldDirty: true })
+    // Definir tipo primeiro
+    formLocalizacao.setValue('localizacao_tipo', template.localizacao_tipo, { shouldDirty: true, shouldValidate: true })
+
+    // Aplicar valores específicos e limpar os outros para evitar conflitos de validação
+    if (template.localizacao_tipo === 'raio') {
+      if (template.raio_km !== undefined) formLocalizacao.setValue('raio_km', template.raio_km, { shouldDirty: true, shouldValidate: true })
+      if (template.centro_latitude !== undefined) formLocalizacao.setValue('centro_latitude', template.centro_latitude, { shouldDirty: true, shouldValidate: true })
+      if (template.centro_longitude !== undefined) formLocalizacao.setValue('centro_longitude', template.centro_longitude, { shouldDirty: true, shouldValidate: true })
+    } else if (template.localizacao_tipo === 'poligono') {
+      if (template.poligono_coordenadas) formLocalizacao.setValue('poligono_coordenadas', template.poligono_coordenadas, { shouldDirty: true, shouldValidate: true })
+    } else if (template.localizacao_tipo === 'cidade') {
+      if (template.cidades) formLocalizacao.setValue('cidades', template.cidades, { shouldDirty: true, shouldValidate: true })
+    } else if (template.localizacao_tipo === 'estado') {
+      if (template.estados) formLocalizacao.setValue('estados', template.estados, { shouldDirty: true, shouldValidate: true })
+    }
   }, [formLocalizacao])
 
   const handleHistorySelect = useCallback((item: any) => {
     if (item.localizacao_tipo) {
-      formLocalizacao.setValue('localizacao_tipo', item.localizacao_tipo, { shouldDirty: true })
+      formLocalizacao.setValue('localizacao_tipo', item.localizacao_tipo, { shouldDirty: true, shouldValidate: true })
     }
-    if (item.lat && item.lng) {
-      formLocalizacao.setValue('centro_latitude', item.lat, { shouldDirty: true })
-      formLocalizacao.setValue('centro_longitude', item.lng, { shouldDirty: true })
+    // Lógica similar de aplicar apenas os campos relevantes
+    if (item.localizacao_tipo === 'raio' && item.lat && item.lng) {
+      formLocalizacao.setValue('centro_latitude', item.lat, { shouldDirty: true, shouldValidate: true })
+      formLocalizacao.setValue('centro_longitude', item.lng, { shouldDirty: true, shouldValidate: true })
+      if (item.raio_km) formLocalizacao.setValue('raio_km', item.raio_km, { shouldDirty: true, shouldValidate: true })
+    } else if (item.localizacao_tipo === 'poligono' && item.poligono_coordenadas) {
+      formLocalizacao.setValue('poligono_coordenadas', item.poligono_coordenadas, { shouldDirty: true, shouldValidate: true })
+    } else if (item.localizacao_tipo === 'cidade' && item.cidades) {
+      formLocalizacao.setValue('cidades', item.cidades, { shouldDirty: true, shouldValidate: true })
+    } else if (item.localizacao_tipo === 'estado' && item.estados) {
+      formLocalizacao.setValue('estados', item.estados, { shouldDirty: true, shouldValidate: true })
     }
-    if (item.raio_km) formLocalizacao.setValue('raio_km', item.raio_km, { shouldDirty: true })
-    if (item.poligono_coordenadas) formLocalizacao.setValue('poligono_coordenadas', item.poligono_coordenadas, { shouldDirty: true })
-    if (item.cidades) formLocalizacao.setValue('cidades', item.cidades, { shouldDirty: true })
-    if (item.estados) formLocalizacao.setValue('estados', item.estados, { shouldDirty: true })
   }, [formLocalizacao])
 
   // Calcular área para CoverageEstimator
