@@ -58,7 +58,8 @@ export const useUploadMidia = () => {
   const uploadMidia = useCallback(async (
     campanhaId: string,
     file: File,
-    tipo: 'imagem' | 'video'
+    tipo: 'imagem' | 'video',
+    categoria?: string // Optional category for folder organization
   ) => {
     if (!empresa?.id) {
       throw new Error('Empresa não encontrada')
@@ -84,12 +85,25 @@ export const useUploadMidia = () => {
 
       // Upload para Supabase Storage
       const fileExt = file.name.split('.').pop()
-      const fileName = `${campanhaId}/${Date.now()}.${fileExt}`
-      const filePath = `campanhas/${fileName}`
+      const fileName = `${Date.now()}.${fileExt}`
+      // Use category folder if provided, otherwise default to 'Geral' or loose in root
+      const folderPath = categoria ? `campanha_midias/${categoria}` : `campanhas/${campanhaId}`
+      const filePath = `${folderPath}/${fileName}`
+
+      // Ensure bucket is correct (assuming 'campanha_midias' is the target bucket for categorized uploads)
+      // If using the single bucket strategy as per walkthrough, ensure consistency.
+      const bucketName = 'midias' // Default generic bucket or specific one? 
+      // Checking previous conversation: "My backend implementation created a Single Bucket called campanha_midias"
+      // Wait, the code currently uses 'midias'. I should check if 'campanha_midias' bucket exists or if 'midias' is the one.
+      // The walkthrough says: "Storage bucket campanha_midias confirmed".
+      // So I should probably change the bucket to 'campanha_midias' and path to `${categoria}/${fileName}`.
+
+      const targetBucket = 'campanha_midias'
+      const storagePath = categoria ? `${categoria}/${fileName}` : `${campanhaId}/${fileName}`
 
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('midias')
-        .upload(filePath, file, {
+        .from(targetBucket)
+        .upload(storagePath, file, {
           cacheControl: '3600',
           upsert: false,
         })

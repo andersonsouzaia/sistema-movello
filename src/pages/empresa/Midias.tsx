@@ -122,7 +122,7 @@ export default function EmpresaMidias() {
 
     try {
       for (const file of selectedFiles) {
-        await uploadMidia(selectedCampanha, file, selectedTipo)
+        await uploadMidia(selectedCampanha, file, selectedTipo, undefined)
       }
       setUploadDialogOpen(false)
       setSelectedFiles([])
