@@ -18,24 +18,7 @@ export const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-movello-orange/10 rounded-full blur-3xl" />
       </div>
 
-      {/* Header */}
-      <header className="w-full py-6 px-4 relative z-10">
-        <div className="container-section">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Link to="/" className="inline-block">
-              <img
-                src={movelloLogo}
-                alt="Movello"
-                className="h-10 sm:h-12 w-auto"
-              />
-            </Link>
-          </motion.div>
-        </div>
-      </header>
+      {/* Header Removed - Logo moved to card */}
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
@@ -66,6 +49,16 @@ export const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="card-premium p-6 sm:p-8"
           >
+            {/* Logo */}
+            <div className="flex justify-center mb-6">
+              <Link to="/" className="inline-block">
+                <img
+                  src={movelloLogo}
+                  alt="Movello"
+                  className="h-8 sm:h-10 w-auto"
+                />
+              </Link>
+            </div>
             {children}
           </motion.div>
         </div>

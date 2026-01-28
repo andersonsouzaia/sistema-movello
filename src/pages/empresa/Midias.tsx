@@ -397,10 +397,11 @@ export default function EmpresaMidias() {
                           preload="metadata"
                         />
                       )}
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <div className="absolute top-2 left-2 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="secondary"
                           size="icon"
+                          className="h-8 w-8 bg-background/80 hover:bg-background backdrop-blur-sm"
                           onClick={() => window.open(midia.url, '_blank')}
                         >
                           <Download className="h-4 w-4" />
@@ -408,6 +409,7 @@ export default function EmpresaMidias() {
                         <Button
                           variant="destructive"
                           size="icon"
+                          className="h-8 w-8"
                           onClick={() => handleDeleteMidia(midia.id)}
                           disabled={deletingMidia}
                         >

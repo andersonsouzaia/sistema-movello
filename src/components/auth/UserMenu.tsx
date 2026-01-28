@@ -24,8 +24,12 @@ export function UserMenu({ className, align = 'end' }: UserMenuProps) {
     const navigate = useNavigate()
 
     const handleSignOut = async () => {
-        await signOut()
-        navigate('/')
+        console.log('🔵 [UserMenu] Botão Sair clicado')
+        try {
+            await signOut()
+        } catch (error) {
+            console.error('❌ [UserMenu] Erro ao chamar signOut:', error)
+        }
     }
 
     const handleDashboard = () => {

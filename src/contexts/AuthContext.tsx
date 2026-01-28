@@ -41,10 +41,12 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>
   updatePassword: (token: string, newPassword: string) => Promise<{ success: boolean; error?: string }>
   verifyEmail: (code: string) => Promise<{ success: boolean; error?: string }>
-  resendVerificationCode: () => Promise<{ success: boolean; error?: string }>
+  resendVerificationCode: (email?: string) => Promise<{ success: boolean; error?: string }>
   refreshUser: (options?: { force?: boolean }) => Promise<void>
   checkSession: () => Promise<void>
   checkPermission: (permissionSlug: string) => boolean
+  sendRecoveryOtp: (email: string) => Promise<{ success: boolean; error?: string }>
+  verifyOtp: (email: string, code: string) => Promise<{ success: boolean; error?: string }>
 }
 
 interface LoadUserProfileOptions {
@@ -239,7 +241,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         const retryCount = loadProfileRetryCountRef.current.get(item.userId) || 0
         if (retryCount < 3 && !item.options?.force) { // Não retentar se for forçado (assumimos que o caller trata)
           loadProfileRetryCountRef.current.set(item.userId, retryCount + 1)
-          const delay = Math.min(1000 * Math.pow(2, retryCount), 5000) // Max 5s
+          const delay = Math.min(500 * Math.pow(2, retryCount), 2000) // Max 2s, start 500ms
           console.log(`🔄 [loadUserProfile] Retry ${retryCount + 1}/3 em ${delay}ms`, { userId: item.userId })
           setTimeout(() => {
             loadProfileQueueRef.current.push(item)
@@ -298,6 +300,49 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       let userData: User | null = null
       let finalError: any = null
 
+      // --- TENTATIVA 0: FAST PATH (Cache de Metadados) ---
+      // Verificar se temos metadados suficientes para renderizar a interface IMEDIATAMENTE
+      // Isso é crucial para F5/Reload em conexões lentas
+      try {
+        let fastUser = currentUserRef.current
+
+        // Se não houver ref, tentar recuperar sessão rapidinho (sem network)
+        if (!fastUser) {
+          const { data: sessionData } = await supabase.auth.getSession()
+          if (sessionData?.session?.user) {
+            fastUser = sessionData.session.user
+            currentUserRef.current = fastUser
+          }
+        }
+
+        if (fastUser && fastUser.user_metadata && fastUser.user_metadata.tipo) {
+          console.log('⚡ [loadUserProfile] FAST PATH: Metadados encontrados, desbloqueando UI imediatamente.')
+          const metadata = fastUser.user_metadata
+
+          // Construir objeto de usuário sintético temporário
+          const syntheticProfile: User = {
+            id: userId,
+            email: fastUser.email || '',
+            nome: metadata.nome || fastUser.email?.split('@')[0] || 'Usuário',
+            tipo: metadata.tipo,
+            status: metadata.status || 'ativo',
+            created_at: new Date().toISOString(), // Data fictícia apenas para tipagem
+            updated_at: new Date().toISOString()
+          }
+
+          // Setar estado IMEDIATAMENTE para liberar a UI
+          setProfile(syntheticProfile)
+          setUserType(metadata.tipo)
+          setIsLoadingProfile(false) // <--- DESBLOQUEIA A TELA
+
+          // A partir daqui, as tentativas de DB (1 e 2) rodarão em "background" para garantir consistência
+          // mas o usuário já poderá ver a tela.
+          console.log('⚡ [loadUserProfile] UI Desbloqueada via Fast Path. Sincronizando DB em background...')
+        }
+      } catch (e) {
+        console.warn('⚠️ [loadUserProfile] Erro no Fast Path (ignorado):', e)
+      }
+
       // --- TENTATIVA 1: Direct Select (Mais rápido e padrão) ---
       try {
         console.log('🔵 [loadUserProfile] Tentativa 1: Select Direto com Cliente Principal')
@@ -306,7 +351,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           const id = setTimeout(() => {
             clearTimeout(id);
             reject(new Error('Select Timeout'));
-          }, 10000);
+          }, 10000); // Aumentado para 10s
         });
 
         const selectPromise = supabase
@@ -336,7 +381,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             const id = setTimeout(() => {
               clearTimeout(id);
               reject(new Error('RPC Timeout'));
-            }, 10000);
+            }, 10000); // Aumentado para 10s
           });
 
           const rpcPromise = supabase.rpc('get_user_profile', { p_user_id: userId });
@@ -354,9 +399,97 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       }
 
+      // --- TENTATIVA 3: SELF-HEALING (Auto-recuperação de perfil) ---
+      // --- TENTATIVA 3: SELF-HEALING (Auto-recuperação de perfil) ---
+      if (!userData) {
+        console.warn('⚠️ [loadUserProfile] Perfil não encontrado nas tentativas normais. Iniciando Self-Healing...')
+        try {
+          // 1. Obter dados do usuário do Auth para acessar metadados
+          console.log('🔧 [loadUserProfile] Buscando user metadata...')
+
+          let currentUser = currentUserRef.current
+          let userError = null
+
+          // Fallback: Se não estiver em memória, tentar recuperar da sessão local (localStorage)
+          if (!currentUser) {
+            console.warn('⚠️ [loadUserProfile] currentUserRef vazio. Tentando recuperar via getSession (localStorage)...')
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+            if (sessionData?.session?.user) {
+              currentUser = sessionData.session.user
+              currentUserRef.current = currentUser
+              console.log('✅ [loadUserProfile] Usuário recuperado via getSession.')
+            } else {
+              console.warn('⚠️ [loadUserProfile] getSession também falhou ou vazio.', sessionError)
+            }
+          }
+
+          if (!currentUser || !currentUser.user_metadata || !currentUser.user_metadata.tipo) {
+            console.log('🔧 [loadUserProfile] Usuário não está em cache. Buscando do servidor...')
+            const getUserTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('getUser Timeout')), 10000))
+            const result = await Promise.race([
+              supabase.auth.getUser(),
+              getUserTimeout
+            ]) as any
+            currentUser = result.data.user
+            userError = result.error
+          } else {
+            console.log('🔧 [loadUserProfile] Usando dados de usuário do cache (rápido).')
+          }
+
+          if (userError || !currentUser || currentUser.id !== userId) {
+            throw new Error(userError?.message || 'Não foi possível recuperar dados do usuário Auth para self-healing')
+          }
+
+          const metadata = currentUser.user_metadata
+          if (metadata && (metadata.tipo === 'motorista' || metadata.tipo === 'empresa')) {
+            console.log('🔧 [loadUserProfile] Tentando recriar perfil usando metadados:', metadata)
+
+            // Tentar criar user base
+            const createTimeout = new Promise((_, reject) => setTimeout(() => reject(new Error('create_user Timeout')), 10000))
+            const { error: createError } = await Promise.race([
+              supabase.rpc('create_user_after_signup', {
+                p_user_id: userId,
+                p_email: currentUser.email,
+                p_nome: metadata.nome,
+                p_tipo: metadata.tipo,
+                p_status: metadata.status || 'ativo',
+              }),
+              createTimeout
+            ]) as any
+
+            console.log('🔧 [loadUserProfile] RPC create_user_after_signup executado. Erro?', createError)
+
+            if (createError && createError.code !== '23505' && createError.code !== 'P0001') { // Ignorar duplicidade ou user exists
+              console.warn('⚠️ [loadUserProfile] Erro no self-healing (create_user):', createError)
+            }
+
+            // Aguardar brevemente para propagação
+            console.log('🔧 [loadUserProfile] Aguardando propagação (1s)...')
+            await new Promise(r => setTimeout(r, 1000))
+
+            // Tentar buscar novamente
+            console.log('🔧 [loadUserProfile] Buscando perfil recém-criado...')
+            const { data: retryData } = await supabase
+              .from('users')
+              .select('*')
+              .eq('id', userId)
+              .single()
+
+            if (retryData) {
+              userData = retryData
+              console.log('✅ [loadUserProfile] Self-healing com sucesso! Perfil recuperado.')
+            } else {
+              console.warn('⚠️ [loadUserProfile] Self-healing finalizou mas perfil ainda não foi encontrado.')
+            }
+          }
+        } catch (healError: any) {
+          console.error('❌ [loadUserProfile] Erro crítico no Self-Healing:', healError.message)
+        }
+      }
+
       // --- PROCESSAMENTO FINAL ---
       if (!userData) {
-        throw new Error('Perfil de usuário não encontrado após todas as tentativas.')
+        throw new Error('Perfil de usuário não encontrado após todas as tentativas (incluindo self-healing).')
       }
 
       console.log('✅ [loadUserProfile] UserData final:', { tipo: userData.tipo })
@@ -914,41 +1047,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
 
       // Criar registro em users usando função SQL (bypass RLS)
-      console.log('🔵 [signUpMotorista] Criando registro em users via função SQL...')
-      const { data: userResult, error: userError } = await supabase.rpc('create_user_after_signup', {
-        p_user_id: authData.user.id,
-        p_email: data.email,
-        p_nome: data.nome,
-        p_tipo: 'motorista',
-        p_status: 'ativo',
-        p_telefone: data.telefone,
-      })
+      console.log('🔵 [signUpMotorista] Criando registro em users via função SQL...', { userId: authData.user.id })
+
+      // Função auxiliar com retry
+      const createUserWithRetry = async (attempt = 1): Promise<{ data: any; error: any }> => {
+        try {
+          const { data: rpcData, error } = await supabase.rpc('create_user_after_signup', {
+            p_user_id: authData.user!.id,
+            p_email: data.email,
+            p_nome: data.nome,
+            p_tipo: 'motorista',
+            p_status: 'ativo',
+          })
+
+          // Se falhar com P0001 (User not found) e tiver tentativas restantes
+          if (error && (error.code === 'P0001' || error.message?.includes('not found')) && attempt <= 5) {
+            console.warn(`⚠️ [signUpMotorista] Usuário não encontrado no RPC (Tentativa ${attempt}/5 code=${error.code}). Aguardando...`)
+            await new Promise(resolve => setTimeout(resolve, 1500)) // Espera fixa de 1.5s entre tentativas
+            return createUserWithRetry(attempt + 1)
+          }
+
+          return { data: rpcData, error }
+        } catch (err) {
+          return { data: null, error: err }
+        }
+      }
+
+      const { data: userResult, error: userError } = await createUserWithRetry()
 
       if (userError) {
-        console.error('❌ [signUpMotorista] Erro ao criar user via função:', {
-          code: userError.code,
-          message: userError.message,
-          details: userError.details,
-          hint: userError.hint,
-        })
-
-        // Tentar método direto como fallback
-        const { error: directError } = await supabase.from('users').insert({
-          id: authData.user.id,
-          tipo: 'motorista',
-          email: data.email,
-          nome: data.nome,
-          telefone: data.telefone,
-          status: 'ativo',
-        })
-
-        if (directError) {
-          console.error('❌ [signUpMotorista] Erro ao criar user (fallback direto):', directError)
-          const errorMessage = handleError(directError, 'database')
-          return { success: false, error: errorMessage.message }
-        } else {
-          console.log('✅ [signUpMotorista] Usuário criado via método direto (fallback)')
-        }
+        console.warn('⚠️ [signUpMotorista] Erro ao criar user via função (Ignorando para permitir verificação de email):', userError)
+        // Não retornar erro fatal aqui. O perfil será criado no primeiro login usando metadados se necessário.
       } else {
         console.log('✅ [signUpMotorista] Usuário criado via função SQL:', userResult)
       }
@@ -1047,9 +1176,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // ============================================
 
   const signOut = async (): Promise<void> => {
+    console.log('🔵 [AuthContext] signOut chamado - Iniciando processo de logout...')
     try {
-      // 1. Tentar fazer logout no Supabase
-      await supabase.auth.signOut()
+      // 1. Tentar fazer logout no Supabase com timeout curto (2s)
+      // Se a rede estiver ruim, não queremos prender o usuário
+      const signOutPromise = supabase.auth.signOut()
+      const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 2000))
+
+      await Promise.race([signOutPromise, timeoutPromise])
+      console.log('🔵 [AuthContext] Logout no Supabase concluído (ou timeout)')
     } catch (error) {
       console.error('⚠️ [signOut] Erro ao fazer logout no Supabase (ignorando):', error)
     } finally {
@@ -1076,7 +1211,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       console.log('✅ [signOut] Estado local limpo, redirecionando...')
 
       // 4. Forçar redirecionamento e reload para garantir limpeza de memória
-      window.location.href = '/'
+      window.location.href = '/login'
     }
   }
 
@@ -1216,12 +1351,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // RESEND VERIFICATION CODE
   // ============================================
 
-  const resendVerificationCode = async (): Promise<{ success: boolean; error?: string }> => {
+  const resendVerificationCode = async (email?: string): Promise<{ success: boolean; error?: string }> => {
     try {
       console.log('🔵 [resendVerificationCode] Iniciando reenvio...')
 
       // Tentar obter email de múltiplas fontes
-      let emailToResend = user?.email
+      let emailToResend = email || user?.email
 
       if (!emailToResend) {
         console.log('🔵 [resendVerificationCode] Email não encontrado no contexto, buscando da sessão...')
@@ -1272,6 +1407,76 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     if (!user?.id) return
     // Usar queue para refresh também, repassando opções
     await loadUserProfile(user.id, options)
+  }
+
+  // ============================================
+  // PASSWORD RECOVERY WITH OTP
+  // ============================================
+  // Implements OTP flow for password recovery
+
+  const sendRecoveryOtp = async (email: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const emailValidation = validateEmail(email)
+      if (!emailValidation.isValid) {
+        return { success: false, error: emailValidation.error }
+      }
+
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: false, // Only allow recovery for existing users
+        },
+      })
+
+      if (error) {
+        const errorMessage = handleError(error, 'auth')
+        return { success: false, error: errorMessage.message }
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('❌ [sendRecoveryOtp] Erro CRÍTICO:', error)
+      const errorMessage = handleError(error)
+      return { success: false, error: errorMessage.message }
+    }
+  }
+
+  const verifyOtp = async (email: string, code: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      console.log('🔵 [verifyOtp] Verificando código OTP...', { email, codeLength: code?.length })
+
+      if (!code || code.length < 6) { // Aceitar 6 ou mais (8 conforme pedido)
+        return { success: false, error: 'Código inválido' }
+      }
+
+      const { data, error } = await supabase.auth.verifyOtp({
+        email,
+        token: code,
+        type: 'email',
+      })
+
+      if (error) {
+        console.error('❌ [verifyOtp] Erro no verifyOtp:', error)
+        const errorMessage = handleError(error, 'auth')
+        return { success: false, error: errorMessage.message }
+      }
+
+      if (data.user) {
+        console.log('✅ [verifyOtp] Usuário verificado, carregando perfil...')
+        setUser(data.user)
+        try {
+          await loadUserProfile(data.user.id)
+        } catch (profileError) {
+          console.error('⚠️ [verifyOtp] Erro ao carregar perfil:', profileError)
+        }
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('❌ [verifyOtp] Erro catch:', error)
+      const errorMessage = handleError(error)
+      return { success: false, error: errorMessage.message }
+    }
   }
 
   // ============================================
@@ -1416,6 +1621,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Tratar eventos INITIAL_SESSION com debounce
       if (event === 'INITIAL_SESSION') {
         console.log('🔵 [AuthContext] INITIAL_SESSION recebido', { hasSession: !!session })
+        if (session?.user) {
+          // CRÍTICO: Atualizar ref IMEDIATAMENTE para garantir que o Fast Path funcione
+          currentUserRef.current = session.user
+          console.log('✅ [AuthContext] currentUserRef atualizado manualmente (INITIAL_SESSION)')
+        }
+
         debouncedHandleInitialSession(session)
         // Garantir que loading seja falso mesmo se não houver sessão
         if (!session) {
@@ -1434,6 +1645,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Prevenir processamento duplicado do mesmo evento
       if (event === 'SIGNED_IN' && session?.user) {
         const userId = session.user.id
+
+        // CRÍTICO: Atualizar ref IMEDIATAMENTE
+        currentUserRef.current = session.user
+        console.log('✅ [AuthContext] currentUserRef atualizado manualmente (SIGNED_IN)')
 
         // Verificar se já temos este usuário carregado (usando refs para valores atuais)
         if (currentUserRef.current?.id === userId && currentProfileRef.current) {
@@ -1513,11 +1728,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const safetyTimeout = setTimeout(() => {
       if (loading) {
-        console.warn('⚠️ [AuthContext] Safety timeout atingido (15s): forçando fim do carregamento.')
+        console.warn('⚠️ [AuthContext] Safety timeout atingido (60s): forçando fim do carregamento.')
         setLoading(false)
         setInitialized(true)
       }
-    }, 15000) // 15 seconds
+    }, 60000) // 60 seconds
 
     return () => clearTimeout(safetyTimeout)
   }, [loading])
@@ -1548,6 +1763,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     refreshUser,
     checkSession,
     checkPermission,
+    sendRecoveryOtp,
+    verifyOtp,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

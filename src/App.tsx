@@ -17,6 +17,7 @@ import Login from "./pages/auth/Login";
 const CadastroEmpresa = lazy(() => import("./pages/auth/CadastroEmpresa"));
 const CadastroMotorista = lazy(() => import("./pages/auth/CadastroMotorista"));
 const RecuperarSenha = lazy(() => import("./pages/auth/RecuperarSenha"));
+const VerificarOtp = lazy(() => import("./pages/auth/VerificarOtp"));
 const RedefinirSenha = lazy(() => import("./pages/auth/RedefinirSenha"));
 const ConfirmarEmail = lazy(() => import("./pages/auth/ConfirmarEmail"));
 const CreateFirstAdmin = lazy(() => import("./pages/setup/CreateFirstAdmin"));
@@ -98,6 +99,14 @@ const App = () => (
                 element={
                   <Suspense fallback={<LoadingFallback />}>
                     <RedefinirSenha />
+                  </Suspense>
+                }
+              />
+              <Route
+                path="/verificar-otp"
+                element={
+                  <Suspense fallback={<LoadingFallback />}>
+                    <VerificarOtp />
                   </Suspense>
                 }
               />

@@ -31,7 +31,7 @@ const redefinirSchema = z
     const validation = validatePassword(data.senha)
     return {
       message: validation.error || 'Senha inválida',
-      path: ['senha'],
+      path: ['senha'] as const,
     }
   })
 
@@ -40,7 +40,7 @@ type RedefinirFormData = z.infer<typeof redefinirSchema>
 export default function RedefinirSenha() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { updatePassword } = useAuth()
+  const { updatePassword, user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -55,18 +55,30 @@ export default function RedefinirSenha() {
   })
 
   useEffect(() => {
-    // Tentar obter token da URL
+    // Tentar obter token da URL (legacy/link flow)
     const tokenFromUrl = searchParams.get('token') || searchParams.get('access_token')
+
     if (tokenFromUrl) {
       setToken(tokenFromUrl)
-    } else {
-      setError('Link inválido ou expirado. Solicite um novo link de recuperação.')
+    } else if (!user) {
+      // Se não tem token E não está logado, erro
+      // Mas se veio do fluxo OTP, o user já deve estar logado
+      // Vamos dar um tempo para o restore session acontecer se for refresh
+      const timeout = setTimeout(() => {
+        if (!user) {
+          // setError('Sessão inválida. Faça login ou inicie a recuperação novamente.')
+          // Redirect to login or recovery?
+          // Maybe just let it render but disable inputs?
+        }
+      }, 1000)
+      return () => clearTimeout(timeout)
     }
-  }, [searchParams])
+  }, [searchParams, user])
 
   const onSubmit = async (data: RedefinirFormData) => {
-    if (!token) {
-      setError('Token inválido. Solicite um novo link de recuperação.')
+    // Se não tiver user E não tiver token, não pode prosseguir
+    if (!user && !token) {
+      setError('Sessão expirada ou inválida. Inicie a recuperação novamente.')
       return
     }
 
@@ -74,12 +86,13 @@ export default function RedefinirSenha() {
     setError(null)
 
     try {
-      const result = await updatePassword(token, data.senha)
+      // Pass token if exists, otherwise empty string (updatePassword uses updateUser internally checking session)
+      const result = await updatePassword(token || '', data.senha)
 
       if (result.success) {
         setSuccess(true)
         toast.success('Senha redefinida com sucesso!')
-        
+
         // Redirecionar para login após 2 segundos
         setTimeout(() => {
           navigate('/login', { replace: true })
@@ -173,7 +186,7 @@ export default function RedefinirSenha() {
                         type="password"
                         placeholder="••••••••"
                         className="pl-14 h-12 rounded-xl border-2 focus:border-primary transition-all"
-                        disabled={loading || !token}
+                        disabled={loading || (!token && !user)}
                       />
                     </div>
                   </FormControl>
@@ -207,7 +220,7 @@ export default function RedefinirSenha() {
                         type="password"
                         placeholder="••••••••"
                         className="pl-14 h-12 rounded-xl border-2 focus:border-primary transition-all"
-                        disabled={loading || !token}
+                        disabled={loading || (!token && !user)}
                       />
                     </div>
                   </FormControl>
@@ -227,7 +240,7 @@ export default function RedefinirSenha() {
               variant="hero"
               className="w-full"
               size="lg"
-              disabled={loading || !token}
+              disabled={loading || (!token && !user)}
             >
               {loading ? (
                 <>

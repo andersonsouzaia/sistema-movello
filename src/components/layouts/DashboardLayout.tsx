@@ -248,7 +248,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {userType === 'admin' && (
               <>
                 {/* Versão Desktop - Campo completo */}
-                <div className="hidden sm:flex flex-1 max-w-md">
+                <div className="hidden sm:flex flex-1 max-w-md items-center">
                   <Button
                     variant="outline"
                     size="sm"

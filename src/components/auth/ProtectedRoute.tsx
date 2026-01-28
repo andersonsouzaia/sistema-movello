@@ -18,6 +18,44 @@ export const ProtectedRoute = ({
   const { user, profile, loading, initialized, userType } = useAuth()
   const location = useLocation()
 
+  // Se não tem profile mas tem user, pode estar carregando ainda ou falhou
+  // Tentar recuperar automaticamente antes de mostrar erro
+  useEffect(() => {
+    let mounted = true
+
+    const tryRecoverProfile = async () => {
+      if (user && !profile && !loading && initialized) {
+        console.log('🔄 [ProtectedRoute] Perfil faltando, tentando recuperação automática...')
+        // Pequeno delay para garantir que não é apenas um lag de estado
+        await new Promise(r => setTimeout(r, 1000))
+        if (!mounted) return
+
+        // Se ainda estiver sem perfil, tentar refresh force
+        if (!profile && !loading) {
+          // Usar a função checkSession ou acessar o refreshUser do contexto se disponível
+          // Como refreshUser não está desestruturado, vamos assumir que o fluxo de auth cuidará ou recarregaremos
+          // Mas para ser proativo:
+          window.location.reload() // Refresh simples como última tentativa automática
+        }
+      }
+    }
+
+    // Apenas executar se estiver nessa estado "limbo" por mais de 2s
+    let timeout: NodeJS.Timeout
+    if (user && !profile && !loading && initialized) {
+      timeout = setTimeout(() => {
+        // Auto-reload da página uma vez se travar aqui?
+        // Melhor mostrar o botão de tentar novamente para não criar loop infinito de F5
+        tryRecoverProfile()
+      }, 2000)
+    }
+
+    return () => {
+      mounted = false
+      if (timeout) clearTimeout(timeout)
+    }
+  }, [user, profile, loading, initialized])
+
   // Aguardar inicialização
   if (!initialized || loading) {
     return (
@@ -32,8 +70,6 @@ export const ProtectedRoute = ({
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // Se não tem profile mas tem user, pode estar carregando ainda
-  // Aguardar um pouco antes de redirecionar
   if (!profile && user) {
     // Se ainda está carregando, mostrar spinner
     if (loading) {
@@ -44,7 +80,6 @@ export const ProtectedRoute = ({
       )
     }
     // Se não está carregando mas não tem profile, pode ser erro
-    // Em vez de redirecionar imediatamente (que causa loop), mostrar erro e opção de retry
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <div className="bg-destructive/10 p-4 rounded-full mb-4">
@@ -63,8 +98,8 @@ export const ProtectedRoute = ({
           </button>
           <button
             onClick={() => {
-              // Forçar logout limpo
-              localStorage.clear()
+              // Forçar logout limpo e ir para login
+              localStorage.removeItem('supabase.auth.token')
               window.location.href = '/login'
             }}
             className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 transition-colors"

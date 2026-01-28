@@ -125,6 +125,11 @@ const handleAuthError = (error: AuthError): ErrorMessage => {
       code: 'RATE_LIMIT',
       userFriendly: true,
     },
+    'email rate limit exceeded': {
+      message: 'Muitas tentativas de envio. Aguarde alguns minutos antes de tentar novamente.',
+      code: 'RATE_LIMIT',
+      userFriendly: true,
+    },
   }
 
   // Buscar erro mapeado
@@ -136,7 +141,7 @@ const handleAuthError = (error: AuthError): ErrorMessage => {
 
   // Se não encontrou mapeamento, retornar mensagem genérica mas amigável
   return {
-    message: 'Erro ao processar sua solicitação. Tente novamente.',
+    message: `Erro: ${error.message || 'Erro desconhecido'} (Código: ${code})`, // DEBUG: Show actual error
     code: code,
     userFriendly: true,
   }
