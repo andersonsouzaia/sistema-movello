@@ -952,7 +952,8 @@ export default function NovaCampanha() {
                         const toastId = toast.loading('Enviando mídia...')
                         try {
                           const categoria = formNicho.getValues('categoria')
-                          const uploadedMidia = await uploadMidia(rascunhoId || 'temp', file, 'imagem', categoria)
+                          const tipo = file.type.startsWith('video/') ? 'video' : 'imagem'
+                          const uploadedMidia = await uploadMidia(rascunhoId || 'temp', file, tipo, categoria)
 
                           if (uploadedMidia?.url) {
                             const current = formObjetivos.getValues('midias_urls') || []
