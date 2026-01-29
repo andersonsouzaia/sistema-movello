@@ -86,20 +86,17 @@ export const useUploadMidia = () => {
       // Upload para Supabase Storage
       const fileExt = file.name.split('.').pop()
       const fileName = `${Date.now()}.${fileExt}`
-      // Use category folder if provided, otherwise default to 'Geral' or loose in root
-      const folderPath = categoria ? `campanha_midias/${categoria}` : `campanhas/${campanhaId}`
-      const filePath = `${folderPath}/${fileName}`
-
-      // Ensure bucket is correct (assuming 'campanha_midias' is the target bucket for categorized uploads)
-      // If using the single bucket strategy as per walkthrough, ensure consistency.
-      const bucketName = 'midias' // Default generic bucket or specific one? 
-      // Checking previous conversation: "My backend implementation created a Single Bucket called campanha_midias"
-      // Wait, the code currently uses 'midias'. I should check if 'campanha_midias' bucket exists or if 'midias' is the one.
-      // The walkthrough says: "Storage bucket campanha_midias confirmed".
-      // So I should probably change the bucket to 'campanha_midias' and path to `${categoria}/${fileName}`.
 
       const targetBucket = 'campanha_midias'
-      const storagePath = categoria ? `${categoria}/${fileName}` : `${campanhaId}/${fileName}`
+      // Use category folder if provided, otherwise default to 'Geral' or loose in root
+      // If category is provided: "Food/timestamp.jpg"
+      // If not provided: "campanhas/campanhaId/timestamp.jpg" (or keep loosely in Geral?)
+      // The previous logic used "Geral/" in Nova.tsx but here we want robustness.
+      // Let's stick to the previous conditional logic but cleaner.
+
+      const storagePath = categoria
+        ? `${categoria}/${fileName}`
+        : `campanhas/${campanhaId}/${fileName}`
 
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from(targetBucket)
@@ -114,8 +111,8 @@ export const useUploadMidia = () => {
 
       // Obter URL pública
       const { data: { publicUrl } } = supabase.storage
-        .from('midias')
-        .getPublicUrl(filePath)
+        .from(targetBucket)
+        .getPublicUrl(storagePath)
 
       // Criar registro na tabela midias
       const { data: midiaData, error: insertError } = await supabase
@@ -131,7 +128,7 @@ export const useUploadMidia = () => {
 
       if (insertError) {
         // Tentar deletar arquivo do storage em caso de erro
-        await supabase.storage.from('midias').remove([filePath])
+        await supabase.storage.from(targetBucket).remove([storagePath])
         throw insertError
       }
 
