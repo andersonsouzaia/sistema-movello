@@ -87,12 +87,7 @@ export const useUploadMidia = () => {
       const fileExt = file.name.split('.').pop()
       const fileName = `${Date.now()}.${fileExt}`
 
-      const targetBucket = 'campanha_midias'
-      // Use category folder if provided, otherwise default to 'Geral' or loose in root
-      // If category is provided: "Food/timestamp.jpg"
-      // If not provided: "campanhas/campanhaId/timestamp.jpg" (or keep loosely in Geral?)
-      // The previous logic used "Geral/" in Nova.tsx but here we want robustness.
-      // Let's stick to the previous conditional logic but cleaner.
+      const targetBucket = 'midias'
 
       const storagePath = categoria
         ? `${categoria}/${fileName}`

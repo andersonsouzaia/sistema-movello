@@ -121,9 +121,12 @@ export default function EmpresaMidias() {
     }
 
     try {
+      const selectedCampanhaData = (campanhas as any[]).find(c => c.id === selectedCampanha)
+      const categoria = selectedCampanhaData?.categoria
+
       for (const file of selectedFiles) {
         const tipo = file.type.startsWith('video/') ? 'video' : 'imagem'
-        await uploadMidia(selectedCampanha, file, tipo, undefined)
+        await uploadMidia(selectedCampanha, file, tipo, categoria)
       }
       setUploadDialogOpen(false)
       setSelectedFiles([])

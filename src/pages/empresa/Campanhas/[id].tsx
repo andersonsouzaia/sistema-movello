@@ -182,7 +182,8 @@ export default function CampanhaDetalhes() {
     if (!id || !selectedFile) return
     try {
       const tipo = selectedFile.type.startsWith('video/') ? 'video' : 'imagem'
-      await uploadMidia(id, selectedFile, tipo)
+      const categoria = (campanha as any)?.categoria
+      await uploadMidia(id, selectedFile, tipo, categoria)
       setUploadDialogOpen(false)
       setSelectedFile(null)
       refetchMidias()
