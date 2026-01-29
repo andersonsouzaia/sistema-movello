@@ -90,17 +90,20 @@ export const midiaService = {
   async uploadMidia(
     campanhaId: string,
     file: File,
-    tipo: 'imagem' | 'video'
+    tipo: 'imagem' | 'video',
+    categoria?: string
   ): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
       const fileExt = file.name.split('.').pop()
-      const fileName = `${campanhaId}/${Date.now()}.${fileExt}`
-      const filePath = `campanhas/${fileName}`
+      const fileName = `${Date.now()}.${fileExt}`
+      const storagePath = categoria
+        ? `${categoria}/${fileName}`
+        : `campanhas/${campanhaId}/${fileName}`
 
       // Upload para Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('campanha_midias')
-        .upload(filePath, file)
+        .from('midias')
+        .upload(storagePath, file)
 
       if (uploadError) {
         throw uploadError
@@ -109,7 +112,7 @@ export const midiaService = {
       // Obter URL pública
       const {
         data: { publicUrl },
-      } = supabase.storage.from('campanhas').getPublicUrl(filePath)
+      } = supabase.storage.from('midias').getPublicUrl(storagePath)
 
       // Criar registro na tabela midias
       const { data: midiaData, error: midiaError } = await supabase
@@ -152,10 +155,18 @@ export const midiaService = {
 
       // Deletar arquivo do storage (extrair path da URL)
       if (midia.url) {
-        const urlParts = midia.url.split('/campanhas/')
+        // Tenta extrair o path independente do bucket inicial
+        const urlParts = midia.url.split('/midias/')
         if (urlParts.length > 1) {
           const filePath = urlParts[1]
-          await supabase.storage.from('campanha_midias').remove([filePath])
+          await supabase.storage.from('midias').remove([filePath])
+        } else {
+          // Fallback para campanhas/ se a URL for antiga
+          const altParts = midia.url.split('/campanhas/')
+          if (altParts.length > 1) {
+            const filePath = 'campanhas/' + altParts[1]
+            await supabase.storage.from('midias').remove([filePath])
+          }
         }
       }
 

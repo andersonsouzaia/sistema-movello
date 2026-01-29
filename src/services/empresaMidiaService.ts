@@ -22,7 +22,8 @@ export const empresaMidiaService = {
   async uploadMidia(
     campanhaId: string,
     file: File,
-    tipo: 'imagem' | 'video'
+    tipo: 'imagem' | 'video',
+    categoria?: string
   ): Promise<Midia> {
     try {
       // Validar tipo de arquivo
@@ -39,46 +40,22 @@ export const empresaMidiaService = {
         throw new Error('Arquivo muito grande. Tamanho máximo: 10MB')
       }
 
-      // Upload para Supabase Storage
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${campanhaId}/${Date.now()}.${fileExt}`
-      const filePath = `campanhas/${fileName}`
+      // Usar midiaService unificado que já cuida do bucket 'midias' e categorias
+      const result = await midiaService.uploadMidia(campanhaId, file, tipo, categoria)
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('midias')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false,
-        })
-
-      if (uploadError) {
-        throw uploadError
+      if (!result.success || !result.url) {
+        throw new Error(result.error || 'Erro ao fazer upload')
       }
 
-      // Obter URL pública
-      const { data: { publicUrl } } = supabase.storage
+      // Buscar o registro recém criado para retornar o objeto Midia completo
+      const { data: midiaData, error: fetchError } = await supabase
         .from('midias')
-        .getPublicUrl(filePath)
-
-      // Criar registro na tabela midias
-      const { data: midiaData, error: insertError } = await supabase
-        .from('midias')
-        .insert({
-          campanha_id: campanhaId,
-          tipo,
-          url: publicUrl,
-          status: 'em_analise',
-        })
-        .select()
+        .select('*')
+        .eq('url', result.url)
         .single()
 
-      if (insertError) {
-        // Tentar deletar arquivo do storage em caso de erro
-        await supabase.storage.from('midias').remove([filePath])
-        throw insertError
-      }
+      if (fetchError) throw fetchError
 
-      toast.success('Mídia enviada com sucesso!')
       return midiaData as Midia
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erro ao fazer upload da mídia'
