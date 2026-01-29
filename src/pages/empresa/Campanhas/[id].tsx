@@ -95,8 +95,8 @@ export default function CampanhaDetalhes() {
   const { updateCampanha, loading: updating } = useUpdateCampanha()
   const { toggleCampanha, loading: toggling } = useToggleCampanha()
   const { deleteCampanha, loading: deleting } = useDeleteCampanha()
-  const { uploadMidia, deleteMidia, loading: uploadingMidia } = useEmpresaMidias()
-  const deletingMidia = uploadingMidia // Reuse same loading state for now as hook seems generic
+  const { uploadMidia, loading: uploadingMidia } = useUploadMidia()
+  const { deleteMidia, loading: deletingMidia } = useDeleteMidia()
   const { metricas: metricasConsolidadas, loading: loadingMetricas } = useCampanhaMetricas(id)
   const { metricas: metricasDiarias } = useCampanhaMetricasDiarias(id, 30)
   const { ativarRascunho, loading: ativando } = useAtivarRascunho()
@@ -181,7 +181,8 @@ export default function CampanhaDetalhes() {
   const handleUploadMidia = async () => {
     if (!id || !selectedFile) return
     try {
-      await uploadMidia(id, selectedFile, selectedTipo)
+      const tipo = selectedFile.type.startsWith('video/') ? 'video' : 'imagem'
+      await uploadMidia(id, selectedFile, tipo)
       setUploadDialogOpen(false)
       setSelectedFile(null)
       refetchMidias()

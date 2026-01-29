@@ -122,7 +122,8 @@ export default function EmpresaMidias() {
 
     try {
       for (const file of selectedFiles) {
-        await uploadMidia(selectedCampanha, file, selectedTipo, undefined)
+        const tipo = file.type.startsWith('video/') ? 'video' : 'imagem'
+        await uploadMidia(selectedCampanha, file, tipo, undefined)
       }
       setUploadDialogOpen(false)
       setSelectedFiles([])
