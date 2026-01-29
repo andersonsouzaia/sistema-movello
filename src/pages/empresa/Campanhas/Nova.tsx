@@ -7,6 +7,7 @@ import { useCreateCampanha, useEmpresaCampanha } from '@/hooks/useEmpresaCampanh
 import { useEmpresaStats } from '@/hooks/useEmpresaStats'
 import { useSalvarRascunho } from '@/hooks/useEmpresaRascunhos'
 import { useAutoSave } from '@/hooks/useAutoSave'
+import { useUploadMidia } from '@/hooks/useEmpresaMidias'
 import { CampaignWizard, type WizardStep } from '@/components/ui/CampaignWizard'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -298,6 +299,7 @@ export default function NovaCampanha() {
   const { stats } = useEmpresaStats()
   const { createCampanha, loading: creating } = useCreateCampanha()
   const { salvarRascunho, loading: salvandoRascunho } = useSalvarRascunho()
+  const { uploadMidia, loading: enviandoMidia } = useUploadMidia()
 
   const [currentStep, setCurrentStep] = useState(0)
   const [rascunhoId, setRascunhoId] = useState<string | null>(searchParams.get('rascunho') || searchParams.get('id') || null)
@@ -949,38 +951,18 @@ export default function NovaCampanha() {
 
                         const toastId = toast.loading('Enviando mídia...')
                         try {
-                          // Obter categoria do formulário de nicho
                           const categoria = formNicho.getValues('categoria')
+                          const uploadedMidia = await uploadMidia(rascunhoId || 'temp', file, 'imagem', categoria)
 
-                          // Usar hook de upload (assumindo que ele está disponível no escopo ou importado)
-                          // Se não estiver, importamos no topo do arquivo. 
-                          // Como não posso garantir o import agora sem ver o topo, vou manter a lógica manual 
-                          // mas ajustada para garantir o bucket correto conforme minha correção anterior.
-
-                          const { supabase } = await import('@/lib/supabase')
-                          const fileExt = file.name.split('.').pop()
-                          const fileName = `${Date.now()}.${fileExt}`
-
-                          // Folder logic: Category -> Filename
-                          const folderPath = categoria ? `${categoria}` : `Geral`
-                          const filePath = `${folderPath}/${fileName}`
-
-                          const { error: uploadError } = await supabase.storage
-                            .from('campanha_midias')
-                            .upload(filePath, file, { cacheControl: '3600', upsert: false })
-
-                          if (uploadError) throw uploadError
-
-                          const { data } = supabase.storage.from('campanha_midias').getPublicUrl(filePath)
-
-                          const current = formObjetivos.getValues('midias_urls') || []
-                          formObjetivos.setValue('midias_urls', [...current, data.publicUrl])
-                          toast.success('Mídia enviada com sucesso!', { id: toastId })
+                          if (uploadedMidia?.url) {
+                            const current = formObjetivos.getValues('midias_urls') || []
+                            formObjetivos.setValue('midias_urls', [...current, uploadedMidia.url])
+                            toast.success('Mídia enviada com sucesso!', { id: toastId })
+                          }
                         } catch (error) {
                           console.error(error)
                           toast.error('Erro ao enviar mídia', { id: toastId })
                         }
-                        // Limpar input
                         e.target.value = ''
                       }}
                     />
