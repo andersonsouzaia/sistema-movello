@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, Upload, Image as ImageIcon, Video, Trash2, Grid3x3, List, Loader2, Download } from 'lucide-react'
+import { Plus, Upload, Image as ImageIcon, Video, Trash2, Grid3x3, List, Loader2, Download, FolderPlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 import type { Midia, MidiaStatus } from '@/types/database'
@@ -147,6 +147,32 @@ export default function EmpresaMidias() {
     }
   }
 
+  const handleInitCategories = async () => {
+    const categories = ['News', 'Food', 'Saúde', 'Jogos', 'Kids', 'Shopping', 'Turismo', 'Fitness', 'Educação']
+    const toastId = toast.loading('Inicializando pastas de categorias...')
+
+    try {
+      for (const cat of categories) {
+        // Criar um arquivo vazio .keep para forçar a criação da pasta virtual
+        const dummyFile = new Blob([''], { type: 'text/plain' })
+        const { error } = await supabase.storage
+          .from('midias')
+          .upload(`${cat}/.keep`, dummyFile, {
+            upsert: true,
+            cacheControl: '3600'
+          })
+
+        if (error && error.message !== 'The resource already exists' && !error.message?.includes('already exists')) {
+          console.warn(`Erro ao criar pasta ${cat}:`, error)
+        }
+      }
+      toast.success('Pastas de categorias inicializadas com sucesso!', { id: toastId })
+    } catch (err) {
+      console.error('Erro ao inicializar categorias:', err)
+      toast.error('Erro ao inicializar pastas', { id: toastId })
+    }
+  }
+
   return (
     <ProtectedRoute requiredUserType="empresa">
       <DashboardLayout>
@@ -166,101 +192,112 @@ export default function EmpresaMidias() {
                 Gerencie suas mídias e materiais publicitários
               </p>
             </div>
-            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-2">
-                  <Upload className="h-4 w-4" />
-                  Upload em Massa
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-[95vw] sm:max-w-2xl p-4 sm:p-6">
-                <DialogHeader>
-                  <DialogTitle>Upload em Massa</DialogTitle>
-                  <DialogDescription>
-                    Envie múltiplas mídias de uma vez para uma campanha
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Campanha</Label>
-                    <Select value={selectedCampanha} onValueChange={setSelectedCampanha}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma campanha" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {campanhas.map((campanha) => (
-                          <SelectItem key={campanha.id} value={campanha.id}>
-                            {campanha.titulo}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Tipo de Mídia</Label>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant={selectedTipo === 'imagem' ? 'default' : 'outline'}
-                        onClick={() => setSelectedTipo('imagem')}
-                        className="flex-1"
-                      >
-                        <ImageIcon className="h-4 w-4 mr-2" />
-                        Imagem
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={selectedTipo === 'video' ? 'default' : 'outline'}
-                        onClick={() => setSelectedTipo('video')}
-                        className="flex-1"
-                      >
-                        <Video className="h-4 w-4 mr-2" />
-                        Vídeo
-                      </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={handleInitCategories}
+                title="Criar as 9 pastas de categorias no bucket"
+              >
+                <FolderPlus className="h-4 w-4" />
+                Inicializar Pastas
+              </Button>
+              <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="gap-2">
+                    <Upload className="h-4 w-4" />
+                    Upload em Massa
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-[95vw] sm:max-w-2xl p-4 sm:p-6">
+                  <DialogHeader>
+                    <DialogTitle>Upload em Massa</DialogTitle>
+                    <DialogDescription>
+                      Envie múltiplas mídias de uma vez para uma campanha
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>Campanha</Label>
+                      <Select value={selectedCampanha} onValueChange={setSelectedCampanha}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma campanha" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {campanhas.map((campanha) => (
+                            <SelectItem key={campanha.id} value={campanha.id}>
+                              {campanha.titulo}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Tipo de Mídia</Label>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant={selectedTipo === 'imagem' ? 'default' : 'outline'}
+                          onClick={() => setSelectedTipo('imagem')}
+                          className="flex-1"
+                        >
+                          <ImageIcon className="h-4 w-4 mr-2" />
+                          Imagem
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={selectedTipo === 'video' ? 'default' : 'outline'}
+                          onClick={() => setSelectedTipo('video')}
+                          className="flex-1"
+                        >
+                          <Video className="h-4 w-4 mr-2" />
+                          Vídeo
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="files">Arquivos</Label>
+                      <Input
+                        id="files"
+                        type="file"
+                        multiple
+                        accept={selectedTipo === 'imagem' ? 'image/*' : 'video/*'}
+                        onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {selectedFiles.length} arquivo(s) selecionado(s). Tamanho máximo: 10MB por arquivo
+                      </p>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="files">Arquivos</Label>
-                    <Input
-                      id="files"
-                      type="file"
-                      multiple
-                      accept={selectedTipo === 'imagem' ? 'image/*' : 'video/*'}
-                      onChange={(e) => setSelectedFiles(Array.from(e.target.files || []))}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {selectedFiles.length} arquivo(s) selecionado(s). Tamanho máximo: 10MB por arquivo
-                    </p>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setUploadDialogOpen(false)
-                      setSelectedFiles([])
-                      setSelectedCampanha('')
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    onClick={handleUploadMultiple}
-                    disabled={!selectedCampanha || selectedFiles.length === 0 || uploadingMidia}
-                  >
-                    {uploadingMidia ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      `Enviar ${selectedFiles.length} arquivo(s)`
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                  <DialogFooter>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setUploadDialogOpen(false)
+                        setSelectedFiles([])
+                        setSelectedCampanha('')
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      onClick={handleUploadMultiple}
+                      disabled={!selectedCampanha || selectedFiles.length === 0 || uploadingMidia}
+                    >
+                      {uploadingMidia ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        `Enviar ${selectedFiles.length} arquivo(s)`
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
           </motion.div>
 
           {/* Filtros */}
